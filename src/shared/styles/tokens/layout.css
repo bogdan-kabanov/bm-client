@@ -1,0 +1,71 @@
+/* CSS Variables for Layout - converted from SCSS */
+
+:root {
+  /* Spacing scale (multiples of 4px) */
+  --space-0: 0;
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.5rem; /* 24px */
+  --space-6: 2rem; /* 32px */
+  --space-7: 2.5rem; /* 40px */
+  --space-8: 3rem; /* 48px */
+  --space-9: 4rem; /* 64px */
+  --space-10: 5rem; /* 80px */
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --shadow-green: 0 4px 15px rgba(52, 116, 65, 0.3);
+  --shadow-green-hover: 0 6px 20px rgba(52, 116, 65, 0.4);
+  --shadow-green-active: 0 2px 10px rgba(52, 116, 65, 0.3);
+
+  /* Breakpoints (for reference, use in media queries) */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1440px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+
+  /* Z-index scale */
+  --z-base: 1;
+  --z-dropdown: 40;
+  --z-sticky: 20;
+  --z-modal: 100;
+  --z-overlay: 200;
+  --z-toast: 300;
+
+  /* Semantic aliases */
+  --primary-green: #1f5f2b;
+  --primary-green-dark: #2a5d34;
+  --primary-green-darker: #184622;
+  --background-dark: #0a0a0a;
+  --background-darker: #161616;
+  --background-green: #0f1a0d;
+  --text-white: #ffffff;
+  --text-light: #c2c2c2;
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --border-green: #172d1a;
+  --border-green-light: rgba(52, 116, 65, 0.3);
+}
+
+
+
+
+
+

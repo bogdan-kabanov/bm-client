@@ -1,0 +1,16 @@
+.country-flag {
+  display: inline-block !important;
+  line-height: 1 !important;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.country-flag svg {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+.country-flag {
+  opacity: 1 !important;
+  visibility: visible !important;
+}

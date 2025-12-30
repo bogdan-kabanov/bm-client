@@ -1,0 +1,292 @@
+/* BotsPage styles */
+.bots-page.wrapper-page {
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #0a0e1a, #141824, #0f1219);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+.bots-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+}
+
+.bots-title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bots-title {
+    font-size: 28px;
+    font-weight: 800;
+    background: #fff;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+}
+
+.bots-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+.telegram-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-username {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.bots-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.bots-tab {
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgba(255, 255, 255, 0.87);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bots-tab:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.bots-tab.active {
+    background: linear-gradient(135deg, #0f8cff, #00a3ff);
+    border-color: transparent;
+    color: #fff;
+}
+
+.bots-loading,
+.bots-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    gap: 20px;
+    width: 100%;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top: 4px solid #00ff8c;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-spinner.large {
+    width: 80px;
+    height: 80px;
+    border-width: 5px;
+}
+
+.bots-error h3 {
+    font-size: 24px;
+    color: #ff006e;
+    margin-bottom: 10px;
+}
+
+.bots-error p {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 20px;
+}
+
+.retry-btn {
+    padding: 12px 24px;
+    background: #ff006e1a;
+    border: 1px solid rgba(255, 0, 110, 0.3);
+    border-radius: 4px;
+    color: #ff006e;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+    background: #ff006e33;
+    box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 4px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.notification.success {
+    background: rgba(0, 255, 140, 0.15);
+    border: 1px solid rgba(0, 255, 140, 0.3);
+    color: #00ff8c;
+}
+
+.notification.error {
+    background: rgba(255, 0, 110, 0.15);
+    border: 1px solid rgba(255, 0, 110, 0.3);
+    color: #ff006e;
+}
+
+.notification button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes slideIn {
+    0% {
+        transform: translate(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(0);
+        opacity: 1;
+    }
+}
+
+/* iPhone адаптация */
+@media (max-width: 428px) {
+    .bots-page.wrapper-page {
+        padding: 12px 14px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-top: max(12px, constant(safe-area-inset-top));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        padding-bottom: max(12px, constant(safe-area-inset-bottom));
+    }
+
+    .bots-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+    }
+
+    .bots-title {
+        font-size: 22px;
+    }
+
+    .bots-subtitle {
+        font-size: 13px;
+    }
+
+    .bots-tabs {
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .bots-tab {
+        min-height: 44px;
+        padding: 10px 14px;
+        font-size: 13px;
+        flex: 1;
+        min-width: calc(50% - 4px);
+    }
+
+    .retry-btn {
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+    .notification {
+        top: max(20px, env(safe-area-inset-top));
+        right: 12px;
+        left: 12px;
+        padding: 12px 16px;
+    }
+}
+
+@media (max-width: 390px) {
+    .bots-page.wrapper-page {
+        padding: 10px 12px;
+    }
+
+    .bots-title {
+        font-size: 20px;
+    }
+
+    .bots-tab {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 375px) {
+    .bots-page.wrapper-page {
+        padding: 8px 10px;
+    }
+
+    .bots-title {
+        font-size: 18px;
+    }
+
+    .bots-header {
+        gap: 12px;
+    }
+}
+
+/* Поддержка safe area для iPhone с вырезом */
+@supports (padding: max(0px)) {
+    @media (max-width: 428px) {
+        .bots-page.wrapper-page {
+            padding-top: max(12px, env(safe-area-inset-top));
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+        }
+    }
+}
+

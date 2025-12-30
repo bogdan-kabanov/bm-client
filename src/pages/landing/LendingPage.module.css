@@ -1,0 +1,11 @@
+.lendingPage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lendingContent {
+  flex: 1;
+  width: 100%;
+}
+

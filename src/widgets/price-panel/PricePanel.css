@@ -1,0 +1,517 @@
+/* PricePanel styles */
+
+.price-panel {
+    background: #171929;
+    backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-left: none;
+    position: relative;
+    z-index: 100;
+    min-height: 0;
+    height: 100%
+}
+
+@media(max-width: 1435px) {
+    .price-panel .panel-header {
+        padding:12px 16px!important
+    }
+
+    .price-panel .panel-header h3 {
+        font-size: 14px!important
+    }
+}
+
+@media(max-width: 1024px) {
+    .price-panel {
+        backdrop-filter:none;
+        overflow: visible
+    }
+}
+
+.price-panel .price-difference-panel {
+    flex: 1;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 101;
+    min-height: 0
+}
+
+@media(max-width: 1024px) {
+    .price-panel .price-difference-panel {
+        overflow:visible
+    }
+}
+
+.price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list) {
+    padding: 12px 18px 0;
+    margin-bottom: 0
+}
+
+.price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list):first-child {
+    padding-top: 12px
+}
+
+.price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list):last-child {
+    padding-bottom: 16px
+}
+
+.price-panel .price-difference-panel .trading-controls {
+    padding-bottom: 0;
+    margin-bottom: 0
+}
+
+.price-panel .price-difference-panel .trading-controls+.trades-panel,.price-panel .price-difference-panel .trading-controls+.copy-trading-signals-wrapper--bottom {
+    margin-top: 0
+}
+
+.price-panel .price-difference-panel .trades-panel {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper--bottom {
+    margin-top: 0;
+    flex-shrink: 0
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-list {
+    flex: 1;
+    min-height: 0;
+    margin-top: 0
+}
+
+.price-panel .price-difference-panel>.trades-panel {
+    margin-top: 0!important
+}
+
+.price-panel .price-difference-panel .exchange-prices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #1e222d;
+    border-radius: 8px;
+    border: none
+}
+
+.price-panel .price-difference-panel .exchange-prices .exchange-price {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center
+}
+
+.price-panel .price-difference-panel .exchange-prices .exchange-price .exchange-label {
+    font-size: 11px;
+    color: #fff9;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 500
+}
+
+.price-panel .price-difference-panel .exchange-prices .exchange-price .price-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    transition: all .3s ease
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display {
+    text-align: center;
+    padding: 12px 14px;
+    margin: 6px 0;
+    background: linear-gradient(135deg,#32ac411a,#32ac4108);
+    border-radius: 8px;
+    border: 1px solid rgba(50,172,65,.3)
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display .diff-label {
+    font-size: 10px;
+    color: #fff9;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 6px;
+    font-weight: 500
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display .diff-amount {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    transition: all .3s ease
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display .diff-amount.positive {
+    color: #32ac41
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display .diff-amount.negative {
+    color: #f7525f
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display .diff-percent {
+    font-size: 12px;
+    font-weight: 600;
+    transition: all .3s ease
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display .diff-percent.positive {
+    color: #32ac41
+}
+
+.price-panel .price-difference-panel .exchange-prices .difference-display .diff-percent.negative {
+    color: #f7525f
+}
+
+.price-panel .price-difference-panel .profit-estimate {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #1e222d;
+    border-radius: 8px;
+    border: none
+}
+
+.price-panel .price-difference-panel .profit-estimate .estimate-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500
+}
+
+.price-panel .price-difference-panel .profit-estimate .estimate-row span:last-child {
+    font-weight: 600
+}
+
+.price-panel .price-difference-panel .profit-estimate .estimate-row span:last-child.positive {
+    color: #32ac41
+}
+
+.price-panel .price-difference-panel .profit-estimate .estimate-row span:last-child.negative {
+    color: #f7525f
+}
+
+.price-panel .price-difference-panel .profit-estimate .estimate-row.total {
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.1);
+    font-size: 15px;
+    font-weight: 700
+}
+
+.price-panel .price-difference-panel .profit-estimate .estimate-row.total span:last-child {
+    font-size: 16px
+}
+
+.copy-trading-signals-wrapper {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.copy-trading-signals-wrapper--bottom {
+  margin-top: auto;
+}
+
+.copy-trading-signals-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-trading-signals-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.copy-trading-signals-btn.active {
+  background: rgba(0, 122, 255, 0.16);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+.copy-trading-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.activity-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  border: 2px solid rgba(29, 32, 47, 0.95);
+}
+
+.copy-trading-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.copy-trading-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+
+.copy-trading-count {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4ade80;
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper {
+    margin: 0;
+    padding: 0
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper.copy-trading-signals-wrapper--bottom {
+    margin: 0;
+    width: 100%;
+    padding: 0
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    background: linear-gradient(135deg,#22c55e1f,#22c55e0d);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper.copy-trading-signals-wrapper--bottom .copy-trading-signals-btn {
+    padding: 12px 16px;
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-icon-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-icon-wrapper svg {
+    width: 18px;
+    height: 18px;
+    z-index: 1
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-icon-wrapper .activity-indicator {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #45b734;
+    top: -2px;
+    right: -2px;
+    opacity: 1
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    min-width: 0
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-content .copy-trading-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: inherit;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-count {
+    position: relative;
+    background: #22c55e26;
+    color: #22c55e;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    min-width: 28px;
+    text-align: center;
+    border: none
+}
+
+.price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn:hover {
+    background: linear-gradient(135deg,#22c55e26,#22c55e12)
+}
+
+@keyframes fadeInDown {
+    0% {
+        opacity: 0;
+        transform: translate(-50%) translateY(-10px)
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%) translateY(0)
+    }
+}
+
+/* iPhone адаптация */
+@media (max-width: 428px) {
+    .price-panel {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    .price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list) {
+        padding: 10px 14px 0;
+    }
+
+    .price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list):first-child {
+        padding-top: 10px;
+    }
+
+    .price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list):last-child {
+        padding-bottom: 12px;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices {
+        padding: 12px 14px;
+        gap: 8px;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .exchange-price .exchange-label {
+        font-size: 10px;
+        margin-bottom: 4px;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .price-value {
+        font-size: 16px;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .difference-display {
+        padding: 10px 12px;
+        margin: 5px 0;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .difference-display .diff-label {
+        font-size: 9px;
+        margin-bottom: 4px;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .difference-display .diff-amount {
+        font-size: 16px;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .difference-display .diff-percent {
+        font-size: 11px;
+    }
+
+    .price-panel .price-difference-panel .profit-estimate {
+        padding: 12px 14px;
+        gap: 8px;
+    }
+
+    .price-panel .price-difference-panel .profit-estimate .estimate-row {
+        font-size: 12px;
+    }
+
+    .price-panel .price-difference-panel .profit-estimate .estimate-row.total {
+        font-size: 14px;
+        padding-top: 8px;
+    }
+
+    .price-panel .price-difference-panel .profit-estimate .estimate-row.total span:last-child {
+        font-size: 15px;
+    }
+
+    .price-panel .price-difference-panel .copy-trading-signals-wrapper.copy-trading-signals-wrapper--bottom .copy-trading-signals-btn {
+        padding: 10px 14px;
+        min-height: 44px;
+    }
+
+    .price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-icon-wrapper svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-content .copy-trading-title {
+        font-size: 12px;
+    }
+
+    .price-panel .price-difference-panel .copy-trading-signals-wrapper .copy-trading-signals-btn .copy-trading-count {
+        font-size: 13px;
+        padding: 5px 8px;
+        min-width: 26px;
+    }
+}
+
+@media (max-width: 390px) {
+    .price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list) {
+        padding: 8px 12px 0;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices {
+        padding: 10px 12px;
+    }
+
+    .price-panel .price-difference-panel .profit-estimate {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 375px) {
+    .price-panel .price-difference-panel>*:not(.trades-panel):not(.copy-trading-signals-wrapper--bottom):not(.copy-trading-signals-list) {
+        padding: 6px 10px 0;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .price-value {
+        font-size: 15px;
+    }
+
+    .price-panel .price-difference-panel .exchange-prices .difference-display .diff-amount {
+        font-size: 15px;
+    }
+}
+

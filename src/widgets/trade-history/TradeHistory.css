@@ -1,0 +1,419 @@
+.trade-history {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin-top: 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.trade-history .trade-history-title {
+    font-size: .9em;
+    color: #fff;
+    margin-bottom: 10px;
+    font-weight: 600
+}
+
+.trade-history .no-trades {
+    text-align: center;
+    padding: 0;
+    color: #ffffff80;
+    font-size: .85em;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.trade-history .no-trades p {
+    margin: 0
+}
+
+.trade-history .trade-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain
+}
+
+.trade-history .trade-history-list::-webkit-scrollbar {
+    width: 6px
+}
+
+.trade-history .trade-history-list::-webkit-scrollbar-track {
+    background: #ffffff0d;
+    border-radius: 0
+}
+
+.trade-history .trade-history-list::-webkit-scrollbar-thumb {
+    background: #fff3;
+    border-radius: 0
+}
+
+.trade-history .trade-history-list::-webkit-scrollbar-thumb:hover {
+    background: #ffffff4d
+}
+
+.trade-history .trade-history-item {
+    background: #ffffff05;
+    border: 1px solid rgba(33,38,52,.8);
+    border-radius: 6px;
+    padding: 6px;
+    transition: all .3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    min-height: 60px
+}
+
+.trade-history .trade-history-item:hover {
+    background: #ffffff0d;
+    border-color: #ffffff1f
+}
+
+.trade-history .trade-history-item.buy {
+    border-left: 2px solid #32ac41
+}
+
+.trade-history .trade-history-item.sell {
+    border-left: 2px solid #f7525f
+}
+
+.trade-history .trade-history-item.win,.trade-history .trade-history-item.loss {
+    background: #ffffff08
+}
+
+.trade-history .trade-history-item .trade-history-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-shrink: 0
+}
+
+.trade-history .trade-history-item .trade-history-row-top {
+    justify-content: space-between;
+    margin-bottom: 4px;
+    min-height: 20px;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    max-width: calc(100% - 100px)
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ffffff14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-view {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(145deg,#ffffff2e,#ffffff0d 45%,#fff0);
+    box-shadow: inset 0 1px 2px #ffffff2e,0 4px 12px #00000059
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-view:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(115deg,#fff0,#ffffff52 45%,#fff0);
+    transform: translate(-120%) skew(-20deg);
+    pointer-events: none;
+    border-radius: inherit
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-view.currency-icon--image:after {
+    animation: currency-icon-shine 3.6s ease-in-out infinite
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .currency-icon__initials {
+    font-size: .6em;
+    font-weight: 600;
+    color: #fffc
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency {
+    font-size: .9em;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-currency .copied-trade-marker {
+    font-size: .85em;
+    cursor: help;
+    opacity: .8;
+    margin-left: 2px
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-profit {
+    font-size: .85em;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 70px
+}
+
+.trade-history .trade-history-item .trade-history-row-bottom {
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 20px;
+    flex-shrink: 0
+}
+
+.trade-history .trade-history-item .trade-history-row-bottom .trade-time {
+    color: #ffffff80;
+    font-size: .75em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 80px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 6px
+}
+
+.trade-history .trade-history-item .trade-history-row-bottom .trade-time .trade-arrow {
+    font-size: 1.2em;
+    line-height: 1;
+    flex-shrink: 0;
+    font-weight: bolder
+}
+
+.trade-history .trade-history-item .trade-history-row-bottom .trade-time .trade-arrow.arrow-up {
+    color: #32ac41
+}
+
+.trade-history .trade-history-item .trade-history-row-bottom .trade-time .trade-arrow.arrow-down {
+    color: #f7525f
+}
+
+
+.trade-history .trade-history-item .trade-history-row-bottom .trade-middle {
+    text-align: right;
+    font-size: .85em;
+    font-weight: 500;
+    color: #fffc;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 70px;
+    margin-left: auto
+}
+
+
+.trade-history .trade-history-item .trade-history-row-top .trade-profit.win {
+    color: #32ac41
+}
+
+.trade-history .trade-history-item .trade-history-row-top .trade-profit.loss {
+    color: #ffffff80
+}
+
+.trade-history .trade-history-load-more {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    margin-top: 8px
+}
+
+.trade-history .trade-history-load-more .loading-more {
+    color: #ffffff80;
+    font-size: .85em
+}
+
+.trade-history .trade-history-load-more .load-more-button {
+    background: #ffffff0d;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #fffc;
+    font-size: .85em;
+    cursor: pointer;
+    transition: all .2s ease
+}
+
+.trade-history .trade-history-load-more .load-more-button:hover {
+    background: #ffffff1a;
+    border-color: #fff3
+}
+
+.trade-history .trade-history-load-more .load-more-button:active {
+    background: #ffffff26
+}
+
+@keyframes currency-icon-shine {
+    0% {
+        transform: translate(-130%) skew(-20deg);
+        opacity: 0
+    }
+
+    35% {
+        opacity: .85
+    }
+
+    60% {
+        transform: translate(170%) skew(-20deg);
+        opacity: 0
+    }
+
+    to {
+        transform: translate(170%) skew(-20deg);
+        opacity: 0
+    }
+}
+
+/* iPhone адаптация */
+@media (max-width: 428px) {
+    .trade-history .trade-history-list {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    .trade-history .trade-history-item {
+        padding: 6px;
+        min-height: 60px;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-top {
+        margin-bottom: 6px;
+        gap: 6px;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper {
+        max-width: calc(100% - 90px);
+    }
+
+    .trade-history .trade-history-item .trade-history-row-top .trade-currency {
+        font-size: 0.85em;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-time {
+        font-size: 0.7em;
+        min-width: 70px;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom {
+        gap: 6px;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-left-block .trade-amount-left {
+        font-size: 0.8em;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-middle {
+        font-size: 0.8em;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-profit {
+        font-size: 0.8em;
+        min-width: 60px;
+    }
+
+    .trade-history .trade-history-load-more .load-more-button {
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 390px) {
+    .trade-history .trade-history-item {
+        padding: 5px;
+        min-height: 55px;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-top .trade-currency-wrapper {
+        max-width: calc(100% - 85px);
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-time {
+        min-width: 65px;
+    }
+}
+
+@media (max-width: 375px) {
+    .trade-history .trade-history-item {
+        padding: 4px;
+        min-height: 50px;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-top .trade-currency {
+        font-size: 0.8em;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-time {
+        font-size: 0.65em;
+        min-width: 60px;
+    }
+
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-left-block .trade-amount-left,
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-middle,
+    .trade-history .trade-history-item .trade-history-row-bottom .trade-profit {
+        font-size: 0.75em;
+    }
+}

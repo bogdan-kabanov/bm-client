@@ -1,0 +1,164 @@
+/* Стили для DepositContent - светлая тема */
+
+.deposit-page {
+    background: transparent !important;
+    color: #333 !important;
+}
+
+.deposit-page__header {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 0 20px 0 !important;
+}
+
+.deposit-page__title {
+    color: #333 !important;
+    font-size: 32px !important;
+    font-weight: 700 !important;
+    margin: 0 0 20px 0 !important;
+}
+
+.deposit-layout {
+    display: flex !important;
+    gap: 20px !important;
+    background: transparent !important;
+}
+
+.deposit-sidebar {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.deposit-sidebar__title {
+    color: #333 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    margin: 0 0 16px 0 !important;
+}
+
+.deposit-sidebar__item {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
+    color: #333 !important;
+}
+
+.deposit-sidebar__item:hover {
+    background: #f9f9f9 !important;
+}
+
+.deposit-sidebar__item.is-active {
+    background: #f0f7ff !important;
+    border-color: #37a1ff !important;
+    color: #37a1ff !important;
+}
+
+.deposit-content {
+    flex: 1 !important;
+    background: transparent !important;
+}
+
+.deposit-methods-panel {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 8px !important;
+    padding: 24px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.section-title {
+    color: #333 !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+}
+
+.deposit-method-card {
+    background: #ffffff !important;
+    border: 2px solid #e5e5e5 !important;
+    color: #333 !important;
+}
+
+.deposit-method-card:hover {
+    border-color: #37a1ff !important;
+}
+
+.deposit-method-card.is-active {
+    background: #f0f7ff !important;
+    border-color: #37a1ff !important;
+    color: #37a1ff !important;
+}
+
+.deposit-method-card__name {
+    color: inherit !important;
+}
+
+.info-card {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
+    color: #333 !important;
+}
+
+.info-card__caption {
+    color: #666 !important;
+}
+
+.info-card__title {
+    color: #333 !important;
+}
+
+.user-deposits-section {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 8px !important;
+    padding: 24px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.transaction-submission {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 8px !important;
+    padding: 24px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    color: #333 !important;
+}
+
+.transaction-submission__label {
+    color: #333 !important;
+}
+
+.transaction-submission__input {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
+    color: #333 !important;
+}
+
+.transaction-submission__input::placeholder {
+    color: #999 !important;
+}
+
+/* Переопределение всех темных стилей */
+.deposit-page * {
+    color: #333 !important;
+}
+
+.deposit-page h1,
+.deposit-page h2,
+.deposit-page h3,
+.deposit-page h4,
+.deposit-page h5,
+.deposit-page h6 {
+    color: #333 !important;
+}
+
+.deposit-page p,
+.deposit-page span,
+.deposit-page div,
+.deposit-page label {
+    color: #333 !important;
+}
+
+

@@ -1,0 +1,114 @@
+.profit-stats-panel {
+  background: var(--color-bg-panel, #1e222d);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid var(--color-border-strong, #2b2f3a);
+  backdrop-filter: blur(10px);
+}
+.profit-stats-panel .profit-stats-panel-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+.profit-stats-panel .panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.profit-stats-panel .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  width: 100%;
+  padding: 10px;
+  background: var(--color-bg-surface, #131722);
+  border: 1px solid var(--color-border-strong, #2b2f3a);
+}
+.profit-stats-panel .stat-item:last-child {
+  margin-bottom: 0;
+}
+.profit-stats-panel .stat-item:hover {
+  background: var(--color-bg-panel, #1e222d);
+  border-color: var(--color-accent-primary, #009af9) -border;
+}
+.profit-stats-panel .stat-item .stat-icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 153, 249, 0.507);
+  border: 2px solid rgb(0, 153, 249);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-white, #ffffff);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.profit-stats-panel .stat-item .stat-content {
+  flex: 1;
+  min-width: 0;
+}
+.profit-stats-panel .stat-item .stat-content .stat-label {
+  font-size: 11px;
+  color: #fff;
+  margin-bottom: 2px;
+}
+.profit-stats-panel .stat-item .stat-content .stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+.profit-stats-panel .stat-item.stat-label-green .stat-value {
+  color: var(--color-success, #32ac41);
+}
+@media (max-width: 768px) {
+  .profit-stats-panel {
+    padding: 15px;
+  }
+  .profit-stats-panel .panel-title {
+    font-size: 16px;
+  }
+  .profit-stats-panel .profit-stats-panel-row {
+    gap: 10px;
+  }
+  .profit-stats-panel .stat-item {
+    padding: 8px;
+  }
+  .profit-stats-panel .stat-item .stat-icon {
+    width: 25px;
+    height: 25px;
+  }
+  .profit-stats-panel .stat-item .stat-value {
+    font-size: 14px;
+  }
+}
+@media (max-width: 576px) {
+  .profit-stats-panel {
+    padding: 10px;
+  }
+  .profit-stats-panel .panel-title {
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+  .profit-stats-panel .profit-stats-panel-row {
+    gap: 8px;
+  }
+  .profit-stats-panel .stat-item {
+    padding: 6px;
+  }
+  .profit-stats-panel .stat-item .stat-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .profit-stats-panel .stat-item .stat-value {
+    font-size: 13px;
+  }
+}

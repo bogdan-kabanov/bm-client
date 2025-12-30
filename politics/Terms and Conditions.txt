@@ -1,0 +1,304 @@
+The Client automatically affirms the full acceptance of the Agreement by registering a Client's Profile at the Company's website. The Agreement remains valid until it is terminated by either party.
+
+Terms and Definitions
+Client’s Area – a workspace created in the web-interface, used by the Client for performing Trading and Non-Trading Operations and entering personal information.
+Client – any person over 18 years of age, using the services of the Company in accordance with this Agreement.
+Company – a legal entity, referred to as “Block Mind”, which provides, in accordance with the provisions of this Agreement, the conduct of arbitrage operations for the purchase and sale of CFD contracts.
+Non-Trading Operation – any operation related to top-up of the Client’s Trading Account with necessary funds or withdrawal of funds from the Trading Account. For Non-Trading Operations, the Company uses electronic payment systems selected at its discretion and tied to the appropriate interface in the Client’s Area.
+Client’s Profile – a set of personal data about the Client, provided by himself/herself during registration and verification process within the Client’s Area, and stored on the Company’s secure server.
+Trading Account – a specialized account on the Company’s server that enables the Client to conduct Trading Operations.
+Trading Operation – an arbitration operation for the purchase and sale of trade contracts performed by the Client using the Trading Terminal available in the Client’s Area.
+Trading Server – a server owned by the Company with specialized software installed on it, which serves for conducting Trading and Non-Trading Operations of Clients and tracking the statistics of these operations.
+Trading Terminal – a specialized interface located in the Client’s Area, connected to the Company’s Trading Server, and allowing Client to perform Trading Operations.
+
+General Provisions
+
+The service provided by the Company is an Internet service that uses the official website of the Company and its Trading Server to carry out Trading Operations. The use of the service implies the availability of sustainable high-speed Internet connection on the Client’s device.
+
+In its activities, the Company is guided by existing Legislation on anti-money laundering and terrorist financing. The Company requires the Client to correctly enter personal data, and reserves the right to verify the Client’s identity, using the necessary methods:
+
+Upload scanned copies of documents confirming the Client’s identity and actual place of residence to the Client’s Profile;
+
+A phone call to the Client at the specified phone number;
+
+Other means necessary at the discretion of the Company to confirm the Client’s identity and financial activity.
+
+A Client, regardless of the legal status (legal or natural person), is prohibited to have more than one Trading Account with the Company. The Company reserves the right to terminate this Agreement or reset the results of Trading Operations in the event of re-registration of the Client Profile or in case of multiple Trading Accounts usage by the same Client.
+
+A Client’s Profile is registered in the secured space of the Client’s Area on the Company’s official website. The Company guarantees confidentiality of the Client’s personal data in accordance with the provisions of the Section 8 of this Agreement.
+
+The Client is responsible for the safety of the Client’s Area authentication data received from the Company, in case of loss of access to the Client’s Area, Client must immediately notify the Company in order to block access to the funds in the Trading Account.
+
+Upon registration, the Company automatically provides the Client with a Trading Account where the Client performs all Trading and Non-Trading Operations.
+
+The Company carries quoting of the Clients by using its own paid sources of quotations, applying processing of the quote flow in accordance with the needs of ensuring the liquidity of contracts opened by Clients. Quotes of any other companies, and/or quotes taken from other paid sources, cannot be taken into account when considering disputes.
+
+The Company provides the Client with a specially prepared web interface (Trading Terminal) to carry out Trading Operations within the Client’s Area.
+
+The Company prohibits the Client to resort to any type of fraudulent activity that may be considered by the Company in the Client’s actions aimed at gaining profit using operations not instructed by the Company, vulnerabilities in the Company’s official website(s), bonus speculation, and abusive trading, including but not limited to hedging transactions from different accounts, speculation on assets with troubled liquidity, etc. In this case, the Company reserves the right to terminate this Agreement or to reset the results of Trading Operations.
+
+The Company reserves the right to terminate this Agreement or to suspend any communication with the Client in cases of detecting an unfair attitude towards the Company as a whole and to the products and services provided, including (but not limited to) insulting employees and partners of the Company, slandering, publishing unreliable information about the Company, negative reviews, attempted blackmail or extortion by the Client.
+
+The Company reserves the right to prohibit the Client from copying the Trading Operations of other traders or reset the results of copied Trading Operations in case of detecting trading violations or any other violations of this Agreement by the copy provider.
+
+The Client shall ensure that his/her activities fully comply with the legislation of the country where they are conducted.
+
+The Client acknowledges and accepts the responsibility for the payment of all taxes and fees which may arise from the performance of Trading Operations.
+
+The Company reserves the right to limit the availability of offered features and services, and motivation benefits at its own discretion.
+
+The Company agrees to provide the Client with the services subject to the Client not being a citizen or permanent resident of the countries specified in section 11 “List of Countries” of the present Agreement or any territories being under jurisdiction or effective control of these countries. The Company reserves the right to limit the availability of offered services in these countries.
+
+Procedure of Non-Trading Operations Execution
+
+Non-Trading Operations include operations performed by the Client to top-up the Trading Account as well as withdraw funds from it (deposit and withdrawal of funds).
+
+Non-Trading Operations are performed by the Client with the help of the Client’s Area functionality. The Company does not carry out Non-Trading Operations requested using conventional means of communication (Email, Live-chat, etc.).
+
+While performing Non-Trading Operations, the Client is only allowed to use personal funds held in electronic and bank payment accounts owned by the Client.
+
+The Client independently selects the currency of their Trading account from the available list of options. The balance of funds in the Client's Trading account is displayed in the selected currency. The Client may change the Trading account currency if desired. When depositing funds into the Trading account, the deposit amount is automatically converted from the currency used by the Client at the time of deposit into the Trading account currency. The same conversion process is applied when processing withdrawals from the Trading account.
+
+In case of currency conversion, the Company uses exchange rate in accordance with the quotes that are received from supported electronic payment providers at the time of the Non-Trading Operation execution.
+
+The Company sets the following minimum amounts for Non-Trading Operations (unless specified otherwise):
+
+Deposit – 5 USD;
+
+Withdrawal – 10 USD.
+
+If the Client uses different methods for a Trading Account top-up, the withdrawal of funds to these methods will be carried out in the same proportion in which the deposit was made. If the Company is not able to process the withdrawal of funds to the method indicated by the Client, the Company will offer the Client to change the selected payment method to one of the currently available.
+
+If the Client uses bank cards to replenish the Trading Account, the Client guarantees that he/she uses only personal funds and agrees that the Company can save the bank card payment details in order to implement the quick top-up feature of the Trading Account in one click, when the Client uses the appropriate functionality in the Client's Area. The Client can disable this service upon request, by contacting the Company's support service.
+
+At the request of the Company, the Client undertakes to provide confirming scans/photos of the cards used to replenish the Trading Account for verification purposes, and also excludes the possibility of any claims against the Company regarding the deposited funds.
+
+In order to ensure compliance with the requirements of generally accepted Legislative standards, as well as to protect Client’s funds, the withdrawal of funds shall be performed using the same payment method that was previously used for depositing, and by using the same payment details.
+
+The Company does not allow the use of the provided services as a means to extract profits from Non-Trading Operations, or in any way other than its intended purpose.
+
+Procedure of Trading Operations Execution
+
+Trading Operations include arbitrage operations for sale and purchase of trade contracts with the trading instruments provided by the Company. These operations are executed via the Trading Terminal provided by the Company within the Client’s Area. The processing of all Clients Trading Operations is carried out by the Company using the Trading Server at its disposal with the appropriate software.
+
+The Company provides quotes in the Trading Terminal, indicating the price in a single Plost quote, which is calculated by the formula:
+Plost = Pbid + (Pask − Pbid) / 2
+
+Where:
+Plost – the price that is used for executing Trading Operations and transactions that take place for opening and closing trade contracts.
+Pbid – the Bid price provided to the Company by its liquidity providers.
+Pask – the Ask price provided to the Company by its liquidity providers.
+
+Trading on the Company’s Trading Server is also performed at the price of Plost. The Company allows Trading Operations and quotes around the clock.
+
+The Company uses the «Market Execution» quotation technology for the Trading Operations execution and performs a transaction at the price that exists at the time of the Client’s request processing in the queue of Client’s requests on the Company’s Trading Server. The maximum deviation of the price indicated in the Client’s Trading Terminal from the price existing on the Company’s Trading Server does not exceed the value of the two average spreads for this trading instrument in the periods corresponding to the average volatility of this instrument.
+
+The Company reserves the right to refuse the Client to conduct a Trade Operation if, at the moment of placing a contract request, the Company does not have enough liquidity in the chosen trading instrument by the time the contract expires. In this case, upon clicking the corresponding button in the Trading Terminal, the Client receives a notification.
+
+The amount of funds paid to the Client in the event of a positive outcome of the trade contract concluded by him/her is determined by the Company as a percentage of the amount of collateral determined by the Client at the time of the execution of the trade contract using the corresponding interface element of the Trading Terminal.
+
+As a part of services provided by the Company, Client is offered to purchase, sell trade contracts or not to participate in operations. The trade contracts come in a variety of classes, depending on the purchase method.
+
+The Client has the possibility to keep any number of simultaneously opened Trading Operations on his Trading Account for any expiration date of any class of trade contracts available. At the same time, the total volume of all newly opened Trading Operations cannot exceed the amount of the Client’s balance in the Trading Terminal.
+
+The Company implements the following mandatory mechanisms for conducting Trading Operations with CFD contracts of the «Buy - Sell» class:
+
+The Client, using the Trading Terminal provided inside of the Client’s Area, determines the parameters of a Trading Operation: a trading instrument, a contract expiration time, a transaction volume, a contract type («Call» or «Put»). The price displayed in the Client’s Trading Terminal is a Plost price.
+
+Depending on the liquidity volumes presently existing at the liquidity providers, the yield of a trade contract as a percentage in case of its positive execution is determined by the trading instrument chosen by the Client in the Client’s Trading Terminal. The level of profitability is determined for each specific Trading Operation and is displayed in the corresponding interface of the Client’s Trading Terminal.
+
+When the Client clicks the «Call» or «Put» button in the Trading Terminal, the parameters of the Trading Operation defined by the Client are fixed and transferred to the Company’s Trading Server. The Trading Server receives a request from the Client’s Trading Terminal and puts it in a queue for processing. At this point, the Client’s Trading Account records the amount of collateral for the execution of a trade contract in accordance with the amount set by the Client.
+
+At the moment of occurrence of the queue for processing the Client’s request, the Trading Server reads the main parameters of the Trade Operation, carries out the production of the operation itself at the price that currently exists on the Company’s Server with a record of this operation in the server database. Processing of Trade Operations, thus, is carried out by the «Market execution» technology.
+
+The processing time for Client's request depends on the quality of the connection between the Clients Trading Terminal and the Trading Server as well as on the current market for the asset. Under normal market conditions, a Clients request is typically processed within 0 – 4 seconds. Under abnormal market conditions the processing time may be increased.
+
+At the time of the trade contract expiration, the price at which the entry into the contract was made is compared with the closing price. Onwards, the following algorithm is used:
+
+For a «Call» type contract:
+
+if the closing price of the contract exceeds the opening price of the contract (in a strict compliance, Popening < Pclosing), then such contract is considered to be executed. The fixed margin amount and the payout for the execution of this trade contract are transferred to the Client’s Trading Account in accordance with the value indicated in the Client’s Trading Terminal at the moment when he/she uses the «Call» button.
+
+if the closing price of the contract is less than the opening price of the contract (in a strict compliance, Popening > Pclosing), then such contract is considered unfulfilled. A withdrawal of a fixed margin amount from the Client’s Trading Account is initiated.
+
+For a «Put» type contract:
+
+if the closing price of this contract is less than the opening price of the contract (in a strict compliance, Popening > Pclosing), then such contract is considered to be executed. The fixed margin amount and the payout for the execution of this trade contract are transferred to the Client’s Trading Account in accordance with the value indicated in the Client’s Trading Terminal at the moment when he/she uses the «Put» button.
+
+if the closing price of the contract is more than the opening price of the contract (in a strict compliance, Popening < Pclosing), then such contract is considered unfulfilled. There is a withdrawal from the Client’s Trading Account of the fixed margin amount.
+
+The Company reserves the right to cancel or revise the results of the Client’s Trading Operation in the following cases:
+
+The Trading Operation is opened/closed at a non-market quotation;
+
+The Trading Operation is performed with the help of unauthorized bot software;
+
+In case of software failures or other malfunction on the Trading Server;
+
+Synthetic Trading Operations (locks) on trade contracts may be invalidated in the event of revealing obvious signs of abuse.
+
+Quotes and Information
+
+The price offered in the Company’s Trading Terminal is used for Trading Operations. Trading conditions for instruments are specified in the contract specifications. All issues related to determining the current price level in the market are in the sole competence of the Company, their values are the same for all Clients of the Company.
+
+In the event of an unplanned interruption in the flow of server quotes caused by a hardware or software failure, the Company reserves the right to synchronize the base of Public offer quotations on the Trading Server with other sources. Such sources may be:
+
+A. the quotes base of the liquidity provider;
+B. the quotes base of a news agency.
+
+In the event of a failure in profit calculation by the type of trade contract/ instrument as a result of incorrect response of the software and/or hardware of the Trading Server, the Company reserves the right to:
+
+A. Cancel a mistakenly opened position;
+B. Adjust a mistakenly executed Trading Operation according to the current values.
+
+The method of adjusting or changing the volume, price and/or number of Trading Operations (and/or the level or volume of any order) is determined by the Company and is final and binding on the Client. The Company undertakes to inform the Client of any adjustment or such change as soon as this becomes possible.
+
+Authorities and Responsibilities of the Company and the Client
+
+The Client is not entitled to request any trading recommendations or other information that motivates to commit Trading Operations from the Company representatives. The Company undertakes not to give the Client any recommendations directly motivating the Client to perform any Trading Operations. This provision does not apply to the issuance of general recommendations by the Company on the use of CFD trading strategies.
+
+The Client guarantees the Company protection against any obligations, expenses, claims, damages that the Company may incur both directly and indirectly due to the inability of the Client to fulfill its obligations to third parties both in connection with its activities in the Company and outside it.
+
+The Company is not a provider of communication (Internet connection) services and is not liable for non-fulfillment of obligations due to failure in communication channels.
+
+The Client is obliged to provide copies of the identification and residence address confirmation documents, as well as comply with any other verification steps as determined by the Company.
+
+The Client undertakes not to distribute in any media (social media, forums, blogs, newspapers, radio, television, including but not limited to the above-mentioned) any information about the Company without prior approval of the content with its official representative.
+
+Before start of using the services offered by the Company, the Client guarantees that he/she is not a citizen or permanent resident of the countries specified in section 11 “List of Countries” of the present Agreement or any territories being under jurisdiction or effective control of these countries. Otherwise, the Client undertakes not to start or stop using the services immediately. If the Client violates these guarantees and obligations, the Client undertakes to reimburse the Company for all losses caused by such violation.
+
+The Company reserves the right to amend this Agreement in whole or in part without notifying the Client. The current Agreement can be found on the official website of the Company, the revision date is indicated in the appropriate section.
+
+The Company is not liable to the Client for any losses incurred as a result of using the service provided by the Company; the Company does not compensate for moral damage or loss of profits, unless otherwise specified in this Agreement or other legal documents of the Company.
+
+The main communication method between the Company and the Client is a support service located on the Company’s website, which does not cancel the Company’s obligation to provide the Client with the necessary support using other means and methods of communication available on its official website.
+
+The Company provides the following procedure for settlements with Clients:
+
+Client’s Trading Accounts top-up is performed automatically in most cases, without the participation of the Company’s staff. In exceptional cases, in the event of malfunctions in the software of intermediaries involved in payments processing, the Company at its discretion may process the accrual of funds on Trading Account manually. If the deposit is processed manually, the Client must specify transfer id number, date & time, payment method used, sender and recipient wallet details when contacting the Company’s support service.
+
+Withdrawal of funds from the Trading Accounts of the Clients is carried out only in manual mode after the Client submits the relevant form in the Client Area. The Client cannot withdraw an amount that exceeds the amount of funds displayed in his/her Trading Account as the available balance. When the Client submits withdrawal form, the corresponding amount is debited from the available funds on the Client’s Trading Account. The withdrawal requests processing is executed within a period of three business days. In certain cases, the Company reserves the right to extend the period required for applications processing up to 14 business days, having notified the Client in advance.
+
+Risks Disclosure
+
+The Client assumes the risks of the following types:
+
+General risks in investing associated with the possible loss of invested funds as a result of committed Trading Operations. Such risks are not subject to state insurance and are not protected by any legislative acts.
+
+Risks associated with the provision of online trading. The Client is aware that the Trading Operations are secured using the electronic trading system and are not directly connected with any existing global trading platform. All communications are carried out via communication channels.
+
+Risks associated with the use of third party electronic payment systems.
+
+The Client is aware that he/she cannot invest funds in his/her Trading Account, the loss of which will significantly impair the quality of his life or create problems for the client in relations with third parties.
+
+The Processing of Personal Data
+
+The Company is guided by the provisions generally accepted in world practice for processing of Client’s personal data.
+
+The Company ensures the safety of the Client’s personal data in the form in which they are entered by the Client during registration on the official website of the Company and within the Client’s Profile.
+
+The Client has the right to change personal data in his/her Client’s Area, except for the email address. The data can be changed only when the Client personally contacts the support service of the Company after proper identification.
+
+The Company uses «cookies» technology on its website, in order to provide statistical information storage.
+
+The Company has an affiliate program, but does not provide partners with any personal data about their referrals.
+
+The Company’s mobile application can gather anonymized stats on the installed applications.
+
+Procedure of Handling Claims and Disputes
+
+All disputes between the Company and the Client are resolved in a complaint procedure by negotiation and correspondence.
+
+The Company accepts claims arising under this Agreement only by email support@blockmind.company
+ and not later than five business days from the date (day) of a disputed case.
+
+The Company is obliged to review the claim of the Client in a period not exceeding 14 business days upon receiving a written complaint from the Client, and to notify the Client about the outcome of the complaint by email.
+
+The Company does not compensate the Clients for any loss of profit or moral damage in the event of a positive decision on the Client’s claim. The Company makes a compensation payment to the Client’s Trading Account or cancels the result of the disputed Trading Operation, bringing the balance of the Client’s Trading Account back the way it was in the case if the disputed Trading Operation would not have been carried out. The results of other Trading Operations on the Client’s Trading Account are not affected.
+
+The compensation payment is credited to the Client’s Trading Account within one business day after a positive decision has been taken on the Client’s claim.
+
+In the event of a dispute that is not described in this Agreement, the Company, when making a final decision, is guided by the norms of generally accepted international practices and ideas about a fair settlement of the dispute.
+
+The laws of Republic of Costa Rica, San Jose-San Jose Mata Redonda, Neighborhood Las Vegas, Blue Building Diagonal To La Salle High School will govern this Agreement and any action related thereto. Exclusive jurisdiction and venue for actions related to this Agreement or use of the services will be courts of Republic of Costa Rica, San Jose-San Jose Mata Redonda, Neighborhood Las Vegas, Blue Building Diagonal To La Salle High School, and both parties consent to the jurisdiction of such courts with respect to any such actions.
+
+Term and Termination of the Agreement
+
+This Agreement becomes effective from the moment the Client logs into his Client’s Area for the first time at https://blockmind.company/en/register/
+ (Client’s Profile registration) and will be valid in perpetuity.
+
+Either Party may terminate this Agreement unilaterally:
+
+The Agreement shall be considered terminated at the initiative of the Client initiative within seven business days from the moment of closing the Client’s Profile in the Client’s Area or receiving the written notification from the Client containing the request for termination of the Agreement, provided that the Client has no unfulfilled obligations hereunder. Notice of termination must be sent by the Client to the Company’s email: support@blockmind.company
+
+The Company has the right to unilaterally, without explanation, terminate the Agreement with the Client. However, the Company undertakes to comply with its financial obligations to the Client at the time of termination of the Agreement within 30 business days, provided that the Client has no unfulfilled obligations hereunder.
+
+The Company has the right to unilaterally terminate the Agreement without prior notice to the Client in the event of a violation of one or several provisions of the following Agreement.
+
+This Agreement is considered terminated with respect to the Parties, when the mutual obligations of the Client and of the Company with respect to previously made Non-Trading Operations are fulfilled and all debts of each Party are repaid provided that the Client has no unfulfilled obligations.
+
+In case of early termination of the Agreement by the Company, the results of Trading Operations will be taken into account and fulfilled at the discretion of the Company.
+
+List of Countries
+
+The United States
+
+Austria
+
+Belgium
+
+Bulgaria
+
+Croatia
+
+Cyprus
+
+Czech Republic
+
+Denmark
+
+Estonia
+
+Finland
+
+France
+
+Germany
+
+Greece
+
+Hungary
+
+Iceland
+
+Ireland
+
+Italy
+
+Latvia
+
+Liechtenstein
+
+Lithuania
+
+Luxembourg
+
+Netherlands
+
+Poland
+
+Portugal
+
+Romania
+
+Slovakia
+
+Slovenia
+
+Spain
+
+Sweden
+
+Norway
+
+Malta

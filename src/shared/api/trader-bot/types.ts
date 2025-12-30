@@ -1,0 +1,30 @@
+export interface TraderBot {
+  id: number;
+  name: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  code: string;
+  is_active: boolean;
+  avatar_url: string | null;
+  trades_per_day_min: number;
+  trades_per_day_max: number;
+  win_rate_min: number;
+  win_rate_max: number;
+  profit_per_trade_min: number;
+  profit_per_trade_max: number;
+  volume_per_trade_min: number;
+  volume_per_trade_max: number;
+  trading_hours_start: number;
+  trading_hours_end: number;
+  timezone: string;
+  symbols: string[];
+  durations: number[];
+  total_profit_target: number | null;
+  total_volume_target: number | null;
+  total_trades_target: number | null;
+  subscribers_count_target: number | null;
+  active_subscribers_count_target: number | null;
+  createdAt: string;
+  updatedAt: string;
+}

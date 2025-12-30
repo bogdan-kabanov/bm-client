@@ -1,0 +1,470 @@
+@media (max-width: 768px) {
+  section {
+    padding-top: 25px !important;
+    padding-bottom: 25px !important;
+  }
+  .features-section {
+    padding: 25px 0;
+  }
+  .feature-card {
+    padding: 1.25rem;
+  }
+  .feature-icon {
+    width: 56px;
+    height: 56px;
+  }
+  .feature-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+  .feature-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+  .feature-description {
+    font-size: 0.9rem;
+  }
+  .testimonials-section {
+    padding: 25px 0;
+  }
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-top: 1.5rem;
+  }
+  .testimonial-card {
+    padding: 18px;
+  }
+  .why-choose-section {
+    padding: 25px 0;
+  }
+  .advantages-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-top: 1.5rem;
+  }
+  .advantage-card {
+    padding: 1rem;
+  }
+  .advantage-icon-wrapper .advantage-icon {
+    width: 70px;
+    height: 70px;
+  }
+  .advantage-icon-wrapper .advantage-icon svg {
+    width: 35px;
+    height: 35px;
+  }
+  .comparison-section {
+    margin: 30px 0;
+    padding: 25px 15px;
+  }
+  .comparison-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .trust-indicators {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 20px 12px;
+    margin-top: 30px;
+  }
+  .trust-indicators .trust-item .trust-value {
+    font-size: 1.6rem;
+  }
+  .trust-indicators .trust-item .trust-label {
+    font-size: 0.8rem;
+  }
+  .bots-description-section {
+    padding: 25px 0;
+  }
+  .bots-categories {
+    margin-top: 30px;
+    gap: 30px;
+  }
+  .category-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .category-icon {
+    min-width: 70px !important;
+    height: 70px !important;
+  }
+  .category-icon svg {
+    width: 35px !important;
+    height: 35px !important;
+  }
+  .category-title {
+    font-size: 1.5rem;
+  }
+  .bots-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .bot-card {
+    padding: 18px;
+  }
+  .bots-workflow {
+    padding: 25px 15px;
+    margin-top: 40px;
+  }
+  .workflow-steps {
+    flex-direction: column;
+  }
+  .workflow-steps .workflow-arrow {
+    transform: rotate(90deg);
+    margin: 10px 0;
+  }
+  .profitability-section {
+    padding: 25px 0;
+  }
+  .calculator-container {
+    padding: 20px 12px;
+    margin: 25px auto;
+  }
+  .profit-display {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .profit-card {
+    padding: 18px;
+  }
+  .profit-card h4 {
+    font-size: 0.8rem;
+  }
+  .profit-card .profit-value {
+    font-size: 1.4rem;
+  }
+  .profit-tiers {
+    margin-top: 40px;
+  }
+  .profit-tiers .tiers-title {
+    margin-bottom: 30px;
+    font-size: 1.5rem;
+  }
+  .tiers-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .tier-card {
+    padding: 18px;
+  }
+  .faq-section {
+    padding: 25px 0;
+  }
+  .faq-container {
+    margin: 25px auto;
+  }
+  .faq-item {
+    margin-bottom: 8px;
+  }
+  .faq-item .faq-question {
+    padding: 16px 12px;
+    font-size: 0.95rem;
+  }
+  .faq-item .faq-answer p {
+    padding: 0 12px 16px;
+    font-size: 0.88rem;
+  }
+  .faq-contact {
+    padding: 25px 18px;
+    margin-top: 30px;
+  }
+  .faq-contact p {
+    font-size: 1.05rem;
+    margin-bottom: 15px;
+  }
+  .faq-contact .contact-button {
+    padding: 12px 28px;
+    font-size: 0.95rem;
+  }
+  .how-it-works-section {
+    padding: 25px 0;
+  }
+  .steps-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 1.5rem 0;
+  }
+  .step-card {
+    padding: 1rem;
+  }
+  .step-number {
+    width: 42px;
+    height: 42px;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  .step-title {
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+  }
+  .step-description {
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .cta-section {
+    padding: 30px 15px;
+    margin: 30px 0;
+  }
+  .cta-title {
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+  }
+  .cta-subtitle {
+    font-size: 0.95rem;
+  }
+  .cta-section {
+    padding: 35px 0;
+  }
+  .cta-container {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    padding: 0 15px;
+  }
+  .cta-content {
+    text-align: center;
+  }
+  .cta-content .cta-title {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+  }
+  .cta-content .cta-subtitle {
+    font-size: 1.05rem;
+    margin-bottom: 30px;
+  }
+  .cta-content .cta-features {
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+  .cta-content .cta-button {
+    width: 100%;
+    padding: 15px 35px;
+    font-size: 1.05rem;
+  }
+  .cta-content .cta-note {
+    margin-top: 15px;
+    font-size: 0.88rem;
+  }
+  .profit-animation {
+    gap: 12px;
+  }
+  .profit-animation .profit-card {
+    padding: 18px 22px;
+  }
+  .profit-animation .profit-card .profit-label {
+    font-size: 0.8rem;
+  }
+  .profit-animation .profit-card .profit-amount {
+    font-size: 1.6rem;
+  }
+  .profit-animation .profit-card .profit-percentage {
+    font-size: 1rem;
+  }
+  .exchanges-section {
+    padding: 25px 0;
+  }
+  .exchanges-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 25px 0;
+  }
+  .exchange-card {
+    padding: 18px 10px;
+  }
+  .exchange-logo {
+    width: 40px;
+    height: 40px;
+  }
+  .exchange-logo svg {
+    width: 32px;
+    height: 32px;
+  }
+  .exchange-name {
+    font-size: 0.9rem;
+  }
+  .stats-section {
+    padding: 25px 0;
+    margin-top: 30px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .stat-card {
+    padding: 18px 12px;
+  }
+  .stat-value {
+    font-size: 1.6rem;
+  }
+  .stat-value .stat-suffix {
+    font-size: 1.1rem;
+  }
+  .stat-title {
+    font-size: 0.8rem;
+  }
+}
+@media (max-width: 480px) {
+  section {
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+  }
+  .features-section,
+  .testimonials-section,
+  .why-choose-section,
+  .bots-description-section,
+  .profitability-section,
+  .faq-section,
+  .how-it-works-section,
+  .cta-section,
+  .exchanges-section {
+    padding: 20px 0;
+  }
+  .feature-icon,
+  .advantage-icon-wrapper .advantage-icon {
+    width: 50px;
+    height: 50px;
+  }
+  .feature-icon svg,
+  .advantage-icon-wrapper .advantage-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+  .cta-title {
+    font-size: 1.75rem !important;
+  }
+  .profit-card,
+  .tier-card,
+  .testimonial-card,
+  .advantage-card,
+  .bot-card,
+  .step-card {
+    padding: 1rem;
+  }
+  .trust-indicators {
+    grid-template-columns: 1fr;
+    padding: 20px 12px;
+  }
+  .trust-indicators .trust-item {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+  }
+  .trust-indicators .trust-item .trust-value {
+    font-size: 1.5rem;
+  }
+  .exchanges-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .cta-button {
+    font-size: 1rem !important;
+    padding: 14px 30px !important;
+  }
+}
+@media (max-width: 1024px) and (orientation: landscape) {
+  .hero-section {
+    padding: 60px 0 40px;
+  }
+  .arbitrage-section,
+  .features-section,
+  .testimonials-section {
+    padding: 40px 0;
+  }
+}
+
+/* iPhone адаптация */
+@media (max-width: 428px) {
+  section {
+    padding-top: max(20px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .hero-section {
+    padding-top: max(40px, calc(40px + env(safe-area-inset-top))) !important;
+    padding-bottom: max(40px, calc(40px + env(safe-area-inset-bottom))) !important;
+  }
+
+  .cta-button,
+  .contact-button,
+  button {
+    min-height: 44px;
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
+  .feature-card,
+  .testimonial-card,
+  .advantage-card,
+  .bot-card,
+  .step-card,
+  .tier-card,
+  .profit-card {
+    padding: 16px;
+  }
+
+  .faq-item .faq-question {
+    min-height: 44px;
+    padding: 14px 12px;
+  }
+
+  input,
+  textarea,
+  select {
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 390px) {
+  section {
+    padding-top: max(18px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(18px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .cta-button,
+  .contact-button {
+    padding: 11px 20px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 375px) {
+  section {
+    padding-top: max(16px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .feature-card,
+  .testimonial-card,
+  .advantage-card,
+  .bot-card,
+  .step-card,
+  .tier-card,
+  .profit-card {
+    padding: 14px;
+  }
+}
+
+/* Поддержка safe area для iPhone с вырезом */
+@supports (padding: max(0px)) {
+  @media (max-width: 428px) {
+    section {
+      padding-top: max(20px, env(safe-area-inset-top)) !important;
+      padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    }
+
+    .hero-section {
+      padding-top: max(40px, calc(40px + env(safe-area-inset-top))) !important;
+      padding-bottom: max(40px, calc(40px + env(safe-area-inset-bottom))) !important;
+    }
+  }
+}

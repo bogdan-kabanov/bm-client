@@ -1,0 +1,220 @@
+.trader-bots-admin-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.trader-bots-admin-page .admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.trader-bots-admin-page .admin-header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+.trader-bots-admin-page .admin-header .admin-header-actions {
+  display: flex;
+  gap: 10px;
+}
+.trader-bots-admin-page .error-banner,
+.trader-bots-admin-page .success-banner {
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.trader-bots-admin-page .error-banner button,
+.trader-bots-admin-page .success-banner button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 10px;
+}
+.trader-bots-admin-page .error-banner {
+  background-color: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+.trader-bots-admin-page .success-banner {
+  background-color: #efe;
+  color: #3c3;
+  border: 1px solid #cfc;
+}
+.trader-bots-admin-page .admin-content {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section:last-child {
+  border-bottom: none;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: #333;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group.full-width {
+  grid-column: 1/-1;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=text],
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=email],
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=url],
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=number] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=text]:disabled,
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=email]:disabled,
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=url]:disabled,
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=number]:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-section .form-row .form-group input[type=checkbox] {
+  width: auto;
+  margin-top: 8px;
+}
+.trader-bots-admin-page .form-container .trader-bot-form .form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+.trader-bots-admin-page .bots-list .empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+.trader-bots-admin-page .bots-list .bots-table {
+  overflow-x: auto;
+}
+.trader-bots-admin-page .bots-list .bots-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.trader-bots-admin-page .bots-list .bots-table table thead {
+  background-color: #f5f5f5;
+}
+.trader-bots-admin-page .bots-list .bots-table table thead th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #ddd;
+}
+.trader-bots-admin-page .bots-list .bots-table table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+.trader-bots-admin-page .bots-list .bots-table table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+.trader-bots-admin-page .bots-list .bots-table table tbody td {
+  padding: 12px;
+  color: #555;
+}
+.trader-bots-admin-page .bots-list .bots-table table tbody td .status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.trader-bots-admin-page .bots-list .bots-table table tbody td .status.active {
+  background-color: #d4edda;
+  color: #155724;
+}
+.trader-bots-admin-page .bots-list .bots-table table tbody td .status.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+.trader-bots-admin-page .bots-list .bots-table table tbody td .action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.trader-bots-admin-page .add-btn,
+.trader-bots-admin-page .save-btn,
+.trader-bots-admin-page .edit-btn,
+.trader-bots-admin-page .generate-btn,
+.trader-bots-admin-page .delete-btn,
+.trader-bots-admin-page .cancel-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.trader-bots-admin-page .add-btn:disabled,
+.trader-bots-admin-page .save-btn:disabled,
+.trader-bots-admin-page .edit-btn:disabled,
+.trader-bots-admin-page .generate-btn:disabled,
+.trader-bots-admin-page .delete-btn:disabled,
+.trader-bots-admin-page .cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.trader-bots-admin-page .add-btn,
+.trader-bots-admin-page .save-btn {
+  background-color: #007bff;
+  color: white;
+}
+.trader-bots-admin-page .add-btn:hover:not(:disabled),
+.trader-bots-admin-page .save-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+.trader-bots-admin-page .edit-btn {
+  background-color: #ffc107;
+  color: #000;
+}
+.trader-bots-admin-page .edit-btn:hover {
+  background-color: #e0a800;
+}
+.trader-bots-admin-page .generate-btn {
+  background-color: #28a745;
+  color: white;
+}
+.trader-bots-admin-page .generate-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+.trader-bots-admin-page .delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+.trader-bots-admin-page .delete-btn:hover {
+  background-color: #c82333;
+}
+.trader-bots-admin-page .cancel-btn {
+  background-color: #6c757d;
+  color: white;
+}
+.trader-bots-admin-page .cancel-btn:hover {
+  background-color: #5a6268;
+}

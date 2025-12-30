@@ -1,0 +1,81 @@
+.exchange-health-monitor {
+  background: var(--color-bg-panel, #1e222d);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid var(--color-border-strong, #2b2f3a);
+  backdrop-filter: blur(10px);
+  height: fit-content;
+}
+.exchange-health-monitor .panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.exchange-health-monitor .exchanges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.exchange-health-monitor .exchanges-list .exchange-status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--color-bg-surface, #131722);
+  border-radius: 6px;
+  border: 1px solid var(--color-border-strong, #2b2f3a);
+  font-size: 12px;
+}
+.exchange-health-monitor .exchanges-list .exchange-status-item .status-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.exchange-health-monitor .exchanges-list .exchange-status-item .exchange-name {
+  color: #fff;
+  font-weight: 500;
+  min-width: 60px;
+}
+.exchange-health-monitor .exchanges-list .exchange-status-item .status-text {
+  font-weight: 600;
+  font-size: 11px;
+  min-width: 50px;
+}
+.exchange-health-monitor .exchanges-list .exchange-status-item .latency-value {
+  margin-left: auto;
+  color: #fff;
+  font-size: 11px;
+}
+.exchange-health-monitor .update-time {
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .exchange-health-monitor .exchanges-list .exchange-status-item {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  .exchange-health-monitor .exchanges-list .exchange-status-item .status-icon {
+    font-size: 11px;
+  }
+  .exchange-health-monitor .exchanges-list .exchange-status-item .exchange-name {
+    min-width: 50px;
+  }
+  .exchange-health-monitor .exchanges-list .exchange-status-item .status-text {
+    font-size: 10px;
+    min-width: 45px;
+  }
+  .exchange-health-monitor .exchanges-list .exchange-status-item .latency-value {
+    font-size: 10px;
+  }
+  .exchange-health-monitor .update-time {
+    font-size: 9px;
+  }
+}

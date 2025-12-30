@@ -1,0 +1,22 @@
+{
+  "name": "BlockMind Trading Platform",
+  "short_name": "BlockMind",
+  "description": "Advanced AI-powered cryptocurrency trading platform with automated arbitrage bots",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/bm.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "business"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/"
+}
+

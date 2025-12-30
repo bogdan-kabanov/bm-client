@@ -1,0 +1,35 @@
+/* Стили для фильтров-пилюль (их нет в TradingTerminal.css) */
+.trading-terminal .terminal-main .chart-section-wrapper .chart-top-bar .base-currency-selector .currency-category-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  background: #1c1f2df2;
+}
+
+.trading-terminal .terminal-main .chart-section-wrapper .chart-top-bar .base-currency-selector .category-filter-pill {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  color: #ffffff80;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.trading-terminal .terminal-main .chart-section-wrapper .chart-top-bar .base-currency-selector .category-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffffe6;
+}
+
+.trading-terminal .terminal-main .chart-section-wrapper .chart-top-bar .base-currency-selector .category-filter-pill.active {
+  background: #4a9eff0d;
+  border-color: #4a9eff;
+  color: #4a9eff;
+}

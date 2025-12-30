@@ -1,0 +1,174 @@
+.trade-notification {
+  min-width: 160px;
+  max-width: 200px;
+  background: rgba(20, 20, 30, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+}
+
+.trade-notification.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.trade-notification.closing {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.trade-notification.win {
+  border-left: 3px solid #10b981;
+}
+
+.trade-notification.loss {
+  border-left: 3px solid #ef4444;
+}
+
+.trade-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trade-notification-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.currency-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.currency-icon-fallback {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+}
+
+.trade-notification-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.trade-notification-amount {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
+}
+
+.trade-notification-profit {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.trade-notification-profit.profit-positive {
+  color: #10b981;
+}
+
+.trade-notification-profit.profit-negative {
+  color: #ef4444;
+}
+
+.trade-notification-direction {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.trade-notification.win .trade-notification-direction {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.trade-notification.loss .trade-notification-direction {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.trade-notification-direction svg {
+  width: 20px;
+  height: 20px;
+}
+
+.trade-notification-close {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.trade-notification-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.trade-notification-close:active {
+  transform: scale(0.95);
+}
+
+.trade-notification-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .trade-notification {
+    min-width: 140px;
+    max-width: calc(100vw - 40px);
+    padding: 14px;
+  }
+
+  .trade-notification-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .currency-icon-img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .trade-notification-profit {
+    font-size: 16px;
+  }
+}
+
+
+
+
+
+

@@ -1,0 +1,93 @@
+.lendingHeader {
+  background: var(--bg-primary, rgba(0, 0, 0, 0.8));
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.headerContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.logoSection {
+  flex-shrink: 0;
+}
+
+.logoImage {
+  height: 40px;
+  width: auto;
+}
+
+.navSection {
+  display: flex;
+  gap: 2rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.navSection a {
+  color: var(--text-color, #fff);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.navSection a:hover {
+  opacity: 0.7;
+}
+
+.authSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.userInfo {
+  color: var(--text-color, #fff);
+  font-weight: 500;
+}
+
+.authButtons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.loginBtn,
+.registerBtn {
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.loginBtn {
+  background: transparent;
+  color: var(--text-color, #fff);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.loginBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.registerBtn {
+  background: var(--primary-color, #4a9eff);
+  color: #fff;
+}
+
+.registerBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+

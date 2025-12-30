@@ -1,0 +1,167 @@
+.heading {
+  margin: 0;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: inherit;
+}
+
+.heading--1 {
+  font-size: clamp(1.75rem, 1.4rem + 1vw, 2.75rem);
+}
+
+.heading--2 {
+  font-size: clamp(1.5rem, 1.2rem + 0.8vw, 2.25rem);
+}
+
+.heading--3 {
+  font-size: clamp(1.35rem, 1.15rem + 0.6vw, 2rem);
+}
+
+.heading--4 {
+  font-size: clamp(1.125rem, 1.05rem + 0.3vw, 1.5rem);
+}
+
+.heading--5 {
+  font-size: 1rem;
+}
+
+.heading--6 {
+  font-size: 0.875rem;
+}
+
+.heading--weight-regular {
+  font-weight: 400;
+}
+
+.heading--weight-medium {
+  font-weight: 500;
+}
+
+.heading--weight-semibold {
+  font-weight: 600;
+}
+
+.heading--weight-bold {
+  font-weight: 700;
+}
+
+.heading--align-left {
+  text-align: left;
+}
+
+.heading--align-center {
+  text-align: center;
+}
+
+.heading--align-right {
+  text-align: right;
+}
+
+.heading--tone-muted {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.heading--tone-subtle {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.heading--uppercase {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.text {
+  margin: 0;
+  font-family: inherit;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.text--size-xs {
+  font-size: 0.75rem;
+}
+
+.text--size-sm {
+  font-size: 0.8125rem;
+}
+
+.text--size-md {
+  font-size: 0.9375rem;
+}
+
+.text--size-lg {
+  font-size: 1.0625rem;
+}
+
+.text--size-xl {
+  font-size: 1.25rem;
+}
+
+.text--weight-regular {
+  font-weight: 400;
+}
+
+.text--weight-medium {
+  font-weight: 500;
+}
+
+.text--weight-semibold {
+  font-weight: 600;
+}
+
+.text--weight-bold {
+  font-weight: 700;
+}
+
+.text--tone-default {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.text--tone-muted {
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.text--tone-subtle {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.text--tone-success {
+  color: #33d69f;
+}
+
+.text--tone-warning {
+  color: #f5a623;
+}
+
+.text--tone-danger {
+  color: var(--color-danger-bright, #ff6b6b);
+}
+
+.text--align-left {
+  text-align: left;
+}
+
+.text--align-center {
+  text-align: center;
+}
+
+.text--align-right {
+  text-align: right;
+}
+
+.text--uppercase {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.text--truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+
+

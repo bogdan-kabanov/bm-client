@@ -1,0 +1,59 @@
+AML / KYC Policy of Block Mind LTD
+
+Domain: https://blockmind.company
+
+It is the policy of Block Mind LTD and its affiliates (hereinafter «The Company») to prohibit and actively pursue the prevention of money laundering and any activity that facilitates money laundering or the funding of terrorist or criminal activities. The Company requires its officers, employees and affiliates to adhere to these standards in preventing the use of its products and services for money laundering purposes.
+
+Within the Policy, money laundering is generally defined as engaging in acts designed to conceal or disguise the true origins of criminally derived proceeds so that the unlawful proceeds appear to have been derived from legitimate origins or constitute legitimate assets.
+
+Generally, money laundering occurs in three stages.
+
+At the «placement» stage, cash generated from criminal activities is converted into monetary instruments (money orders, traveler’s checks, bank deposits).
+
+At the «layering» stage, the funds are transferred or moved into other accounts or other financial institutions to further separate the funds from their criminal origin.
+
+At the «integration» stage, the funds are reintroduced into the economy through the purchase of legitimate assets, funding businesses, or used for further criminal activities.
+Terrorist financing may not involve criminal proceeds but often involves concealing the source or intended use of legitimate funds that will later support criminal or terrorist acts.
+
+Each employee of The Company whose duties are associated with the provision of products and services of Block Mind LTD, and who directly or indirectly deals with the clientele, is expected to know the requirements of applicable laws and regulations that affect their job responsibilities. It is the affirmative duty of such employees to comply with all relevant legal and regulatory requirements at all times.
+
+The relevant laws and regulations include, but are not limited to:
+
+«Customer Due Diligence for Banks» (2001)
+
+«General Guide to Account Opening and Customer Identification» (2003) of the Basel Committee of Banking Supervision
+
+FATF Forty + Nine Recommendations for Money Laundering
+
+USA Patriot Act (2001)
+
+Prevention and Suppression of Money Laundering Activities Law (1996)
+
+To ensure this general policy is properly implemented, the management of Block Mind LTD has established and maintains an ongoing compliance program. This program ensures adherence to applicable laws and regulations and prevents money laundering. The program coordinates regulatory requirements within a consolidated framework to manage risks related to money laundering and terrorist financing across all business units, functions, and legal entities.
+
+Each affiliate of Block Mind LTD is required to comply with AML and KYC policies.
+
+All identification documentation and service records shall be maintained for at least the minimum period required by local law.
+
+All new employees shall receive anti-money laundering training as part of the mandatory onboarding program. All applicable employees must complete AML and KYC training annually. Participation in additional AML-targeted training programs is required for all employees with day-to-day AML and KYC responsibilities.
+
+The Company has the right to request that the Client confirm the registration information provided when opening a trading account at its discretion and at any time. To verify such data, Block Mind LTD may request notarized copies of:
+
+passport,
+
+driver’s license,
+
+national identity card,
+
+bank statements or utility bills to confirm the residential address.
+In some cases, the Company may additionally request a photograph of the Client holding their identity document close to their face.
+Detailed requirements for client identification are specified in the AML Policy section on the Company’s official website https://blockmind.company
+.
+
+The verification procedure is not mandatory unless the Company requests it. The Client may voluntarily send copies of their identification documents to the client support department to ensure verification. However, for deposits/withdrawals via bank transfer, full verification of name and address is required due to the specifics of banking operations.
+
+If any of the Client’s personal data (full name, address, or phone number) has changed, the Client must immediately notify the Company’s support department with a request to update this information or update it independently in the Client's Profile.
+
+12.1. To change the phone number used for registration, the Client must provide a document confirming ownership of the new number (e.g., service provider contract) along with a photo of the Client holding their ID next to their face. The personal data must match across both documents.
+
+The Client is responsible for the authenticity of the documents (or copies) provided and acknowledges the right of Block Mind LTD to contact the issuing authorities of the relevant country to verify document authenticity.

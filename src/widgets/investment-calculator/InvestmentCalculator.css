@@ -1,0 +1,168 @@
+.investment-calculator {
+  position: absolute;
+  z-index: 10000;
+  background: rgba(29, 32, 47, 0.95);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  min-width: 280px;
+  max-width: 320px;
+  width: auto;
+  pointer-events: auto;
+  box-sizing: border-box;
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 32px);
+  overflow: hidden;
+}
+
+.investment-calculator-display {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.investment-calculator-increment-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.investment-amount-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.currency-symbol {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.amount-value {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.investment-calculator-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.calculator-row {
+  display: flex;
+  gap: 8px;
+}
+
+.calc-btn {
+  flex: 1;
+  min-width: 60px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.calc-btn:active {
+  transform: translateY(0);
+}
+
+.calc-btn-backspace {
+  background: rgba(0, 122, 255, 0.16);
+  border-color: rgba(0, 122, 255, 0.35);
+}
+
+.calc-btn-backspace:hover {
+  background: rgba(0, 122, 255, 0.22);
+  border-color: rgba(0, 122, 255, 0.5);
+}
+
+.calc-btn-increment {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.calc-btn-increment:hover {
+  background: rgba(34, 197, 94, 0.22);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.calc-btn-decrement {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.calc-btn-decrement:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.investment-quick-amounts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-amount-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-amount-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 1024px) {
+  .investment-calculator {
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+  }
+  
+  .calc-btn {
+    height: 44px;
+    font-size: 1rem;
+  }
+  
+  .quick-amount-btn {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    min-width: 50px;
+  }
+}
+

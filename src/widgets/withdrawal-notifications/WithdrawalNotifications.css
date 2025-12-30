@@ -1,0 +1,157 @@
+.withdrawal-notifications {
+  background: var(--color-bg-panel, #1e222d);
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid var(--color-border-strong, #2b2f3a);
+  backdrop-filter: blur(10px);
+  max-height: 400px;
+  overflow: hidden;
+}
+.withdrawal-notifications .panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.withdrawal-notifications .notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 270px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.withdrawal-notifications .notifications-list::-webkit-scrollbar {
+  display: none;
+}
+.withdrawal-notifications .notification-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--color-bg-surface, #131722);
+  border-radius: 6px;
+  border: 1px solid var(--color-border-strong, #2b2f3a);
+  animation: subtleSlide 0.5s ease-out;
+  transition: all 0.3s ease;
+}
+.withdrawal-notifications .notification-item:hover {
+  background: var(--color-bg-panel, #1e222d);
+  border-color: var(--color-accent-primary, #009af9) -border;
+}
+.withdrawal-notifications .notification-item.new .notification-amount {
+  color: var(--color-accent-primary, #009af9);
+}
+.withdrawal-notifications .notification-item .notification-icon {
+  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.withdrawal-notifications .notification-item .notification-icon img {
+  width: 100%;
+}
+.withdrawal-notifications .notification-item .notification-content {
+  flex: 1;
+  min-width: 0;
+}
+.withdrawal-notifications .notification-item .notification-content .notification-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.withdrawal-notifications .notification-item .notification-content .notification-user {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.withdrawal-notifications .notification-item .notification-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+}
+.withdrawal-notifications .empty-notifications {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+.withdrawal-notifications .empty-notifications .empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+.withdrawal-notifications .empty-notifications p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+@keyframes subtleSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 768px) {
+  .withdrawal-notifications {
+    padding: 15px;
+    max-height: 350px;
+  }
+  .withdrawal-notifications .panel-title {
+    font-size: 16px;
+  }
+  .withdrawal-notifications .notifications-list {
+    gap: 6px;
+    max-height: 250px;
+  }
+  .withdrawal-notifications .notification-item {
+    padding: 10px;
+  }
+  .withdrawal-notifications .notification-item .notification-amount {
+    font-size: 13px;
+  }
+  .withdrawal-notifications .notification-item .notification-user {
+    font-size: 11px;
+  }
+  .withdrawal-notifications .notification-item .notification-time {
+    font-size: 10px;
+  }
+}
+@media (max-width: 576px) {
+  .withdrawal-notifications {
+    padding: 10px;
+    max-height: 300px;
+  }
+  .withdrawal-notifications .panel-title {
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+  .withdrawal-notifications .notifications-list {
+    gap: 5px;
+    max-height: 200px;
+  }
+  .withdrawal-notifications .notification-item {
+    padding: 8px;
+  }
+  .withdrawal-notifications .notification-item .notification-icon {
+    width: 28px;
+    height: 28px;
+  }
+}

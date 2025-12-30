@@ -1,0 +1,1457 @@
+/* ProfilePopup.css - Compact popup style */
+
+.profile-popup {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    width: 0;
+    max-width: 320px;
+    max-height: calc(100vh - 100px);
+    background: #272b3a;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease 0.1s;
+    pointer-events: none;
+}
+
+.profile-popup.visible {
+    width: 320px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Increased font sizes when visible */
+.profile-popup.visible .profile-popup__name {
+    font-size: 17px;
+}
+
+.profile-popup.visible .profile-popup__id {
+    font-size: 15px;
+}
+
+.profile-popup.visible .profile-popup__level-badge {
+    font-size: 13px;
+    padding: 3px 8px;
+}
+
+.profile-popup.visible .profile-popup__info-label {
+    font-size: 15px;
+}
+
+.profile-popup.visible .profile-popup__info-value {
+    font-size: 15px;
+}
+
+.profile-popup.visible .profile-popup__currency-button {
+    font-size: 15px;
+}
+
+.profile-popup.visible .profile-popup__link-button {
+    font-size: 15px;
+}
+
+/* Header */
+.profile-popup__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.profile-popup__user-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-popup__avatar {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.profile-popup__avatar--clickable {
+    cursor: pointer;
+}
+
+.profile-popup__avatar--clickable:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.profile-popup__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    transform: scale(1.05);
+}
+
+.profile-popup__avatar--green {
+    box-shadow: 0 0 0 2px #5be58a;
+}
+
+.profile-popup__avatar--yellow {
+    box-shadow: 0 0 0 2px #fbbf24;
+}
+
+.profile-popup__avatar--purple {
+    box-shadow: 0 0 0 2px #c084fc;
+}
+
+.profile-popup__avatar--red {
+    box-shadow: 0 0 0 2px #f7525f;
+}
+
+.profile-popup__user-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-popup__name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.profile-popup__name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.profile-popup__level-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    line-height: 1.4;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.profile-popup__level-badge--green {
+    background: rgba(91, 229, 138, 0.2);
+    color: #5be58a;
+    border: 1px solid rgba(91, 229, 138, 0.3);
+}
+
+.profile-popup__level-badge--yellow {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.profile-popup__level-badge--purple {
+    background: rgba(192, 132, 252, 0.2);
+    color: #c084fc;
+    border: 1px solid rgba(192, 132, 252, 0.3);
+}
+
+.profile-popup__level-badge--red {
+    background: rgba(247, 82, 95, 0.2);
+    color: #f7525f;
+    border: 1px solid rgba(247, 82, 95, 0.3);
+}
+
+.profile-popup__id {
+    font-size: 13px;
+    color: #fff;
+    line-height: 1.4;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s ease;
+    user-select: none;
+}
+
+.profile-popup__id:hover {
+    opacity: 0.8;
+}
+
+.profile-popup__id-text {
+    color: inherit;
+}
+
+.profile-popup__id-copy-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.profile-popup__id:hover .profile-popup__id-copy-icon {
+    opacity: 1;
+}
+
+.profile-popup__id--copied .profile-popup__id-copy-icon {
+    color: #5be58a;
+    opacity: 1;
+    animation: copyCheckmark 0.3s ease-out;
+}
+
+@keyframes copyCheckmark {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) rotate(-180deg);
+    }
+    50% {
+        transform: scale(1.1) rotate(10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.profile-popup__close {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.profile-popup__close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.profile-popup__close svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Body */
+.profile-popup__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.profile-popup__content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.profile-popup__content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.profile-popup__content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.profile-popup__info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.profile-popup__info-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+    line-height: 1.5;
+    flex-shrink: 0;
+}
+
+.profile-popup__info-value {
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500;
+    text-align: right;
+    line-height: 1.5;
+    word-break: break-word;
+    flex: 1;
+}
+
+.profile-popup__info-value--profit {
+    color: rgba(0, 255, 140, 0.9);
+}
+
+/* Language button styles */
+.profile-popup__info-item--language {
+    align-items: center;
+}
+
+.profile-popup__language-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    text-align: right;
+    line-height: 1.5;
+    outline: none;
+    transition: color 0.2s ease;
+}
+
+.profile-popup__language-button:hover {
+    color: rgba(0, 154, 249, 0.8);
+}
+
+.profile-popup__language-button-text {
+    flex: 1;
+    text-align: right;
+}
+
+.profile-popup__language-arrow {
+    width: 10px;
+    height: 6px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.profile-popup__language-button:hover .profile-popup__language-arrow {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Currency editing styles */
+.profile-popup__info-item--currency {
+    position: relative;
+}
+
+.profile-popup__info-item--currency.profile-popup__info-item--editing {
+    align-items: center;
+}
+
+/* Currency dropdown styles */
+.profile-popup__currency-dropdown {
+    position: relative;
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.profile-popup__currency-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    text-align: right;
+    line-height: 1.5;
+    outline: none;
+    transition: color 0.2s ease;
+}
+
+.profile-popup__currency-button:hover:not(:disabled) {
+    color: rgba(0, 154, 249, 0.8);
+}
+
+.profile-popup__currency-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.profile-popup__currency-button-text {
+    flex: 1;
+    text-align: right;
+}
+
+.profile-popup__currency-arrow {
+    width: 10px;
+    height: 6px;
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.profile-popup__currency-arrow--open {
+    transform: rotate(180deg);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.profile-popup__currency-button:hover .profile-popup__currency-arrow {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.profile-popup__currency-dropdown-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 200px;
+    max-width: 280px;
+    width: max-content;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #1e222d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 10001;
+    display: none;
+    flex-direction: column;
+    padding: 4px;
+    gap: 2px;
+}
+
+.profile-popup__currency-dropdown-list--portal {
+    display: flex !important;
+    position: fixed !important;
+}
+
+.profile-popup__currency-dropdown-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.profile-popup__currency-dropdown-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.profile-popup__currency-dropdown-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.profile-popup__currency-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.profile-popup__currency-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-align: left;
+    font-size: 13px;
+    color: #fff;
+    outline: none;
+}
+
+.profile-popup__currency-option:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.profile-popup__currency-option--active {
+    background: rgba(0, 154, 249, 0.15);
+    color: #009af9;
+}
+
+.profile-popup__currency-option--active:hover {
+    background: rgba(0, 154, 249, 0.2);
+}
+
+.profile-popup__currency-option:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.profile-popup__currency-option-symbol {
+    font-weight: 600;
+    min-width: 30px;
+    flex-shrink: 0;
+}
+
+.profile-popup__currency-option-name {
+    flex: 1;
+    text-align: left;
+}
+
+.profile-popup__currency-option-code {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.profile-popup__currency-option--active .profile-popup__currency-option-code {
+    color: rgba(0, 154, 249, 0.7);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.profile-popup__currency-cancel {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.profile-popup__currency-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.profile-popup__currency-cancel:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Action buttons in content */
+.profile-popup__info-item--action {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 0 -12px;
+}
+
+.profile-popup__info-item--action:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.profile-popup__action-button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: rgba(0, 154, 249, 0.9);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: right;
+    transition: color 0.2s ease;
+    outline: none;
+}
+
+.profile-popup__action-button:hover {
+    color: #009af9;
+}
+
+.profile-popup__verification-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.profile-popup__verification-badge--verified {
+    background: rgba(0, 255, 140, 0.15);
+    color: rgba(0, 255, 140, 0.9);
+    border: 1px solid rgba(0, 255, 140, 0.3);
+}
+
+.profile-popup__verification-badge--not-verified {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Footer */
+.profile-popup__footer {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profile-popup__footer-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.profile-popup__open-profile-button {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    line-height: 1.5;
+    border-radius: 6px;
+}
+
+.profile-popup__open-profile-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.profile-popup__deposit-button {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    line-height: 1.5;
+    border-radius: 6px;
+}
+
+.profile-popup__deposit-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.profile-popup__logout-button {
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 6px;
+}
+
+.profile-popup__logout-button:hover {
+    background: rgba(255, 94, 94, 0.1);
+    color: #ff5e5e;
+}
+
+.profile-popup__logout-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* Logout confirmation popover */
+.profile-popup__logout-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 10, 20, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+}
+
+.profile-popup__logout-popover {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1f2e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 20px;
+    min-width: min(90vw, 320px);
+    max-width: 400px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-popup__logout-message {
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+    text-align: center;
+}
+
+.profile-popup__logout-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.profile-popup__logout-btn {
+    flex: 1;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    white-space: nowrap;
+}
+
+.profile-popup__logout-btn--primary {
+    background: #ff5e5e;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(255, 94, 94, 0.3);
+}
+
+.profile-popup__logout-btn--primary:hover {
+    background: #ff7676;
+    box-shadow: 0 6px 16px rgba(255, 94, 94, 0.4);
+}
+
+.profile-popup__logout-btn--ghost {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.profile-popup__logout-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Light theme for Profile and Payment pages */
+body.profile-page-active .profile-popup,
+html.profile-page-active .profile-popup,
+body:has(.profile-page-wrapper) .profile-popup,
+html:has(.profile-page-wrapper) .profile-popup,
+body:has(.deposit-page-wrapper) .profile-popup,
+html:has(.deposit-page-wrapper) .profile-popup {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+body.profile-page-active .profile-popup__header,
+html.profile-page-active .profile-popup__header,
+body:has(.profile-page-wrapper) .profile-popup__header,
+html:has(.profile-page-wrapper) .profile-popup__header,
+body:has(.deposit-page-wrapper) .profile-popup__header,
+html:has(.deposit-page-wrapper) .profile-popup__header {
+    border-bottom-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__name,
+html.profile-page-active .profile-popup__name,
+body:has(.profile-page-wrapper) .profile-popup__name,
+html:has(.profile-page-wrapper) .profile-popup__name,
+body:has(.deposit-page-wrapper) .profile-popup__name,
+html:has(.deposit-page-wrapper) .profile-popup__name {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__id,
+html.profile-page-active .profile-popup__id,
+body:has(.profile-page-wrapper) .profile-popup__id,
+html:has(.profile-page-wrapper) .profile-popup__id,
+body:has(.deposit-page-wrapper) .profile-popup__id,
+html:has(.deposit-page-wrapper) .profile-popup__id {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__id:hover,
+html.profile-page-active .profile-popup__id:hover,
+body:has(.profile-page-wrapper) .profile-popup__id:hover,
+html:has(.profile-page-wrapper) .profile-popup__id:hover,
+body:has(.deposit-page-wrapper) .profile-popup__id:hover,
+html:has(.deposit-page-wrapper) .profile-popup__id:hover {
+    opacity: 0.7;
+}
+
+body.profile-page-active .profile-popup__id-copy-icon,
+html.profile-page-active .profile-popup__id-copy-icon,
+body:has(.profile-page-wrapper) .profile-popup__id-copy-icon,
+html:has(.profile-page-wrapper) .profile-popup__id-copy-icon,
+body:has(.deposit-page-wrapper) .profile-popup__id-copy-icon,
+html:has(.deposit-page-wrapper) .profile-popup__id-copy-icon {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__id--copied .profile-popup__id-copy-icon,
+html.profile-page-active .profile-popup__id--copied .profile-popup__id-copy-icon,
+body:has(.profile-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
+html:has(.profile-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
+body:has(.deposit-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
+html:has(.deposit-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon {
+    color: #22c55e;
+}
+
+body.profile-page-active .profile-popup__info-label,
+html.profile-page-active .profile-popup__info-label,
+body:has(.profile-page-wrapper) .profile-popup__info-label,
+html:has(.profile-page-wrapper) .profile-popup__info-label,
+body:has(.deposit-page-wrapper) .profile-popup__info-label,
+html:has(.deposit-page-wrapper) .profile-popup__info-label {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__info-value,
+html.profile-page-active .profile-popup__info-value,
+body:has(.profile-page-wrapper) .profile-popup__info-value,
+html:has(.profile-page-wrapper) .profile-popup__info-value,
+body:has(.deposit-page-wrapper) .profile-popup__info-value,
+html:has(.deposit-page-wrapper) .profile-popup__info-value {
+    color: #333;
+}
+
+/* Light theme styles for currency dropdown */
+body.profile-page-active .profile-popup__currency-button,
+html.profile-page-active .profile-popup__currency-button,
+body:has(.profile-page-wrapper) .profile-popup__currency-button,
+html:has(.profile-page-wrapper) .profile-popup__currency-button,
+body:has(.deposit-page-wrapper) .profile-popup__currency-button,
+html:has(.deposit-page-wrapper) .profile-popup__currency-button {
+    background: #f5f5f5;
+    border-color: #e5e5e5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__currency-button:hover:not(:disabled),
+html.profile-page-active .profile-popup__currency-button:hover:not(:disabled),
+body:has(.profile-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
+html:has(.profile-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
+body:has(.deposit-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
+html:has(.deposit-page-wrapper) .profile-popup__currency-button:hover:not(:disabled) {
+    background: #e5e5e5;
+    border-color: #d5d5d5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__currency-button--open,
+html.profile-page-active .profile-popup__currency-button--open,
+body:has(.profile-page-wrapper) .profile-popup__currency-button--open,
+html:has(.profile-page-wrapper) .profile-popup__currency-button--open,
+body:has(.deposit-page-wrapper) .profile-popup__currency-button--open,
+html:has(.deposit-page-wrapper) .profile-popup__currency-button--open {
+    background: #e5e5e5;
+    border-color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__currency-arrow,
+html.profile-page-active .profile-popup__currency-arrow,
+body:has(.profile-page-wrapper) .profile-popup__currency-arrow,
+html:has(.profile-page-wrapper) .profile-popup__currency-arrow,
+body:has(.deposit-page-wrapper) .profile-popup__currency-arrow,
+html:has(.deposit-page-wrapper) .profile-popup__currency-arrow {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__language-button,
+html.profile-page-active .profile-popup__language-button,
+body:has(.profile-page-wrapper) .profile-popup__language-button,
+html:has(.profile-page-wrapper) .profile-popup__language-button,
+body:has(.deposit-page-wrapper) .profile-popup__language-button,
+html:has(.deposit-page-wrapper) .profile-popup__language-button {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__language-button:hover,
+html.profile-page-active .profile-popup__language-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__language-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__language-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__language-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__language-button:hover {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__language-arrow,
+html.profile-page-active .profile-popup__language-arrow,
+body:has(.profile-page-wrapper) .profile-popup__language-arrow,
+html:has(.profile-page-wrapper) .profile-popup__language-arrow,
+body:has(.deposit-page-wrapper) .profile-popup__language-arrow,
+html:has(.deposit-page-wrapper) .profile-popup__language-arrow {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__language-button:hover .profile-popup__language-arrow,
+html.profile-page-active .profile-popup__language-button:hover .profile-popup__language-arrow,
+body:has(.profile-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
+html:has(.profile-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
+body:has(.deposit-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
+html:has(.deposit-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__currency-dropdown-list,
+html.profile-page-active .profile-popup__currency-dropdown-list,
+body:has(.profile-page-wrapper) .profile-popup__currency-dropdown-list,
+html:has(.profile-page-wrapper) .profile-popup__currency-dropdown-list,
+body:has(.deposit-page-wrapper) .profile-popup__currency-dropdown-list,
+html:has(.deposit-page-wrapper) .profile-popup__currency-dropdown-list {
+    background: #ffffff;
+    border-color: #e5e5e5;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+body.profile-page-active .profile-popup__currency-option,
+html.profile-page-active .profile-popup__currency-option,
+body:has(.profile-page-wrapper) .profile-popup__currency-option,
+html:has(.profile-page-wrapper) .profile-popup__currency-option,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__currency-option:hover:not(:disabled),
+html.profile-page-active .profile-popup__currency-option:hover:not(:disabled),
+body:has(.profile-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
+html:has(.profile-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
+body:has(.deposit-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
+html:has(.deposit-page-wrapper) .profile-popup__currency-option:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+body.profile-page-active .profile-popup__currency-option--active,
+html.profile-page-active .profile-popup__currency-option--active,
+body:has(.profile-page-wrapper) .profile-popup__currency-option--active,
+html:has(.profile-page-wrapper) .profile-popup__currency-option--active,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option--active,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option--active {
+    background: rgba(64, 146, 255, 0.1);
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__currency-option-code,
+html.profile-page-active .profile-popup__currency-option-code,
+body:has(.profile-page-wrapper) .profile-popup__currency-option-code,
+html:has(.profile-page-wrapper) .profile-popup__currency-option-code,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option-code,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option-code {
+    color: #999;
+}
+
+body.profile-page-active .profile-popup__currency-option--active .profile-popup__currency-option-code,
+html.profile-page-active .profile-popup__currency-option--active .profile-popup__currency-option-code,
+body:has(.profile-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
+html:has(.profile-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code {
+    color: rgba(64, 146, 255, 0.7);
+}
+
+body.profile-page-active .profile-popup__footer,
+html.profile-page-active .profile-popup__footer,
+body:has(.profile-page-wrapper) .profile-popup__footer,
+html:has(.profile-page-wrapper) .profile-popup__footer,
+body:has(.deposit-page-wrapper) .profile-popup__footer,
+html:has(.deposit-page-wrapper) .profile-popup__footer {
+    border-top-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__close,
+html.profile-page-active .profile-popup__close,
+body:has(.profile-page-wrapper) .profile-popup__close,
+html:has(.profile-page-wrapper) .profile-popup__close,
+body:has(.deposit-page-wrapper) .profile-popup__close,
+html:has(.deposit-page-wrapper) .profile-popup__close {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__close:hover,
+html.profile-page-active .profile-popup__close:hover,
+body:has(.profile-page-wrapper) .profile-popup__close:hover,
+html:has(.profile-page-wrapper) .profile-popup__close:hover,
+body:has(.deposit-page-wrapper) .profile-popup__close:hover,
+html:has(.deposit-page-wrapper) .profile-popup__close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__link-button,
+html.profile-page-active .profile-popup__link-button,
+body:has(.profile-page-wrapper) .profile-popup__link-button,
+html:has(.profile-page-wrapper) .profile-popup__link-button,
+body:has(.deposit-page-wrapper) .profile-popup__link-button,
+html:has(.deposit-page-wrapper) .profile-popup__link-button {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__link-button:hover,
+html.profile-page-active .profile-popup__link-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__link-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__link-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__link-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__link-button:hover {
+    color: #2d6cc0;
+}
+
+/* Light theme for new elements */
+body.profile-page-active .profile-popup__action-button,
+html.profile-page-active .profile-popup__action-button,
+body:has(.profile-page-wrapper) .profile-popup__action-button,
+html:has(.profile-page-wrapper) .profile-popup__action-button,
+body:has(.deposit-page-wrapper) .profile-popup__action-button,
+html:has(.deposit-page-wrapper) .profile-popup__action-button {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__action-button:hover,
+html.profile-page-active .profile-popup__action-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__action-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__action-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__action-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__action-button:hover {
+    color: #2d6cc0;
+}
+
+body.profile-page-active .profile-popup__verification-badge--verified,
+html.profile-page-active .profile-popup__verification-badge--verified,
+body:has(.profile-page-wrapper) .profile-popup__verification-badge--verified,
+html:has(.profile-page-wrapper) .profile-popup__verification-badge--verified,
+body:has(.deposit-page-wrapper) .profile-popup__verification-badge--verified,
+html:has(.deposit-page-wrapper) .profile-popup__verification-badge--verified {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+body.profile-page-active .profile-popup__verification-badge--not-verified,
+html.profile-page-active .profile-popup__verification-badge--not-verified,
+body:has(.profile-page-wrapper) .profile-popup__verification-badge--not-verified,
+html:has(.profile-page-wrapper) .profile-popup__verification-badge--not-verified,
+body:has(.deposit-page-wrapper) .profile-popup__verification-badge--not-verified,
+html:has(.deposit-page-wrapper) .profile-popup__verification-badge--not-verified {
+    background: rgba(0, 0, 0, 0.05);
+    color: #666;
+    border-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__footer,
+html.profile-page-active .profile-popup__footer,
+body:has(.profile-page-wrapper) .profile-popup__footer,
+html:has(.profile-page-wrapper) .profile-popup__footer,
+body:has(.deposit-page-wrapper) .profile-popup__footer,
+html:has(.deposit-page-wrapper) .profile-popup__footer {
+    border-top-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__open-profile-button,
+html.profile-page-active .profile-popup__open-profile-button,
+body:has(.profile-page-wrapper) .profile-popup__open-profile-button,
+html:has(.profile-page-wrapper) .profile-popup__open-profile-button,
+body:has(.deposit-page-wrapper) .profile-popup__open-profile-button,
+html:has(.deposit-page-wrapper) .profile-popup__open-profile-button {
+    background: #f5f5f5;
+    border-color: #e5e5e5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__open-profile-button:hover,
+html.profile-page-active .profile-popup__open-profile-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__open-profile-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__open-profile-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__open-profile-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__open-profile-button:hover {
+    background: #e5e5e5;
+    border-color: #d5d5d5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__deposit-button,
+html.profile-page-active .profile-popup__deposit-button,
+body:has(.profile-page-wrapper) .profile-popup__deposit-button,
+html:has(.profile-page-wrapper) .profile-popup__deposit-button,
+body:has(.deposit-page-wrapper) .profile-popup__deposit-button,
+html:has(.deposit-page-wrapper) .profile-popup__deposit-button {
+    background: #f5f5f5;
+    border-color: #e5e5e5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__deposit-button:hover,
+html.profile-page-active .profile-popup__deposit-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__deposit-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__deposit-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__deposit-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__deposit-button:hover {
+    background: #e5e5e5;
+    border-color: #d5d5d5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__logout-button,
+html.profile-page-active .profile-popup__logout-button,
+body:has(.profile-page-wrapper) .profile-popup__logout-button,
+html:has(.profile-page-wrapper) .profile-popup__logout-button,
+body:has(.deposit-page-wrapper) .profile-popup__logout-button,
+html:has(.deposit-page-wrapper) .profile-popup__logout-button {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__logout-button:hover,
+html.profile-page-active .profile-popup__logout-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__logout-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__logout-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__logout-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__logout-button:hover {
+    background: rgba(255, 94, 94, 0.1);
+    color: #ff5e5e;
+}
+
+body.profile-page-active .profile-popup__info-item--action:hover,
+html.profile-page-active .profile-popup__info-item--action:hover,
+body:has(.profile-page-wrapper) .profile-popup__info-item--action:hover,
+html:has(.profile-page-wrapper) .profile-popup__info-item--action:hover,
+body:has(.deposit-page-wrapper) .profile-popup__info-item--action:hover,
+html:has(.deposit-page-wrapper) .profile-popup__info-item--action:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-popup {
+        width: 0;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 80px);
+        top: 60px;
+        right: 10px;
+        left: auto;
+    }
+
+    .profile-popup.visible {
+        width: calc(100vw - 20px);
+    }
+
+    .profile-popup__header {
+        padding: 12px 14px;
+    }
+
+    .profile-popup__content {
+        padding: 10px 14px;
+    }
+
+    .profile-popup__footer {
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-popup__info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .profile-popup__info-value {
+        text-align: left;
+    }
+
+    .profile-popup__currency-dropdown {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .profile-popup__currency-button {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .profile-popup__currency-dropdown-list {
+        left: 10px !important;
+        right: 10px !important;
+        width: auto;
+        max-width: calc(100vw - 20px);
+    }
+}
+
+/* Avatar upload modal */
+.profile-popup__avatar-upload-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 10, 20, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+}
+
+.profile-popup__avatar-upload-modal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1f2e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 0;
+    min-width: min(90vw, 400px);
+    max-width: 500px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.profile-popup__avatar-upload-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-popup__avatar-upload-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.profile-popup__avatar-upload-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.profile-popup__avatar-upload-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.profile-popup__avatar-upload-close svg {
+    width: 18px;
+    height: 18px;
+}
+
+.profile-popup__avatar-upload-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-popup__avatar-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-popup__avatar-upload-label:hover {
+    border-color: rgba(0, 154, 249, 0.5);
+    background: rgba(0, 154, 249, 0.05);
+}
+
+.profile-popup__avatar-upload-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(0, 154, 249, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #009af9;
+}
+
+.profile-popup__avatar-upload-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.profile-popup__avatar-upload-hint {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+}
+
+.profile-popup__avatar-upload-error {
+    padding: 12px 16px;
+    background: rgba(247, 82, 95, 0.1);
+    border: 1px solid rgba(247, 82, 95, 0.3);
+    border-radius: 8px;
+    color: #f7525f;
+    font-size: 13px;
+    width: 100%;
+    text-align: center;
+}
+
+/* Light theme for avatar upload modal */
+body.profile-page-active .profile-popup__avatar-upload-modal,
+html.profile-page-active .profile-popup__avatar-upload-modal,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-modal,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-modal,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-modal,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-modal {
+    background: #ffffff;
+    border-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-header,
+html.profile-page-active .profile-popup__avatar-upload-header,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-header,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-header,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-header,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-header {
+    border-bottom-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-title,
+html.profile-page-active .profile-popup__avatar-upload-title,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-title,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-title,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-title,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-title {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-close,
+html.profile-page-active .profile-popup__avatar-upload-close,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-close,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-close,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-close,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-close {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-close:hover,
+html.profile-page-active .profile-popup__avatar-upload-close:hover,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-close:hover,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-close:hover,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-close:hover,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-label,
+html.profile-page-active .profile-popup__avatar-upload-label,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-label,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-label,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-label,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-label {
+    border-color: #e5e5e5;
+    background: #f5f5f5;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-label:hover,
+html.profile-page-active .profile-popup__avatar-upload-label:hover,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-label:hover,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-label:hover,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-label:hover,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-label:hover {
+    border-color: #009af9;
+    background: #e8f4fd;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-text,
+html.profile-page-active .profile-popup__avatar-upload-text,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-text,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-text,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-text,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-text {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__avatar-upload-hint,
+html.profile-page-active .profile-popup__avatar-upload-hint,
+body:has(.profile-page-wrapper) .profile-popup__avatar-upload-hint,
+html:has(.profile-page-wrapper) .profile-popup__avatar-upload-hint,
+body:has(.deposit-page-wrapper) .profile-popup__avatar-upload-hint,
+html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-hint {
+    color: #666;
+}
+
+@media (max-width: 480px) {
+    .profile-popup__avatar-upload-modal {
+        min-width: calc(100vw - 32px);
+        max-width: calc(100vw - 32px);
+    }
+
+    .profile-popup__avatar-upload-header {
+        padding: 16px 20px;
+    }
+
+    .profile-popup__avatar-upload-content {
+        padding: 20px;
+    }
+
+    .profile-popup__avatar-upload-label {
+        padding: 24px;
+    }
+}

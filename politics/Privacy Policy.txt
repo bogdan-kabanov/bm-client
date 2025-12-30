@@ -1,0 +1,249 @@
+Privacy Policy of Block Mind LTD
+
+Website: https://blockmind.company
+
+Introduction
+
+We recognize the importance of safeguarding your personal information and respecting your privacy. We understand that you value discretion and expect your data to be handled with care. That’s why we are fully committed to protecting the privacy of every user (“you” or “user”) of our services.
+
+This Privacy Policy describes how we collect, use, and disclose your personal information when you access or interact with our websites, applications, and any other digital platforms through which we deliver our services (collectively referred to as the “Services”).
+
+This Policy forms an integral part of our Service Agreement and is incorporated into it by reference.
+
+We strongly encourage you to read this Privacy Policy thoroughly and use it to make informed choices about your interactions with us. By using our Services, you acknowledge and agree to the terms outlined in this Privacy Policy. Continued use of the Services following any updates constitutes your acceptance of the revised Policy.
+
+Data usage
+
+We may collect, use, store and transfer different kinds of personal data about you and for different purposes. For your use, we made the table with data categories, purposes of their use, and lawful bases for processing.
+
+Data Categories Table
+
+Data Type	Examples of Information We May Collect	Purposes of Processing	Lawful Bases for Processing
+Identity Data	First name, last name, and patronymic (if available), date of birth, gender, passport, ID, driver’s license number, or photo.	Account management, fraud prevention, security, compliance with AML, CTF, and other applicable laws and regulations, advertising, and personalization of user experience.	1. Necessary to perform our contract with you.
+2. Necessary to comply with our legal obligations.
+3. Necessary for our legitimate interests.
+Contact Data	Billing address, email address, and telephone numbers.	Account management, application functionality, fraud prevention, security, compliance with AML, CTF, and other applicable laws and regulations, developer communications, advertising, and personalization of user experience.	1. Perform contract.
+2. Legal obligations.
+3. Legitimate interests.
+Audio and Video Data	Full audio or video recordings of calls that you receive from us or make to us. (Not relevant for iOS/Android apps)	Account management, fraud prevention, security, compliance with legal obligations, developer communications, promotional activities, client support.	1. Contract.
+2. Legal obligation.
+Conformity Data	Education, employment status, trading experience, self-assessment tests.	Fraud prevention, AML/CTF compliance, account management.	1. Contract.
+2. Legal obligations.
+Marketing & Communication Data	Marketing preferences, communication settings.	Compliance, marketing analytics, personalization, promotions, service provision.	1. Contract.
+2. Legal obligations.
+3. Legitimate interests.
+Location Data	Residency country, time zone, interface language, etc. (Not relevant for iOS/Android apps)	Account management, fraud prevention, AML/CTF compliance, developer communications, personalization.	1. Contract.
+2. Legal obligations.
+Payment Data	Wallet details, bank card details, issuing bank, card number, cardholder name, expiration date, CVV2/CVC2, card photos.	Fraud prevention, AML/CTF compliance, service provision, user experience personalization.	1. Contract.
+2. Legal obligations.
+3. Legitimate interests.
+Economic Profile Data	Occupation, purpose of investment, income, net wealth, expected annual investment amount, sources of funds.	Fraud prevention, AML/CTF compliance, account management.	1. Contract.
+2. Legal obligations.
+KYC Data	Identity documents such as passport, ID card, driver’s license, utility bills.	Fraud prevention, AML/CTF compliance, account management.	1. Contract.
+2. Legal obligations.
+Special / Sensitive Data	Annual income, biometric data, criminal convictions.	Fraud prevention, AML/CTF compliance.	1. Contract.
+2. Legal obligations.
+3. Consent.
+Financial Data	Bank account details, tax identification numbers.	Account management, fraud prevention, AML/CTF compliance.	1. Contract.
+2. Legal obligations.
+3. Legitimate interests.
+Transaction Data & Purchase History	Payments, withdrawals, exchanges, trading history, balance, profit, ROI metric, trade direction.	Account management, AML/CTF compliance, personalization.	1. Contract.
+2. Legal obligations.
+3. Legitimate interests.
+Technical Data	IP address, login data, browser type, OS data, cookies, device identifiers.	Fraud prevention, security, advertising, analytics, personalization.	1. Contract.
+2. Legal obligations.
+3. Legitimate interests.
+Usage Data	Website/app usage, registration date, trading cluster, complaints, performance logs.	Security, analytics, AML/CTF compliance, personalization.	1. Contract.
+2. Legitimate interests.
+Profile Data	Username, password, avatar, rank, XP, preferences, surveys, etc.	Account management, analytics, advertising, personalization.	1. Contract.
+2. Legal obligations.
+3. Legitimate interests.
+
+We process the aforementioned data:
+
+To perform our contractual obligations.
+
+To provide Services efficiently.
+
+To comply with AML/CTF and FATF obligations.
+
+To protect legitimate and vital interests.
+
+Legal bases include:
+
+Compliance with laws
+
+Contract execution
+
+Legitimate interests
+
+User consent
+
+Some data must be stored even after account deletion — as required by law.
+
+Leaderboards
+
+By using the platform, you agree to participate in the leaderboard system of Block Mind LTD and allow us to display:
+
+Your name or User ID
+
+Country flag icon
+
+Profile photo (optional)
+
+Rank
+
+Online status
+
+XP
+
+Total winnings (only as a metric, not actual sum)
+
+We may also generate trading signals based on your activity.
+
+We never show:
+
+Your actual trade amounts
+
+Your balance
+
+Exact monetary values
+
+Only ROI %, direction, asset, and duration.
+
+Cookies and other tracking technologies
+
+(Полностью сохранено, адаптировано к Block Mind LTD)
+
+We use:
+
+Session cookies
+
+Persistent cookies
+
+Third-party cookies
+
+Cookies may support login, security, personalization, advertising, analytics.
+
+Users can disable cookies but some features may stop working.
+
+With whom we share information
+
+Block Mind LTD may share information with:
+
+1. Affiliates and Subsidiaries
+
+Internal operational data exchange.
+
+2. Trusted Third-Party Providers
+
+For:
+
+Identity verification
+
+Storage and processing
+
+Fraud prevention
+
+Advertising
+
+Analytics
+
+Cloud infrastructure
+
+3. Legal Compliance
+
+We may disclose data to comply with:
+
+Laws
+
+Regulations
+
+Court orders
+
+Fraud investigations
+
+Other legitimate purposes
+
+Ads display
+
+Research
+
+Technical support
+
+IP protection
+
+Anti-fraud monitoring
+
+Security enforcement
+
+Every third party must comply with this Privacy Policy.
+
+Third-Party Collection of Information
+
+Links to external sites are not governed by Block Mind LTD.
+We disclaim responsibility for:
+
+Their content
+
+Their privacy practices
+
+Their data handling
+
+We also use Google Analytics for anonymized traffic analytics.
+
+Advertisements
+
+We may use:
+
+Interest-based ads
+
+Retargeting
+
+Third-party ad partners
+
+Users may opt-out via:
+
+NAI opt-out
+
+DAA opt-out
+
+Personal Data Deletion and Rectification Requests
+
+You may request:
+
+Correction
+
+Deletion (excluding legally preserved data)
+
+We retain data for up to 7 years for legal obligations.
+
+Safeguarding and Transferring Your Information
+
+Block Mind LTD applies industry-standard security measures.
+However, absolute protection cannot be guaranteed.
+
+Marketing
+
+We may use your personal data or share it with Marketing Affiliates to send promotional content.
+
+You can opt out by sending an email with "remove" in the subject.
+
+Service-related notifications will still be delivered.
+
+Corporate Transactions
+
+If Block Mind LTD undergoes merger, acquisition, restructuring — data may be transferred to the successor entity.
+
+Account Deletion and Recovery
+
+You may delete your account via app interface or by sending an email with the subject “delete account”.
+
+Some data (e.g., transactions) must be retained for legal reasons.
+
+To restore an account — email: “restore account”.
+
+Updates or Amendments to This Privacy Policy
+
+Block Mind LTD may update this Policy at any time.
+Latest version is always published on https://blockmind.company

@@ -1,0 +1,61 @@
+.balance-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-level__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.balance-level__label {
+  white-space: nowrap;
+}
+
+.balance-level--green {
+  background: rgba(50, 172, 65, 0.15);
+  color: #32ac41;
+}
+
+.balance-level--green .balance-level__icon {
+  color: #32ac41;
+}
+
+.balance-level--yellow {
+  background: rgba(255, 167, 38, 0.15);
+  color: #ffa726;
+}
+
+.balance-level--yellow .balance-level__icon {
+  color: #ffa726;
+}
+
+.balance-level--purple {
+  background: rgba(102, 126, 234, 0.15);
+  color: #667eea;
+}
+
+.balance-level--purple .balance-level__icon {
+  color: #667eea;
+}
+
+.balance-level--red {
+  background: rgba(247, 82, 95, 0.15);
+  color: #f7525f;
+}
+
+.balance-level--red .balance-level__icon {
+  color: #f7525f;
+}
+

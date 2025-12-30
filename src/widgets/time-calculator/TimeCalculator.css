@@ -1,0 +1,150 @@
+.time-calculator {
+  position: absolute;
+  z-index: 10000;
+  background: rgba(29, 32, 47, 0.95);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  min-width: 280px;
+  max-width: 320px;
+  width: auto;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.time-calculator-display {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.time-input-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-operator-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 122, 255, 0.16);
+  border: 1px solid rgba(0, 122, 255, 0.35);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.time-operator-btn:hover {
+  background: rgba(0, 122, 255, 0.22);
+  border-color: rgba(0, 122, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.time-operator-btn:active {
+  transform: translateY(0);
+}
+
+.time-input {
+  width: 56px;
+  height: 48px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 0;
+}
+
+.time-separator {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 8px;
+}
+
+.time-quick-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.time-quick-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.time-quick-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.time-quick-btn.active {
+  background: rgba(0, 122, 255, 0.22);
+  border-color: rgba(0, 122, 255, 0.5);
+  color: #ffffff;
+}
+
+/* Адаптивность для узких графиков */
+.time-calculator--narrow {
+  max-width: calc(100% - 32px);
+}
+
+@media (max-width: 1024px) {
+  .time-calculator {
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+  }
+
+  .time-input {
+    width: 48px;
+    height: 44px;
+    font-size: 1.125rem;
+  }
+
+  .time-separator {
+    font-size: 1.25rem;
+  }
+
+  .time-operator-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .time-quick-btn {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    min-width: 50px;
+  }
+}

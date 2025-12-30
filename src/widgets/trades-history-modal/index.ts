@@ -1,0 +1,2 @@
+export { TradesHistoryModal } from './TradesHistoryModal';
+

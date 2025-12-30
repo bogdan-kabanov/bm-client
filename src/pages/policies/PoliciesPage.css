@@ -1,0 +1,77 @@
+.policies-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: var(--text-color, #fff);
+}
+
+.policies-container {
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border-radius: 8px;
+  padding: 2rem;
+  line-height: 1.6;
+}
+
+.back-button {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: var(--primary-color, #4a9eff);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.back-button:hover {
+  opacity: 0.8;
+}
+
+.policies-container h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color, #fff);
+}
+
+.policies-container h2 {
+  font-size: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: var(--text-color, #fff);
+}
+
+.policies-container h3 {
+  font-size: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-color, #fff);
+}
+
+.policies-container section {
+  margin-bottom: 2rem;
+}
+
+.policies-container p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.8));
+}
+
+.policies-container a {
+  color: var(--primary-color, #4a9eff);
+  text-decoration: none;
+}
+
+.policies-container a:hover {
+  text-decoration: underline;
+}
+
+.last-updated {
+  font-size: 0.875rem;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.6));
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+.policies-container strong {
+  font-weight: 600;
+  color: var(--text-color, #fff);
+}
+

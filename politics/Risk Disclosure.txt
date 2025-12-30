@@ -1,0 +1,80 @@
+Risk Disclosure — Block Mind
+
+Domain: https://blockmind.company
+
+Official language: English
+
+The official language of the Company is English. For a more complete description of the Company's activity, please visit the English version of the site. Information translated into languages other than English is for information purposes only and has no legal force; the Company is not responsible for the accuracy of the information provided in other languages.
+
+Risks disclosure for operations with foreign currency and derivatives — Block Mind
+
+This short warning, being an addition to the General Business Terms, is not intended to mention all risks and other important aspects of operations with foreign currency and derivatives. Considering the risks, you should not settle transactions of the aforementioned products if you are not aware of the nature of the contracts you enter into, the legal aspects of such relations within the context of such contracts, or the degree of your exposure to risk. Operations with foreign currency and derivatives are connected with a high level of risk, therefore they are not suitable for many people. You have to thoroughly evaluate to what extent such operations are suitable for you, taking into consideration your experience, aims, financial resources and other important factors.
+
+1. Operations with foreign currency and derivatives
+1.1 Leveraged trading
+
+Leveraged trading means that potential profits are magnified; it also means that losses are magnified. The lower the margin requirement, the higher the risk of potential losses if the market moves against you. Sometimes margins required can be as little as 0.5%.
+Be aware that when trading using margin, your losses can exceed your initial payment, and it is possible to lose much more money than you initially invested.
+
+Relatively inconsiderable market movements will have proportionally increasing impact on the amounts deposited, or intended to be deposited by you. This may work either for you or against you.
+
+If the market moves against your position, Block Mind may require you to urgently deposit additional funds. Failure to do so may result in forced closing of your positions, and you will bear responsibility for any resulting losses.
+
+1.2 Orders and risk-reduction strategies
+
+Certain orders (e.g., stop-loss or stop-limit) may turn out to be inefficient if the market conditions prevent their execution (for example, low liquidity).
+Strategies using combinations of positions (spread, straddle, etc.) may not be less risky than simple long or short positions.
+
+2. Additional risks specific to foreign currency and derivatives transactions
+2.1 Contract conditions
+
+You must obtain from your broker detailed information regarding obligations, execution terms, and settlement conditions (e.g., option expiration and exercise limitations).
+Under certain circumstances, exchanges may change contract requirements to reflect market changes.
+
+2.2 Suspension or restriction of trade
+
+Market conditions (e.g., illiquidity) or exchange rules (e.g., price limits) may make executing transactions difficult or impossible. This may result in increased losses.
+
+2.3 Deposited funds and property
+
+You should familiarize yourself with protective instruments that apply to your deposited security (money or other assets). Recovery of funds depends on local legislation and the standards of the jurisdiction in which the counterparty operates.
+
+2.4 Commission fees and charges
+
+Before trading, you must clearly understand all commissions, fees, and charges. These will affect your net profit or loss.
+
+2.5 Transactions in other jurisdictions
+
+Trading in foreign markets may expose you to additional risks. Local regulators may not enforce foreign regulatory rules.
+
+2.6 Currency risks
+
+Transactions denominated in a foreign currency are affected by exchange rate fluctuations.
+
+2.7 Liquidity risk
+
+If assets cannot be traded when needed, you may face losses or inability to close/open positions. Margin requirements may force you to add funds immediately.
+
+2.8 Stop-loss limits
+
+Stop-loss orders may not always be effective due to gaps or rapid price movements.
+
+2.9 Execution risk
+
+There may be a lag between order placement and execution. Prices may differ from expected, especially when trading while markets are closed.
+
+2.10 Counterparty risk
+
+This is the risk that the counterparty issuing the CFD defaults. If funds are not segregated, you may not receive your money back.
+
+2.11 Trading systems
+
+Electronic systems may fail. Recovery of losses depends on the liability limits of the system providers.
+
+2.12 Electronic trading
+
+Electronic trading platforms have specific risks (system failure, order issues, margin requirement delays, etc.).
+
+2.13 Over-the-counter operations
+
+OTC operations may involve difficulty closing positions, estimating value, or determining fair pricing. Regulation may be weaker.

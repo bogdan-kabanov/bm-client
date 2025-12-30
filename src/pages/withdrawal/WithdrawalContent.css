@@ -1,0 +1,227 @@
+/* Стили для WithdrawalContent - используем те же классы что и в депозитах */
+
+/* Все стили наследуются из DepositContent.css через общие классы */
+/* Дополнительные стили только для специфичных элементов выводов */
+
+/* Кнопка вывода использует класс pay-button из депозитов */
+.pay-button {
+    width: 100%;
+    padding: 16px 24px;
+    background: #37a1ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pay-button:hover:not(:disabled) {
+    background: #2a8ae6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(55, 161, 255, 0.3);
+}
+
+.pay-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.pay-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+
+/* Секция кошелька */
+.wallet-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wallet-address-container {
+    margin-top: 8px;
+}
+
+.wallet-address {
+    padding: 16px;
+    background: #f0f7ff;
+    border: 2px solid #37a1ff;
+    border-radius: 8px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #333 !important;
+    word-break: break-all;
+    position: relative;
+    padding-right: 120px;
+}
+
+.wallet-saved-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 12px;
+    background: #37a1ff;
+    color: #ffffff;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.wallet-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wallet-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    color: #333 !important;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.wallet-input:focus {
+    border-color: #37a1ff;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(55, 161, 255, 0.1);
+}
+
+.wallet-note {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
+}
+
+.edit-wallet-btn {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid #37a1ff;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #37a1ff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-wallet-btn:hover {
+    background: #37a1ff;
+    color: #ffffff;
+}
+
+/* Конвертация */
+.conversion-section {
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+.converted-amount-container {
+    text-align: center;
+}
+
+/* Попапы */
+.withdraw-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.popup-content {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.popup-icon {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.popup-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333 !important;
+    margin: 0 0 12px 0;
+}
+
+.popup-message {
+    font-size: 16px;
+    color: #666;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+}
+
+.popup-close-btn {
+    padding: 12px 32px;
+    background: #37a1ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.popup-close-btn:hover {
+    background: #2a8ae6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(55, 161, 255, 0.3);
+}
+
+.special-withdrawal-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+    backdrop-filter: blur(6px);
+}
+
+.special-popup-body {
+    text-align: left;
+    margin: 20px 0;
+    font-size: 15px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.special-popup-body p {
+    margin: 12px 0;
+}
+
+.special-close-btn {
+    margin-top: 8px;
+}

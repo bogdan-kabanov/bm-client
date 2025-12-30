@@ -1,0 +1,12 @@
+:root {
+  --font-family-base: Roboto, sans-serif;
+  --font-family-heading: Roboto, sans-serif;
+  --font-family-mono: Roboto, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-display: 24px;
+}

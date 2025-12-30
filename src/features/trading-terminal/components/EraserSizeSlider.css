@@ -1,0 +1,113 @@
+.eraser-size-slider {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translate(100%, -50%);
+  z-index: 10000;
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+
+.eraser-size-slider--open {
+  transform: translate(0, -50%);
+  pointer-events: auto;
+}
+
+.eraser-size-slider__content {
+  background: rgba(22, 27, 40, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(108, 144, 255, 0.2);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 20px;
+  min-width: 200px;
+}
+
+.eraser-size-slider__label {
+  display: block;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.eraser-size-slider__control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.eraser-size-slider__input {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.eraser-size-slider__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #61a9ff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.eraser-size-slider__input::-webkit-slider-thumb:hover {
+  background: #7bb5ff;
+  transform: scale(1.1);
+}
+
+.eraser-size-slider__input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #61a9ff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.eraser-size-slider__input::-moz-range-thumb:hover {
+  background: #7bb5ff;
+  transform: scale(1.1);
+}
+
+.eraser-size-slider__value {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+  font-family: 'Roboto', sans-serif;
+}
+
+.eraser-size-slider__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.eraser-size-slider__preview-circle {
+  border: 2px solid #61a9ff;
+  border-radius: 50%;
+  background: rgba(97, 169, 255, 0.1);
+  aspect-ratio: 1;
+  max-width: 60px;
+  max-height: 60px;
+  transition: width 0.2s ease, height 0.2s ease;
+}
+

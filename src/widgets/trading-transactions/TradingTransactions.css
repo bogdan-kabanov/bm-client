@@ -1,0 +1,238 @@
+.trading-transactions {
+    background: #1e222d;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #2b2f3a;
+    backdrop-filter: blur(10px);
+    max-height: 400px;
+    overflow: hidden
+}
+
+.trading-transactions .panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 12px;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 1px
+}
+
+.trading-transactions .transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: none
+}
+
+.trading-transactions .transactions-list::-webkit-scrollbar {
+    display: none
+}
+
+.trading-transactions .transaction-card {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #131722;
+    border-radius: 6px;
+    border: 1px solid #2b2f3a;
+    transition: all .3s ease;
+    animation: subtleSlide .5s ease-out
+}
+
+.trading-transactions .transaction-card.replenishment {
+    border-left: 3px solid #32ac41
+}
+
+.trading-transactions .transaction-card.loss {
+    border-left: 3px solid #f7525f
+}
+
+.trading-transactions .transaction-card:hover {
+    background: #1e222d;
+    border-color: #009af94d
+}
+
+.trading-transactions .transaction-card .transaction-icon {
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff0d;
+    border-radius: 4px;
+    margin-right: 12px
+}
+
+.trading-transactions .transaction-card .transaction-details {
+    flex: 1;
+    min-width: 0
+}
+
+.trading-transactions .transaction-card .transaction-details .transaction-pair {
+    font-weight: 600;
+    color: #fff;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.trading-transactions .transaction-card .transaction-details .transaction-date {
+    font-size: 10px;
+    color: #ffffff80;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.trading-transactions .transaction-card .transaction-amount {
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap
+}
+
+.trading-transactions .transaction-card .transaction-amount.replenishment {
+    color: #32ac41
+}
+
+.trading-transactions .transaction-card .transaction-amount.loss {
+    color: #f7525f
+}
+
+.trading-transactions .loading-transactions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 10px
+}
+
+.trading-transactions .loading-transactions .loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 2px solid rgba(255,255,255,.1);
+    border-top: 2px solid #009af9;
+    border-radius: 50%;
+    animation: spin 1s linear infinite
+}
+
+.trading-transactions .loading-transactions p {
+    color: #fff;
+    font-size: 12px
+}
+
+.trading-transactions .transactions-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px;
+    background: #ff006e1a;
+    border-radius: 10px;
+    border: 1px solid rgba(255,0,110,.3)
+}
+
+.trading-transactions .transactions-error p {
+    color: #ff398a;
+    font-weight: 500;
+    font-size: 12px
+}
+
+.trading-transactions .empty-transactions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    text-align: center
+}
+
+.trading-transactions .empty-transactions p {
+    font-size: 12px;
+    color: #fff;
+    margin-top: 8px
+}
+
+@keyframes subtleSlide {
+    0% {
+        opacity: 0;
+        transform: translateY(10px)
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0)
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0)
+    }
+
+    to {
+        transform: rotate(360deg)
+    }
+}
+
+@media(max-width: 768px) {
+    .trading-transactions {
+        padding:15px;
+        max-height: 350px
+    }
+
+    .trading-transactions .panel-title {
+        font-size: 16px
+    }
+
+    .trading-transactions .transactions-list {
+        gap: 6px;
+        max-height: 250px
+    }
+
+    .trading-transactions .transaction-card {
+        padding: 10px
+    }
+
+    .trading-transactions .transaction-card .transaction-pair {
+        font-size: 11px
+    }
+
+    .trading-transactions .transaction-card .transaction-date {
+        font-size: 9px
+    }
+
+    .trading-transactions .transaction-card .transaction-amount {
+        font-size: 11px
+    }
+}
+
+@media(max-width: 576px) {
+    .trading-transactions {
+        padding:10px;
+        max-height: 300px
+    }
+
+    .trading-transactions .panel-title {
+        font-size: 14px;
+        margin-bottom: 15px
+    }
+
+    .trading-transactions .transactions-list {
+        gap: 5px;
+        max-height: 200px
+    }
+
+    .trading-transactions .transaction-card {
+        padding: 8px
+    }
+
+    .trading-transactions .transaction-card .transaction-icon {
+        min-width: 28px;
+        height: 28px
+    }
+}
+

@@ -1,0 +1,325 @@
+.add-signal-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001; /* Поверх графика (график обычно имеет z-index 1-10) */
+    padding: 20px;
+}
+
+.add-signal-modal {
+    background: #171929;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.add-signal-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #ffffff1a;
+}
+
+.add-signal-modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.add-signal-modal-close {
+    background: transparent;
+    border: none;
+    color: #ffffff80;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.add-signal-modal-close:hover {
+    background: #ffffff0d;
+    color: #fff;
+}
+
+.add-signal-form {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.add-signal-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.add-signal-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    margin: 0;
+}
+
+.add-signal-input {
+    padding: 10px 12px;
+    background: #ffffff0a;
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.add-signal-input:focus {
+    outline: none;
+    border-color: #32ac41;
+    background: #ffffff0f;
+}
+
+.add-signal-input::placeholder {
+    color: #ffffff60;
+}
+
+/* Выпадающий список */
+.add-signal-dropdown-wrapper {
+    position: relative;
+}
+
+.add-signal-dropdown-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.add-signal-dropdown-input {
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    background: #ffffff0a;
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+}
+
+.add-signal-dropdown-input:focus {
+    outline: none;
+    border-color: #32ac41;
+    background: #ffffff0f;
+}
+
+.add-signal-dropdown-input::placeholder {
+    color: #ffffff60;
+}
+
+.add-signal-dropdown-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ffffff80;
+    transition: transform 0.2s, color 0.2s;
+    pointer-events: none;
+}
+
+.add-signal-dropdown-arrow.open {
+    transform: translateY(-50%) rotate(180deg);
+    color: #fff;
+}
+
+.add-signal-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #1e2139;
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    max-height: 300px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.add-signal-dropdown-search {
+    padding: 8px;
+    border-bottom: 1px solid #ffffff1a;
+    flex-shrink: 0;
+}
+
+.add-signal-dropdown-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: #ffffff0a;
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.add-signal-dropdown-search-input:focus {
+    outline: none;
+    border-color: #32ac41;
+    background: #ffffff0f;
+}
+
+.add-signal-dropdown-search-input::placeholder {
+    color: #ffffff60;
+}
+
+.add-signal-dropdown-list {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.add-signal-dropdown-item {
+    padding: 10px 12px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.add-signal-dropdown-item:hover {
+    background: #ffffff0a;
+}
+
+.add-signal-dropdown-item.selected {
+    background: #025b44;
+    color: #fff;
+}
+
+.add-signal-dropdown-loading,
+.add-signal-dropdown-empty {
+    padding: 20px;
+    text-align: center;
+    color: #ffffff80;
+    font-size: 14px;
+}
+
+.add-signal-direction-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.add-signal-direction-btn {
+    flex: 1;
+    padding: 12px;
+    background: #ffffff0a;
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.add-signal-direction-btn:hover {
+    background: #ffffff0f;
+    border-color: #ffffff2a;
+}
+
+.add-signal-direction-btn.active {
+    background: #025b44;
+    border-color: #32ac41;
+}
+
+.add-signal-direction-btn .signal-direction {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.add-signal-direction-btn .signal-direction.up {
+    color: #32ac41;
+}
+
+.add-signal-direction-btn .signal-direction.down {
+    color: #f7525f;
+}
+
+.add-signal-form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.add-signal-btn {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-signal-btn--cancel {
+    background: #ffffff0a;
+    color: #fff;
+    border: 1px solid #ffffff1a;
+}
+
+.add-signal-btn--cancel:hover:not(:disabled) {
+    background: #ffffff0f;
+    border-color: #ffffff2a;
+}
+
+.add-signal-btn--submit {
+    background: #025b44;
+    color: #fff;
+}
+
+.add-signal-btn--submit:hover:not(:disabled) {
+    background: #037a5a;
+    box-shadow: 0 2px 8px #025b444d;
+}
+
+.add-signal-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Скроллбар для выпадающего списка */
+.add-signal-dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.add-signal-dropdown-menu::-webkit-scrollbar-track {
+    background: #ffffff0d;
+}
+
+.add-signal-dropdown-menu::-webkit-scrollbar-thumb {
+    background: #fff3;
+    border-radius: 3px;
+}
+
+.add-signal-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: #ffffff4d;
+}
+

@@ -1,0 +1,175 @@
+.urgencyTimerBanner {
+  background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.timerWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.timerContainer {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.timerContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 250px;
+}
+
+.timerIcon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(74, 158, 255, 0.2);
+  border-radius: 50%;
+  color: var(--primary-color, #4a9eff);
+}
+
+.timerIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.timerInfo {
+  flex: 1;
+}
+
+.timerTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-color, #fff);
+  margin-bottom: 0.5rem;
+}
+
+.highlight {
+  color: var(--primary-color, #4a9eff);
+  font-weight: 700;
+}
+
+.timerSubtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+.spotsLeft {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.timerDisplay {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.timeBlock {
+  text-align: center;
+  min-width: 60px;
+}
+
+.timeValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color, #fff);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeLabel {
+  font-size: 0.75rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.timeSeparator {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color, #4a9eff);
+  line-height: 1;
+  margin: 0 0.25rem;
+}
+
+.timerCtaBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: var(--primary-color, #4a9eff);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.timerCtaBtn:hover {
+  background: #3d8ae6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+}
+
+.timerCtaBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 768px) {
+  .timerWrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timerContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timerContent {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .timerDisplay {
+    justify-content: center;
+  }
+
+  .timerCtaBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .timeValue {
+    font-size: 1.5rem;
+  }
+
+  .timeSeparator {
+    font-size: 1.5rem;
+  }
+}
+

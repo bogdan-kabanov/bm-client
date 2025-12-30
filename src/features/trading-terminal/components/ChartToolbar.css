@@ -1,0 +1,321 @@
+.chart-toolbar {
+  position: absolute;
+  bottom: 25px; /* Позиция между временной шкалой (bottom: 0-20px) и OCHL (выше) */
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  z-index: 100;
+  overflow: visible;
+}
+
+.chart-toolbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+}
+
+.chart-toolbar-button-wrapper {
+  position: relative;
+}
+
+.chart-toolbar-button {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #868893;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.chart-toolbar-button:hover {
+  color: #868893;
+}
+
+.chart-toolbar-button:active {
+  opacity: 0.7;
+}
+
+.timeframe-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  width: 60px;
+}
+
+.timeframe-label {
+  font-size: 16.5px;
+  font-weight: 500;
+  font-family: 'Roboto', sans-serif;
+  color: #868893;
+}
+
+.chart-toolbar-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+  background: #232737;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 120px;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chart-toolbar-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.chart-toolbar-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.chart-toolbar-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.chart-toolbar-dropdown-item.active {
+  background: #fff;
+  color: #232737;
+  font-weight: 600;
+}
+
+.chart-tools-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 60px;
+}
+
+.chart-tools-button.active {
+  background: rgba(255, 165, 0, 0.2);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  color: orange;
+}
+
+.chart-tools-dropdown {
+  min-width: 200px;
+}
+
+.chart-tools-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.chart-tools-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.chart-tools-item-label {
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.chart-tools-item:hover .chart-tools-item-icon {
+  color: rgba(255, 255, 255, 1);
+}
+
+/* Меню инструментов рисования */
+.chart-toolbar .drawing-tools-wrapper {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+  z-index: 100;
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-btn {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 38, 66, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #868893;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 4px;
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-btn:hover {
+  color: #868893;
+  background: rgba(20, 38, 66, 1);
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-btn.active {
+  background: rgba(255, 165, 0, 0.2);
+  border-color: rgba(255, 165, 0, 0.3);
+  color: orange;
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-tools-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+  background: rgba(20, 38, 66, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  min-width: 200px;
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-tools-menu .drawing-tools-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-tools-menu .drawing-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-tools-menu .drawing-tool-option {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #868893;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-tools-menu .drawing-tool-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #868893;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chart-toolbar .drawing-tools-wrapper .drawing-tools-menu .drawing-tool-option.active {
+  background: rgba(255, 165, 0, 0.2);
+  border-color: rgba(255, 165, 0, 0.3);
+  color: orange;
+}
+
+/* Горизонтальная панель инструментов рисования, выезжающая вправо */
+.chart-toolbar-button-wrapper.drawing-tools-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+.chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-row-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-20px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s 0.25s;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 0;
+  z-index: 100;
+  min-width: 0;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-row-container.drawing-tools-row-open {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s 0s;
+}
+
+.chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex: 1 1 0;
+  min-width: 0;
+  scroll-behavior: smooth;
+}
+
+.chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-row::-webkit-scrollbar {
+  display: none;
+}
+
+.chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-scroll-button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 38, 66, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #868893;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-scroll-button:hover {
+  background: rgba(20, 38, 66, 1);
+  color: #868893;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-scroll-button:active {
+  opacity: 0.7;
+}
+

@@ -1,0 +1,39 @@
+/* CSS Variables for Typography - converted from SCSS */
+
+:root {
+  --font-family-base: "Roboto", sans-serif;
+  --font-family-alt: "Roboto", sans-serif;
+  --font-family-heading: "Roboto", sans-serif;
+  --font-family-mono: "Roboto", sans-serif;
+
+  --font-size-root: 16px;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-display: 24px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.25;
+  --line-height-normal: 1.45;
+  --line-height-relaxed: 1.6;
+}
+
+/* Font smoothing utility classes */
+.font-smoothing {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+
+
+
+

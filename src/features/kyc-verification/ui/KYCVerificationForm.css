@@ -1,0 +1,681 @@
+/* KYCVerificationForm styles */
+
+.kyc-verification-form {
+    background: #1e222d;
+    border-radius: 12px;
+    padding: 32px;
+    border: 1px solid #2b2f3a;
+    margin-top: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+    .kyc-verification-form {
+        padding: 24px 20px;
+    }
+}
+
+.kyc-verification-form .kyc-header {
+    margin-bottom: 24px
+}
+
+.kyc-verification-form .kyc-header h2 {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px
+}
+
+.kyc-verification-form .kyc-header p {
+    color: #ffffffb3;
+    font-size: 14px;
+    line-height: 1.5
+}
+
+.kyc-verification-form .kyc-error {
+    background: #ff006e1a;
+    border: 1px solid rgba(255,0,110,.3);
+    color: #ff398a;
+    padding: 12px;
+    border-radius: 0;
+    margin-bottom: 20px;
+    font-size: 14px
+}
+
+.kyc-verification-form .kyc-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 300px;
+}
+
+.kyc-verification-form .kyc-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px
+}
+
+@media(max-width: 768px) {
+    .kyc-verification-form .kyc-form .form-row {
+        grid-template-columns:1fr
+    }
+}
+
+.kyc-verification-form .kyc-form .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px
+}
+
+.kyc-verification-form .kyc-form .form-group label {
+    color: #ffffffe6;
+    font-size: 14px;
+    font-weight: 600
+}
+
+.kyc-verification-form .kyc-form .form-group input,.kyc-verification-form .kyc-form .form-group select {
+    padding: 10px 14px;
+    background: #ffffff0d;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 0;
+    color: #fff;
+    font-size: 14px;
+    transition: all .2s;
+    height: auto;
+    line-height: 1.4;
+}
+
+.kyc-verification-form .kyc-form .form-group input[type="date"] {
+    padding: 10px 40px 10px 14px;
+}
+
+.kyc-verification-form .kyc-form .form-group input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(1);
+    opacity: 1;
+    width: 18px;
+    height: 18px;
+    margin-left: 8px;
+}
+
+.kyc-verification-form .kyc-form .form-group input[type="date"]::-webkit-inner-spin-button,
+.kyc-verification-form .kyc-form .form-group input[type="date"]::-webkit-clear-button {
+    filter: invert(1);
+}
+
+.kyc-verification-form .kyc-form .form-group input[type="date"]::-moz-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(1);
+    opacity: 1;
+}
+
+.kyc-verification-form .kyc-form .form-group input:focus,.kyc-verification-form .kyc-form .form-group select:focus {
+    outline: none;
+    border-color: #009af9;
+    background: #ffffff14
+}
+
+.kyc-verification-form .kyc-form .form-group input::placeholder,.kyc-verification-form .kyc-form .form-group select::placeholder {
+    color: #fff6
+}
+
+.kyc-verification-form .kyc-form .form-group select {
+    cursor: pointer
+}
+
+.kyc-verification-form .kyc-form .form-group .field-error {
+    color: #ff398a;
+    font-size: 12px;
+    margin-top: 4px
+}
+
+.kyc-verification-form .kyc-form .form-note {
+    background: #009af91a;
+    border: 1px solid rgba(0,154,249,.2);
+    padding: 12px;
+    border-radius: 0;
+    margin-top: 8px
+}
+
+.kyc-verification-form .kyc-form .form-note p {
+    color: #fffc;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0
+}
+
+/* Steps indicator */
+.kyc-steps {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin: 32px 0 40px;
+    position: relative;
+    width: 100%;
+    padding: 0;
+}
+
+.kyc-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    z-index: 2;
+    min-width: 0;
+}
+
+.kyc-step-line {
+    display: none;
+}
+
+.kyc-step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffffb3;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.kyc-step.active .kyc-step-number {
+    background: linear-gradient(135deg, #00ff8c, #00d1ff);
+    border-color: transparent;
+    color: #0a0c12;
+    box-shadow: 0 4px 16px rgba(0, 255, 140, 0.4);
+    transform: scale(1.1);
+}
+
+.kyc-step.completed .kyc-step-number {
+    background: linear-gradient(135deg, #00ff8c, #00d1ff);
+    border-color: transparent;
+    color: #0a0c12;
+}
+
+.kyc-step.completed .kyc-step-number svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 3;
+}
+
+.kyc-step-label {
+    font-size: 13px;
+    color: #ffffffb3;
+    font-weight: 500;
+    text-align: center;
+    transition: color 0.3s ease;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+.kyc-step.active .kyc-step-label {
+    color: #fff;
+    font-weight: 600;
+}
+
+.kyc-step.completed .kyc-step-label {
+    color: #ffffffb3;
+}
+
+@media (max-width: 768px) {
+    .kyc-steps {
+        margin: 24px 0 32px;
+    }
+    
+    .kyc-step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+    }
+    
+    .kyc-step-label {
+        font-size: 10px;
+        line-height: 1.3;
+    }
+    
+}
+
+/* Step content */
+.kyc-step-content {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.step-title {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.step-title h3 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.step-title p {
+    color: #ffffffb3;
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .step-title {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+    }
+    
+    .step-title h3 {
+        font-size: 18px;
+    }
+    
+    .step-title p {
+        font-size: 13px;
+    }
+}
+
+/* Form actions */
+.kyc-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.kyc-form-actions-spacer {
+    flex: 1;
+}
+
+.kyc-btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.kyc-btn-primary {
+    background: linear-gradient(135deg, #00ff8c, #00d1ff);
+    color: #0a0c12;
+}
+
+.kyc-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 255, 140, 0.4);
+}
+
+.kyc-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.kyc-btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.kyc-btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.kyc-btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .kyc-form-actions {
+        margin-top: 32px;
+        padding-top: 24px;
+        flex-direction: column;
+    }
+    
+    .kyc-btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .kyc-form-actions-spacer {
+        display: none;
+    }
+}
+
+.kyc-verification-form .kyc-form .submit-btn {
+    padding: 14px 32px;
+    background: linear-gradient(135deg,#00ff8c,#00d1ff);
+    border: none;
+    border-radius: 8px;
+    color: #0a0c12;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all .3s;
+    min-width: 120px;
+}
+
+.kyc-verification-form .kyc-form .submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 255, 140, 0.4);
+}
+
+.kyc-verification-form .kyc-form .submit-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.kyc-status-card {
+    background: linear-gradient(135deg, rgba(0, 255, 140, 0.1), rgba(0, 209, 255, 0.1));
+    border-radius: 12px;
+    padding: 32px;
+    border: 1px solid rgba(0, 255, 140, 0.2);
+    margin-top: 20px;
+    margin-bottom: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.kyc-status-card.verified {
+    background: linear-gradient(135deg, rgba(69, 183, 52, 0.1), rgba(0, 255, 140, 0.1));
+    border-color: rgba(69, 183, 52, 0.3);
+}
+
+.kyc-status-card.pending {
+    background: linear-gradient(135deg, rgba(255, 200, 0, 0.1), rgba(255, 200, 0, 0.05));
+    border-color: rgba(255, 200, 0, 0.3);
+}
+
+.kyc-status-card.success {
+    background: linear-gradient(135deg, rgba(0, 255, 140, 0.1), rgba(0, 209, 255, 0.1));
+    border-color: rgba(0, 255, 140, 0.3);
+}
+
+.kyc-status-card .kyc-status-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-align: left;
+}
+
+.kyc-status-card .kyc-status-icon {
+    font-size: 48px;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 700;
+}
+
+.kyc-status-card .kyc-status-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kyc-status-card h3 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.kyc-status-card p {
+    color: #ffffffb3;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.kyc-status-card .kyc-date {
+    color: #ffffff80;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.kyc-status-card.verified .kyc-status-icon {
+    color: #45b734;
+    background: rgba(69, 183, 52, 0.2);
+}
+
+.kyc-status-card.pending .kyc-status-icon {
+    color: #ffc800;
+    background: rgba(255, 200, 0, 0.2);
+}
+
+.kyc-status-card.success .kyc-status-icon {
+    color: #00ff8c;
+    background: rgba(0, 255, 140, 0.2);
+}
+
+@media (max-width: 768px) {
+    .kyc-status-card {
+        padding: 24px 20px;
+    }
+    
+    .kyc-status-card .kyc-status-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 40px;
+    }
+    
+    .kyc-status-card h3 {
+        font-size: 18px;
+    }
+    
+    .kyc-status-card p {
+        font-size: 13px;
+    }
+}
+
+.kyc-status-card .kyc-rejection {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,.1)
+}
+
+.kyc-status-card .kyc-rejection .rejection-reason {
+    background: #ff006e1a;
+    border: 1px solid rgba(255,0,110,.3);
+    color: #ff398a;
+    padding: 12px;
+    border-radius: 0;
+    margin-bottom: 16px;
+    font-size: 13px
+}
+
+.kyc-status-card .kyc-rejection .retry-btn {
+    padding: 10px 20px;
+    background: #ffffff1a;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s
+}
+
+.kyc-status-card .kyc-rejection .retry-btn:hover {
+    background: #ffffff26;
+    border-color: #ffffff4d
+}
+
+/* Photo upload styles */
+.kyc-photos-upload {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.kyc-photo-upload-item {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.kyc-photo-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 20px;
+    text-align: center;
+}
+
+.kyc-photo-upload-label:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(0, 255, 140, 0.4);
+}
+
+.kyc-photo-upload-icon {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 12px;
+    transition: color 0.3s ease;
+}
+
+.kyc-photo-upload-label:hover .kyc-photo-upload-icon {
+    color: #00ff8c;
+}
+
+.kyc-photo-upload-text {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.kyc-photo-upload-hint {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+}
+
+.kyc-photo-preview {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.kyc-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.kyc-photo-preview:hover .kyc-photo-remove,
+.kyc-photo-preview:hover .kyc-photo-replace {
+    opacity: 1;
+}
+
+.kyc-photo-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 57, 138, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.kyc-photo-remove:hover {
+    background: rgba(255, 57, 138, 1);
+    transform: scale(1.1);
+}
+
+.kyc-photo-replace {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.kyc-photo-replace:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(0, 255, 140, 0.5);
+}
+
+@media (max-width: 768px) {
+    .kyc-photos-upload {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .kyc-photo-upload-item {
+        aspect-ratio: 16/9;
+    }
+    
+    .kyc-photo-remove,
+    .kyc-photo-replace {
+        opacity: 1;
+    }
+}

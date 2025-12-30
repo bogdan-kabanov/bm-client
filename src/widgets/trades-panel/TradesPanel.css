@@ -1,0 +1,107 @@
+.trades-panel {
+    background: rgba(36, 39, 56, 1);
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.trades-panel .trades-panel-header {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    background: rgba(28, 30, 44, 1);
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0
+}
+
+.trades-panel .trades-panel-header .tab-button {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    color: #ffffffb3;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    cursor: pointer;
+    transition: all .3s ease;
+    text-align: center
+}
+
+.trades-panel .trades-panel-header .tab-button:hover {
+    color: #ffffffe6;
+    background: #ffffff0d
+}
+
+.trades-panel .trades-panel-header .tab-button.active {
+    color: #fff;
+    border-bottom: 1px solid #009af9;
+    background: rgba(57, 63, 86, 1);
+}
+
+.trades-panel .trades-panel-content {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column
+}
+
+.trades-panel .trades-panel-content .active-trades,.trades-panel .trades-panel-content .trade-history {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0
+}
+
+.trades-panel .trades-panel-content .trade-history .trade-history-title {
+    display: none
+}
+
+/* iPhone адаптация */
+@media (max-width: 428px) {
+    .trades-panel .trades-panel-header .tab-button {
+        padding: 10px 12px;
+        font-size: 10px;
+        min-height: 44px;
+    }
+
+    .trades-panel .trades-panel-content {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+}
+
+@media (max-width: 390px) {
+    .trades-panel .trades-panel-header .tab-button {
+        padding: 8px 10px;
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 375px) {
+    .trades-panel .trades-panel-header .tab-button {
+        padding: 8px 8px;
+        font-size: 9px;
+        letter-spacing: 0.3px;
+    }
+}
