@@ -253,8 +253,8 @@ export class TradingService {
             
             if (response.trades && Array.isArray(response.trades)) {
                 const activeTrades: ActiveTrade[] = response.trades.map((trade: any) => {
-                    const createdAt = trade.createdAt;
-                    if (!createdAt || !Number.isFinite(createdAt) || createdAt <= 0) {
+                    const created_at = trade.createdAt;
+                    if (!created_at || !Number.isFinite(created_at) || created_at <= 0) {
                         console.warn('[TRADE_HISTORY] requestActiveTrades: невалидный createdAt в данных сервера', {
                             tradeId: trade.id,
                             createdAt: trade.createdAt,
@@ -270,7 +270,7 @@ export class TradingService {
                         entryPrice: trade.entryPrice || trade.price,
                         currentPrice: trade.currentPrice || null,
                         currentPriceAtTrade: trade.currentPriceAtTrade || trade.currentPrice || null,
-                        createdAt: createdAt, // ВАЖНО: используем только данные с сервера
+                        createdAt: created_at, // ВАЖНО: используем только данные с сервера
                         symbol: trade.symbol || trade.pair || null,
                         baseCurrency: trade.baseCurrency || trade.base_currency || null,
                         quoteCurrency: trade.quoteCurrency || trade.quote_currency || null,

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import { CountryFlag } from '@src/shared/ui/CountryFlag/CountryFlag';
 import { detectUserCountry } from '@src/shared/lib/geolocation.util';
 import { paymentMethodsApi } from '@src/shared/api';
+import { getFallbackCountries } from '@src/shared/lib/countries-fallback';
 import './PhoneInput.css';
 
 interface PhoneInputProps {
@@ -44,9 +45,19 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
   // Гарантируем, что phoneNumber всегда строка, чтобы input был контролируемым
   // Используем пустую строку по умолчанию, чтобы избежать undefined
+  // Гарантируем, что phoneNumber всегда строка с самого начала
+  // Используем функцию инициализации, которая всегда возвращает строку
   const [phoneNumber, setPhoneNumber] = useState<string>(() => {
-    const initialValue = value != null && value !== undefined ? String(value) : '';
-    return initialValue || '';
+    // Всегда возвращаем строку, никогда undefined или null
+    if (value == null || value === undefined || value === '') {
+      return '';
+    }
+    try {
+      const stringValue = String(value);
+      return stringValue || '';
+    } catch {
+      return '';
+    }
   });
   const [showDropdown, setShowDropdown] = useState(false);
   const [isValid, setIsValid] = useState(true);
@@ -58,11 +69,20 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
 
   // Синхронизируем phoneNumber с value prop
   useEffect(() => {
-    const newValue = value != null && value !== undefined ? String(value) : '';
-    // Обновляем только если значение действительно изменилось
-    if (newValue !== phoneNumber) {
-      setPhoneNumber(newValue || '');
+    let newValue = '';
+    if (value != null && value !== undefined) {
+      const stringValue = String(value);
+      newValue = stringValue || '';
     }
+    // Обновляем только если значение действительно изменилось
+    // Используем функциональную форму setState для избежания зависимости от phoneNumber
+    setPhoneNumber(prev => {
+      const prevValue = prev || '';
+      if (prevValue !== newValue) {
+        return newValue;
+      }
+      return prevValue;
+    });
   }, [value]); // Убираем phoneNumber из зависимостей, чтобы избежать циклов
 
   // Инициализация страны по умолчанию с геолокацией (выполняется только при монтировании)
@@ -81,17 +101,37 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           }));
         setCountries(countriesWithDialCode);
       } catch (error) {
-        console.error('Error loading countries for phone input:', error);
-        // Fallback: set empty array, component will handle gracefully
-        setCountries([]);
+        // Use fallback countries when API is unavailable
+        if (import.meta.env.DEV) {
+          console.warn('Error loading countries from API, using fallback list:', error);
+        }
+        const fallbackCountries = getFallbackCountries();
+        setCountries(fallbackCountries);
       }
     };
     loadCountries();
   }, []);
 
   useEffect(() => {
-    // Если страна уже установлена или уже была попытка определения, не делаем ничего
-    if (selectedCountry || countryDetectionAttempted.current || countries.length === 0) {
+    // Если страна уже установлена, не делаем ничего
+    if (selectedCountry) {
+      return;
+    }
+
+    // Если список стран пустой, используем fallback и устанавливаем дефолтную страну
+    if (countries.length === 0) {
+      const fallbackCountries = getFallbackCountries();
+      if (fallbackCountries.length > 0) {
+        setCountries(fallbackCountries);
+        // Устанавливаем первую страну из fallback (обычно US)
+        setSelectedCountry(fallbackCountries[0]);
+        countryDetectionAttempted.current = true;
+      }
+      return;
+    }
+
+    // Если уже была попытка определения, не делаем ничего
+    if (countryDetectionAttempted.current) {
       return;
     }
 
@@ -210,7 +250,8 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
 
   // Обработка изменения номера
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
+    // Гарантируем, что input всегда строка
+    const input = e.target.value ?? '';
     
     // Обновляем внутреннее состояние для отображения
     setPhoneNumber(input);
@@ -336,7 +377,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       // Сбрасываем ошибки валидации при смене страны, если номер не введен
       setIsValid(true);
       setValidationError('');
-      // Сбрасываем phoneNumber, чтобы поле было пустым
+      // Сбрасываем phoneNumber, чтобы поле было пустым (всегда строка)
       setPhoneNumber('');
       onChange('');
       return;
@@ -367,7 +408,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     onChange(newNumber);
   };
 
-  const formatDisplayNumber = (number: string | undefined | null): string => {
+  const formatDisplayNumber = React.useCallback((number: string | undefined | null): string => {
     // Гарантируем, что всегда возвращаем строку для контролируемого input
     if (!number || number === null || number === undefined || typeof number !== 'string') {
       return '';
@@ -375,14 +416,27 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     try {
       if (selectedCountry && number.startsWith(selectedCountry.dialCode)) {
         const nationalNumber = number.substring(selectedCountry.dialCode.length);
-        return typeof nationalNumber === 'string' ? nationalNumber : '';
+        const result = typeof nationalNumber === 'string' ? nationalNumber : '';
+        return result || '';
       }
       const cleaned = number.replace(/^\+\d+\s*/, '');
-      return typeof cleaned === 'string' ? cleaned : '';
+      const result = typeof cleaned === 'string' ? cleaned : '';
+      return result || '';
     } catch (error) {
       return '';
     }
-  };
+  }, [selectedCountry]);
+
+  // Гарантируем, что inputValue всегда строка для контролируемого input
+  // Это критично для предотвращения предупреждения React о неконтролируемом input
+  const inputValue = useMemo(() => {
+    // Гарантируем, что phoneNumber всегда строка
+    const safePhoneNumber = typeof phoneNumber === 'string' ? phoneNumber : '';
+    // Форматируем номер
+    const formatted = formatDisplayNumber(safePhoneNumber);
+    // Гарантируем, что результат всегда строка
+    return typeof formatted === 'string' ? formatted : '';
+  }, [phoneNumber, formatDisplayNumber]);
 
   // Если страна ещё не определена, показываем загрузку
   if (!selectedCountry) {
@@ -400,6 +454,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
             type="tel"
             placeholder="Loading..."
             disabled
+            value=""
             className="phone-input"
           />
         </div>
@@ -463,8 +518,9 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
         {/* Поле ввода номера */}
         <input
           type="tel"
+          name="phone"
           autoComplete="tel"
-          value={formatDisplayNumber(phoneNumber ?? '')}
+          value={inputValue}
           onChange={handlePhoneChange}
           onBlur={handleBlur}
           placeholder={placeholder || t('profile.enterPhone') || 'Enter phone number'}

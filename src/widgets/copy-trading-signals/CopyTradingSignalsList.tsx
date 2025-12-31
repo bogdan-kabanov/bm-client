@@ -354,48 +354,48 @@ export const CopyTradingSignalsList: React.FC<CopyTradingSignalsListProps> = ({
 
   // Вычисляем прогресс от 0% до 100% на основе unix timestamp
   const calculateProgress = useCallback((signal: Signal): number => {
-    const createdAt = signal.created_at_unix;
-    const expiresAt = signal.expires_at_unix;
+    const created_at = signal.created_at_unix;
+    const expires_at = signal.expires_at_unix;
     
-    if (!createdAt || !expiresAt) {
+    if (!created_at || !expires_at) {
       // Fallback на timestamp/expires_at если unix нет
       if (!signal.expires_at || !signal.timestamp) {
         return 0;
       }
-      const expiresAtMs = new Date(signal.expires_at).getTime();
-      const createdAtMs = new Date(signal.timestamp).getTime();
+      const expires_at_ms = new Date(signal.expires_at).getTime();
+      const created_at_ms = new Date(signal.timestamp).getTime();
       const now = getServerTime();
       
-      if (expiresAtMs <= now) return 100;
-      if (createdAtMs > now) return 0;
+      if (expires_at_ms <= now) return 100;
+      if (created_at_ms > now) return 0;
       
-      const totalDuration = expiresAtMs - createdAtMs;
-      const elapsed = now - createdAtMs;
+      const total_duration = expires_at_ms - created_at_ms;
+      const elapsed = now - created_at_ms;
       
-      if (totalDuration <= 0) return 0;
-      return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+      if (total_duration <= 0) return 0;
+      return Math.min(100, Math.max(0, (elapsed / total_duration) * 100));
     }
     
     // Используем unix timestamp в секундах
     const now = currentTime;
     
-    if (expiresAt <= now) {
+    if (expires_at <= now) {
       return 100; // Сигнал истек
     }
     
-    if (createdAt > now) {
+    if (created_at > now) {
       return 0; // Сигнал еще не начался
     }
     
-    const totalDuration = expiresAt - createdAt;
-    const elapsed = now - createdAt;
+    const total_duration = expires_at - created_at;
+    const elapsed = now - created_at;
     
-    if (totalDuration <= 0) {
+    if (total_duration <= 0) {
       return 0;
     }
     
     // Прогресс от 0% до 100% от начала до окончания
-    return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+    return Math.min(100, Math.max(0, (elapsed / total_duration) * 100));
   }, [currentTime]);
 
   // Вычисляем оставшееся время в секундах для сигнала
@@ -434,27 +434,27 @@ export const CopyTradingSignalsList: React.FC<CopyTradingSignalsListProps> = ({
     
     // Если осталось >= 30 секунд, вычисляем прогрессивное значение
     // Нужно знать общее время жизни сигнала для расчета прогресса
-    const createdAt = signal.created_at_unix;
-    const expiresAt = signal.expires_at_unix;
+    const created_at = signal.created_at_unix;
+    const expires_at = signal.expires_at_unix;
     
-    if (!createdAt || !expiresAt) {
+    if (!created_at || !expires_at) {
       // Fallback: если нет unix timestamp, используем expiration_seconds
       if (signal.expiration_seconds) {
-        const totalDuration = signal.expiration_seconds;
-        const elapsed = totalDuration - remainingSeconds;
+        const total_duration = signal.expiration_seconds;
+        const elapsed = total_duration - remainingSeconds;
         // Прогресс от 0 до 1 (0% до 100%)
-        const linearProgress = Math.min(1, Math.max(0, elapsed / Math.max(1, totalDuration - 30)));
+        const linear_progress = Math.min(1, Math.max(0, elapsed / Math.max(1, total_duration - 30)));
         // Используем квадратичную функцию для более медленного роста
-        const smoothProgress = Math.pow(linearProgress, 2.5);
-        return Math.floor(realCopied * smoothProgress);
+        const smooth_progress = Math.pow(linear_progress, 2.5);
+        return Math.floor(realCopied * smooth_progress);
       }
       // Если нет данных, возвращаем 0
       return 0;
     }
     
     // Вычисляем общую длительность сигнала
-    const totalDuration = expiresAt - createdAt;
-    if (totalDuration <= 0) {
+    const total_duration = expires_at - created_at;
+    if (total_duration <= 0) {
       return 0;
     }
     

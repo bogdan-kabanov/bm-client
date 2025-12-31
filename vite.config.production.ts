@@ -5,10 +5,9 @@ import { resolve } from 'path';
 const envDir = resolve(process.cwd(), '..', 'env-config', 'client');
 const env = loadEnv('production', envDir, '');
 
-// Use full URL for production if not specified in env
-// Default to https://api.velartrade.com/v3 for production
-const API_BASE = env.VITE_API_BASE || 'https://api.velartrade.com/v3';
-const WS_BASE = '/v3/ws';
+// Use only values from .env file, no fallbacks
+const API_BASE = env.VITE_API_BASE || '';
+const WS_BASE = env.VITE_WS_BASE || '/v3/ws';
 
 export default defineConfig({
   envDir: envDir,
@@ -38,10 +37,10 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.VITE_API_BASE': JSON.stringify(API_BASE),
-    'import.meta.env.VITE_WS_URL': JSON.stringify(env.VITE_WS_URL || 'wss://api.velartrade.com/v3/ws'),
+    'import.meta.env.VITE_WS_URL': JSON.stringify(env.VITE_WS_URL || ''),
     'import.meta.env.VITE_WS_BASE': JSON.stringify(WS_BASE),
-    'import.meta.env.VITE_API_DOMAIN': JSON.stringify(env.VITE_API_DOMAIN || 'api.velartrade.com'),
-    'import.meta.env.VITE_CLIENT_DOMAIN': JSON.stringify(env.VITE_CLIENT_DOMAIN || 'velartrade.com'),
+    'import.meta.env.VITE_API_DOMAIN': JSON.stringify(env.VITE_API_DOMAIN || ''),
+    'import.meta.env.VITE_CLIENT_DOMAIN': JSON.stringify(env.VITE_CLIENT_DOMAIN || ''),
     'import.meta.env.MODE': JSON.stringify('production'),
     'import.meta.env.PROD': true,
     'import.meta.env.DEV': false,

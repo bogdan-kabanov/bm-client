@@ -377,22 +377,22 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
     setShowPopup(false);
   };
 
-  const formatMessageTime = useCallback((createdAt: string) => {
+  const formatMessageTime = useCallback((created_at: string) => {
     try {
-      const messageDate = new Date(createdAt);
+      const message_date = new Date(created_at);
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const messageDay = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate());
+      const message_day = new Date(message_date.getFullYear(), message_date.getMonth(), message_date.getDate());
       
-      const hours = messageDate.getHours().toString().padStart(2, '0');
-      const minutes = messageDate.getMinutes().toString().padStart(2, '0');
+      const hours = message_date.getHours().toString().padStart(2, '0');
+      const minutes = message_date.getMinutes().toString().padStart(2, '0');
       
-      if (messageDay.getTime() === today.getTime()) {
+      if (message_day.getTime() === today.getTime()) {
         return `${hours}:${minutes}`;
       }
       
-      const day = messageDate.getDate().toString().padStart(2, '0');
-      const month = (messageDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = message_date.getDate().toString().padStart(2, '0');
+      const month = (message_date.getMonth() + 1).toString().padStart(2, '0');
       return `${day}.${month} ${hours}:${minutes}`;
     } catch {
       return '';

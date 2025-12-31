@@ -2,6 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { selectProfile } from '@src/entities/user/model/selectors';
+import { setUser } from '@src/entities/user/model/slice';
 import { loginWithEmail, registerWithEmail, checkAndRegisterUser } from '@src/features/auth/authCheck';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import styles from './LendingPage.module.css';
@@ -85,17 +86,30 @@ const LendingPage: React.FC = () => {
     try {
       await dispatch(loginWithEmail({ email, password })).unwrap();
       // Загружаем профиль пользователя после успешной авторизации
-      await dispatch(checkAndRegisterUser()).unwrap();
-      handleCloseAuth();
-      // Редирект на страницу торговли после успешной авторизации
-      navigate('/trading', { replace: true });
+      try {
+        await dispatch(checkAndRegisterUser()).unwrap();
+        handleCloseAuth();
+        // navigate('/trading', { replace: true }); // Отключено по запросу
+      } catch (profileError: any) {
+        const profileErrorMessage = profileError?.message || profileError?.toString() || '';
+        // Всегда показываем ошибку в форме, не делаем редирект при ошибке
+        if (profileErrorMessage.includes('Network error') || profileErrorMessage.includes('NETWORK_ERROR')) {
+          setAuthError(t('auth.errors.networkError'));
+        } else if (profileErrorMessage.includes('Session expired') || profileErrorMessage.includes('SESSION_EXPIRED')) {
+          setAuthError(t('auth.errors.sessionExpired'));
+        } else if (profileErrorMessage.includes('timeout') || profileErrorMessage.includes('Request timeout')) {
+          setAuthError(t('auth.errors.networkError'));
+        } else {
+          setAuthError(t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.');
+        }
+      }
     } catch (error: any) {
-
       // Redux Toolkit возвращает ошибку в error.message
       const errorMessage = error?.message || error?.toString() || '';
 
+      // Всегда показываем ошибку в форме, не делаем редирект при ошибке
       // Маппинг ошибок от authCheck.tsx
-      if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials')) {
+      if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials') || errorMessage.includes('UNAUTHORIZED')) {
         setAuthError(t('auth.errors.invalidCredentials'));
       } else if (errorMessage.includes('Invalid password')) {
         setAuthError(t('auth.errors.invalidPassword'));
@@ -103,12 +117,13 @@ const LendingPage: React.FC = () => {
         setAuthError(t('auth.errors.invalidCredentials'));
       } else if (errorMessage.includes('Session expired')) {
         setAuthError(t('auth.errors.sessionExpired'));
-      } else if (errorMessage.includes('Network error')) {
+      } else if (errorMessage.includes('Network error') || errorMessage.includes('NETWORK_ERROR') || errorMessage.includes('timeout') || errorMessage.includes('Request timeout')) {
         setAuthError(t('auth.errors.networkError'));
       } else if (errorMessage.includes('Server error')) {
         setAuthError(t('auth.errors.serverError'));
       } else {
-        setAuthError(t('auth.errors.unknownError'));
+        // Для неизвестных ошибок тоже показываем сообщение
+        setAuthError(t('auth.errors.invalidCredentials') || 'Неверный email или пароль');
       }
     }
   };
@@ -116,34 +131,57 @@ const LendingPage: React.FC = () => {
   const handleRegister = async ({ email, password, phone }: AuthFormValues) => {
     setAuthError(null);
     try {
-      await dispatch(registerWithEmail({ email, password, phone, refId })).unwrap();
-      // Загружаем профиль пользователя после успешной регистрации
-      await dispatch(checkAndRegisterUser()).unwrap();
-      handleCloseAuth();
-      // Редирект на страницу торговли после успешной регистрации
-      navigate('/trading', { replace: true });
+      const registerResponse = await dispatch(registerWithEmail({ email, password, phone, refId })).unwrap();
+      
+      // Если регистрация вернула user, используем его напрямую
+      if (registerResponse?.user) {
+        // Обновляем состояние пользователя в Redux
+        dispatch(setUser(registerResponse.user));
+        // Закрываем модальное окно
+        handleCloseAuth();
+        // navigate('/trading', { replace: true }); // Отключено по запросу
+        return;
+      }
+      
+      // Если user не вернулся, пытаемся загрузить профиль
+      try {
+        await dispatch(checkAndRegisterUser()).unwrap();
+        handleCloseAuth();
+        // navigate('/trading', { replace: true }); // Отключено по запросу
+      } catch (profileError: any) {
+        const profileErrorMessage = profileError?.message || profileError?.toString() || '';
+        // Всегда показываем ошибку в форме, не делаем редирект при ошибке
+        if (profileErrorMessage.includes('Network error') || profileErrorMessage.includes('NETWORK_ERROR')) {
+          setAuthError(t('auth.errors.networkError'));
+        } else if (profileErrorMessage.includes('Session expired') || profileErrorMessage.includes('SESSION_EXPIRED')) {
+          setAuthError(t('auth.errors.sessionExpired'));
+        } else if (profileErrorMessage.includes('timeout') || profileErrorMessage.includes('Request timeout')) {
+          setAuthError(t('auth.errors.networkError'));
+        } else {
+          setAuthError(t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.');
+        }
+      }
     } catch (error: any) {
-
       // Redux Toolkit возвращает ошибку в error.message
       const errorMessage = error?.message || error?.toString() || '';
 
       // Маппинг ошибок от authCheck.tsx
-      if (errorMessage.includes('Email already exists') || errorMessage.includes('email already')) {
+      if (errorMessage.includes('Email already exists') || errorMessage.includes('email already') || errorMessage.includes('Email уже зарегистрирован')) {
         setAuthError(t('auth.errors.emailAlreadyExists'));
       } else if (errorMessage.includes('Login already exists') || errorMessage.includes('login already')) {
         setAuthError(t('auth.errors.loginAlreadyExists'));
       } else if (errorMessage.includes('Invalid email')) {
         setAuthError(t('auth.errors.invalidEmail'));
-      } else if (errorMessage.includes('Password too short') || errorMessage.includes('password')) {
+      } else if (errorMessage.includes('Password too short') || errorMessage.includes('password') || errorMessage.includes('too weak')) {
         setAuthError(t('auth.errors.passwordTooShort'));
       } else if (errorMessage.includes('Invalid phone') || errorMessage.includes('phone')) {
         setAuthError(t('auth.errors.phoneInvalid'));
-      } else if (errorMessage.includes('Network error')) {
+      } else if (errorMessage.includes('Network error') || errorMessage.includes('NETWORK_ERROR') || errorMessage.includes('timeout') || errorMessage.includes('Request timeout')) {
         setAuthError(t('auth.errors.networkError'));
       } else if (errorMessage.includes('Server error')) {
         setAuthError(t('auth.errors.serverError'));
       } else {
-        setAuthError(t('auth.errors.unknownError'));
+        setAuthError(t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.');
       }
     }
   };

@@ -31,11 +31,22 @@ export const fetchProfile = createAsyncThunk<
     { rejectValue: string }
 >(
     'profile/fetchProfile',
-    async (_, { rejectWithValue }) => {
+    async (_, { rejectWithValue, dispatch }) => {
         try {
             return await userApi.getProfile();
         } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            // Если аккаунт удален, очищаем профиль и не показываем ошибку
+            if (errorMessage.includes('ACCOUNT_DELETED')) {
+                dispatch(clearProfile());
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                if (window.location.pathname !== '/') {
+                    window.location.href = '/';
+                }
+                return rejectWithValue('');
+            }
+            return rejectWithValue(errorMessage);
         }
     }
 );

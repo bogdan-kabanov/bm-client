@@ -361,17 +361,17 @@ class TradePlacementService {
         // Проверяем временную близость (в пределах 10 секунд)
         // ВАЖНО: используем серверное время для сравнения, а не локальное время клиента
         const serverTime = getServerTime();
-        const dataTimestamp = data.trade_timestamp || data.tradeTimestamp || data.createdAt || serverTime;
-        const timeDiff = Math.abs(dataTimestamp - pendingTrade.timestamp);
-        const timeMatch = timeDiff < 10000;
+        const data_timestamp = data.trade_timestamp || data.tradeTimestamp || data.createdAt || serverTime;
+        const time_diff = Math.abs(data_timestamp - pendingTrade.timestamp);
+        const time_match = time_diff < 10000;
 
         this.log('INFO', `Checking pending trade`, { 
           requestId,
           directionMatch,
           amountMatch,
           priceMatch,
-          timeMatch,
-          timeDiff,
+          time_match,
+          time_diff,
           paramsDirection: params.direction,
           dataDirection: data.direction,
           paramsAmount: params.amount,
@@ -380,11 +380,11 @@ class TradePlacementService {
           dataEntryPrice: data.entryPrice,
           dataPrice: data.price,
           pendingTimestamp: pendingTrade.timestamp,
-          dataTimestamp
+          data_timestamp
         });
 
         // Убираем проверку idMatch, так как в ответе сервера нет data.id
-        if (directionMatch && amountMatch && priceMatch && timeMatch) {
+        if (directionMatch && amountMatch && priceMatch && time_match) {
           this.log('INFO', `✅ Found matching pending trade`, { requestId, params, data });
           return requestId;
         }
@@ -413,9 +413,9 @@ class TradePlacementService {
       // Логируем источник entryPrice из данных сервера
       // ВАЖНО: createdAt должен быть зафиксирован на момент создания сделки на сервере
       // Используем только данные с сервера, НИКОГДА не используем Date.now() как fallback
-      const createdAt = data.createdAt || data.trade_timestamp || data.tradeTimestamp;
+      const created_at = data.createdAt || data.trade_timestamp || data.tradeTimestamp;
       
-      if (!createdAt || !Number.isFinite(createdAt) || createdAt <= 0) {
+      if (!created_at || !Number.isFinite(created_at) || created_at <= 0) {
         this.log('ERROR', `Отсутствует валидный createdAt в данных сервера`, {
           tradeId: tradeId,
           dataCreatedAt: data.createdAt,
@@ -435,10 +435,10 @@ class TradePlacementService {
         dataCurrentPriceAtTrade: data.currentPriceAtTrade,
         finalEntryPrice: data.entryPrice || data.price,
         entryPriceSource: data.entryPrice ? 'data.entryPrice' : 'data.price',
-        createdAt: createdAt,
+        createdAt: created_at,
         createdAtSource: data.createdAt ? 'data.createdAt' : (data.trade_timestamp ? 'data.trade_timestamp' : 'data.tradeTimestamp'),
         serverTime: getServerTime(),
-        timeDiff: getServerTime() - createdAt
+        time_diff: getServerTime() - created_at
       });
       
       // Создаем активный трейд
@@ -454,7 +454,7 @@ class TradePlacementService {
         currentPrice: data.currentPrice || entryPrice,
         currentPriceAtTrade: data.currentPriceAtTrade || entryPrice,
         expirationTime: data.expirationTime,
-        createdAt: createdAt, // ВАЖНО: используем только данные с сервера, без fallback
+        createdAt: created_at, // ВАЖНО: используем только данные с сервера, без fallback
         baseCurrency: data.baseCurrency || data.symbol?.split('_')[0],
         quoteCurrency: data.quoteCurrency || data.symbol?.split('_')[1] || 'USDT',
         isDemo: data.isDemo || data.is_demo || false,

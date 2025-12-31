@@ -201,31 +201,47 @@ export const loginWithEmail = createAsyncThunk<
       
       return response;
     } catch (error: unknown) {
+      console.error('[authCheck] loginWithEmail ошибка:', error);
       const errorMessage = error instanceof Error ? error.message : 'UNKNOWN_ERROR';
+      console.log('[authCheck] loginWithEmail errorMessage:', errorMessage);
       
       if (errorMessage.includes('Request timeout') || errorMessage.includes('timeout')) {
-        return rejectWithValue('Network error. Request timeout. Please check your internet connection');
+        const msg = 'Network error. Request timeout. Please check your internet connection';
+        console.log('[authCheck] Возвращаем:', msg);
+        return rejectWithValue(msg);
       }
       
       if (errorMessage.includes('USER_NOT_FOUND') || errorMessage.toLowerCase().includes('пользователь не найден') || errorMessage.includes('user not found')) {
-        return rejectWithValue('User not found');
+        const msg = 'User not found';
+        console.log('[authCheck] Возвращаем:', msg);
+        return rejectWithValue(msg);
       }
       
       if (errorMessage.includes('INVALID_PASSWORD') || errorMessage.toLowerCase().includes('неверный пароль') || errorMessage.includes('Invalid password')) {
-        return rejectWithValue('Invalid password');
+        const msg = 'Invalid password';
+        console.log('[authCheck] Возвращаем:', msg);
+        return rejectWithValue(msg);
       }
       
-      if (errorMessage.includes('INVALID_CREDENTIALS') || errorMessage.includes('неверные') || errorMessage.includes('invalid credentials')) {
-        return rejectWithValue('Invalid email or password');
+      if (errorMessage.includes('INVALID_CREDENTIALS') || errorMessage.includes('неверные') || errorMessage.includes('invalid credentials') || errorMessage === 'UNAUTHORIZED') {
+        const msg = 'Invalid email or password';
+        console.log('[authCheck] Возвращаем:', msg);
+        return rejectWithValue(msg);
       }
       if (errorMessage === 'SESSION_EXPIRED') {
-        return rejectWithValue('Session expired');
+        const msg = 'Session expired';
+        console.log('[authCheck] Возвращаем:', msg);
+        return rejectWithValue(msg);
       }
       if (errorMessage.includes('NETWORK_ERROR') || errorMessage.includes('Failed to fetch') || errorMessage.includes('CORS')) {
-        return rejectWithValue('Network error. Please check your internet connection');
+        const msg = 'Network error. Please check your internet connection';
+        console.log('[authCheck] Возвращаем:', msg);
+        return rejectWithValue(msg);
       }
       
-      return rejectWithValue('Login failed. Please check your credentials and try again.');
+      const defaultMsg = 'Invalid email or password';
+      console.log('[authCheck] Возвращаем по умолчанию:', defaultMsg);
+      return rejectWithValue(defaultMsg);
     }
   }
 );

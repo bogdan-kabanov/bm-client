@@ -31,8 +31,12 @@ export const paymentMethodsApi = {
       const result = Array.isArray(response) ? response : (response as any)?.data || [];
       return result;
     } catch (error) {
-      console.error('Error loading countries:', error);
-      return [];
+      // Only log errors in development mode to reduce console noise
+      if (import.meta.env.DEV) {
+        console.error('Error loading countries:', error);
+      }
+      // Re-throw error so caller can handle it (e.g., use fallback)
+      throw error;
     }
   },
   getStructured: async (countryCode: string, direction?: 'IN' | 'OUT' | 'deposit' | 'withdrawal'): Promise<StructuredCategory[]> => {

@@ -214,10 +214,18 @@ const TradingPageComponent = () => {
         // Не загружаем, если:
         // 1. Данные уже загружены
         // 2. Загрузка уже выполняется
-        // 3. Была ошибка (чтобы избежать бесконечного цикла)
-        // 4. Уже была попытка загрузки
-        if (currencyCategories.length > 0 || currenciesLoading || currenciesError || hasAttemptedLoadRef.current) {
+        // 3. Уже была попытка загрузки
+        // Если была ошибка, пробуем еще раз (но только один раз)
+        if (currencyCategories.length > 0 || currenciesLoading || hasAttemptedLoadRef.current) {
             return;
+        }
+        
+        // Если была ошибка, сбрасываем состояние и пробуем загрузить снова
+        if (currenciesError) {
+            // Пробуем только один раз даже при ошибке
+            if (hasAttemptedLoadRef.current) {
+                return;
+            }
         }
         
         hasAttemptedLoadRef.current = true;

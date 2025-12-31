@@ -6,9 +6,11 @@ import classNames from 'classnames';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import { useAppDispatch } from '@/src/shared/lib/hooks';
 import { selectProfile } from '@src/entities/user/model/selectors';
+import { setUser } from '@src/entities/user/model/slice';
 import { loginWithEmail, registerWithEmail, checkAndRegisterUser, initiateGoogleAuth, loginWithGoogle } from '@src/features/auth/authCheck';
 import AuthModal, { AuthFormValues } from '../landing/components/AuthModal';
 import { PhoneInput } from '@/src/shared/ui/PhoneInput';
+import { getPartnerProgramUrl } from '@src/shared/lib/partnerServerUtils';
 import styles from './LandingPageV2.module.css';
 import fullLogo from '@src/assets/full-logo.png';
 import platformImage from '@src/assets/1.png';
@@ -174,7 +176,7 @@ export const LandingPageV2: FC = () => {
           await dispatch(loginWithGoogle({ code: googleCode, state: googleState || undefined })).unwrap();
           await dispatch(checkAndRegisterUser()).unwrap();
           window.history.replaceState({}, '', window.location.pathname);
-          navigate('/trading', { replace: true });
+          // navigate('/trading', { replace: true }); // Отключено по запросу
         } catch (error: any) {
           setAuthError(error?.message || 'Ошибка авторизации через Google');
           window.history.replaceState({}, '', window.location.pathname);
@@ -363,13 +365,18 @@ export const LandingPageV2: FC = () => {
 
   const handleLogin = async ({ email, password }: AuthFormValues) => {
     setAuthError(null);
+    setSidebarFormError(null);
+    console.log('[LandingPageV2] handleLogin вызван');
     try {
       const loginResult = await dispatch(loginWithEmail({ email, password })).unwrap();
+      console.log('[LandingPageV2] loginResult:', loginResult);
       
       if (loginResult?.user) {
+        dispatch(setUser(loginResult.user));
         setAuthModalOpen(false);
         setAuthError(null);
-        navigate('/trading', { replace: true });
+        setSidebarFormError(null);
+        // navigate('/trading', { replace: true }); // Отключено по запросу
         return;
       }
       
@@ -377,69 +384,110 @@ export const LandingPageV2: FC = () => {
         await dispatch(checkAndRegisterUser()).unwrap();
         setAuthModalOpen(false);
         setAuthError(null);
-        navigate('/trading', { replace: true });
+        setSidebarFormError(null);
+        // navigate('/trading', { replace: true }); // Отключено по запросу
       } catch (profileError: any) {
         const profileErrorMessage = profileError?.message || profileError?.toString() || '';
-        if (profileErrorMessage.includes('Network error') || profileErrorMessage.includes('NETWORK_ERROR')) {
-          setAuthError(t('auth.errors.networkError'));
-        } else {
-          setAuthModalOpen(false);
-          setAuthError(null);
-          navigate('/trading', { replace: true });
-        }
+        const errorText = profileErrorMessage.includes('Network error') || profileErrorMessage.includes('NETWORK_ERROR')
+          ? t('auth.errors.networkError')
+          : profileErrorMessage.includes('Session expired') || profileErrorMessage.includes('SESSION_EXPIRED')
+          ? t('auth.errors.sessionExpired')
+          : profileErrorMessage.includes('timeout') || profileErrorMessage.includes('Request timeout')
+          ? t('auth.errors.networkError')
+          : t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.';
+        setAuthError(errorText);
+        setSidebarFormError(errorText);
       }
     } catch (error: any) {
+      console.error('[LandingPageV2] Ошибка в handleLogin:', error);
       const errorMessage = error?.message || error?.toString() || '';
+      console.log('[LandingPageV2] errorMessage:', errorMessage);
 
-      if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials')) {
-        setAuthError(t('auth.errors.invalidCredentials'));
+      let errorText = '';
+      if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials') || errorMessage.includes('UNAUTHORIZED')) {
+        errorText = t('auth.errors.invalidCredentials') || 'Неверный email или пароль';
       } else if (errorMessage.includes('Invalid password')) {
-        setAuthError(t('auth.errors.invalidPassword'));
+        errorText = t('auth.errors.invalidPassword');
       } else if (errorMessage.includes('User not found')) {
-        setAuthError(t('auth.errors.invalidCredentials'));
+        errorText = t('auth.errors.invalidCredentials');
       } else if (errorMessage.includes('Session expired')) {
-        setAuthError(t('auth.errors.sessionExpired'));
+        errorText = t('auth.errors.sessionExpired');
       } else if (errorMessage.includes('Network error') || errorMessage.includes('NETWORK_ERROR') || errorMessage.includes('timeout') || errorMessage.includes('Request timeout')) {
-        const networkErrorMsg = t('auth.errors.networkError');
-        setAuthError(networkErrorMsg || 'Ошибка сети. Проверьте подключение к интернету и попробуйте снова.');
+        errorText = t('auth.errors.networkError') || 'Ошибка сети. Проверьте подключение к интернету и попробуйте снова.';
       } else if (errorMessage.includes('Server error')) {
-        setAuthError(t('auth.errors.serverError'));
+        errorText = t('auth.errors.serverError');
       } else {
-        setAuthError(t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.');
+        errorText = t('auth.errors.invalidCredentials') || 'Неверный email или пароль';
       }
+      
+      console.log('[LandingPageV2] Устанавливаем ошибку:', errorText);
+      setAuthError(errorText);
+      setSidebarFormError(errorText);
     }
   };
 
   const handleRegister = async ({ email, password, phone }: AuthFormValues) => {
     setAuthError(null);
+    setSidebarFormError(null);
     try {
-      await dispatch(registerWithEmail({ email, password, phone, refId })).unwrap();
-      await dispatch(checkAndRegisterUser()).unwrap();
-      // Закрываем модальное окно сразу после успешной регистрации
-      setAuthModalOpen(false);
-      setAuthError(null);
-      // Немедленная навигация - модальное окно закроется через return null
-      navigate('/trading', { replace: true });
+      const registerResponse = await dispatch(registerWithEmail({ email, password, phone, refId })).unwrap();
+      
+      // Если регистрация вернула user, используем его напрямую
+      if (registerResponse?.user) {
+        // Обновляем состояние пользователя в Redux
+        dispatch(setUser(registerResponse.user));
+        // Закрываем модальное окно
+        setAuthModalOpen(false);
+        setAuthError(null);
+        setSidebarFormError(null);
+        // navigate('/trading', { replace: true }); // Отключено по запросу
+        return;
+      }
+      
+      // Если user не вернулся, пытаемся загрузить профиль
+      try {
+        await dispatch(checkAndRegisterUser()).unwrap();
+        // Закрываем модальное окно только после успешной регистрации и загрузки профиля
+        setAuthModalOpen(false);
+        setAuthError(null);
+        setSidebarFormError(null);
+        // navigate('/trading', { replace: true }); // Отключено по запросу
+      } catch (profileError: any) {
+        const profileErrorMessage = profileError?.message || profileError?.toString() || '';
+        const errorText = profileErrorMessage.includes('Network error') || profileErrorMessage.includes('NETWORK_ERROR')
+          ? t('auth.errors.networkError')
+          : profileErrorMessage.includes('Session expired') || profileErrorMessage.includes('SESSION_EXPIRED')
+          ? t('auth.errors.sessionExpired')
+          : profileErrorMessage.includes('timeout') || profileErrorMessage.includes('Request timeout')
+          ? t('auth.errors.networkError')
+          : t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.';
+        setAuthError(errorText);
+        setSidebarFormError(errorText);
+      }
     } catch (error: any) {
       const errorMessage = error?.message || error?.toString() || '';
 
-      if (errorMessage.includes('Email already exists') || errorMessage.includes('email already')) {
-        setAuthError(t('auth.errors.emailAlreadyExists'));
+      let errorText = '';
+      if (errorMessage.includes('Email already exists') || errorMessage.includes('email already') || errorMessage.includes('Email уже зарегистрирован')) {
+        errorText = t('auth.errors.emailAlreadyExists');
       } else if (errorMessage.includes('Login already exists') || errorMessage.includes('login already')) {
-        setAuthError(t('auth.errors.loginAlreadyExists'));
+        errorText = t('auth.errors.loginAlreadyExists');
       } else if (errorMessage.includes('Invalid email')) {
-        setAuthError(t('auth.errors.invalidEmail'));
-      } else if (errorMessage.includes('Password too short') || errorMessage.includes('password')) {
-        setAuthError(t('auth.errors.passwordTooShort'));
+        errorText = t('auth.errors.invalidEmail');
+      } else if (errorMessage.includes('Password too short') || errorMessage.includes('password') || errorMessage.includes('too weak')) {
+        errorText = t('auth.errors.passwordTooShort');
       } else if (errorMessage.includes('Invalid phone') || errorMessage.includes('phone')) {
-        setAuthError(t('auth.errors.phoneInvalid'));
-      } else if (errorMessage.includes('Network error')) {
-        setAuthError(t('auth.errors.networkError'));
+        errorText = t('auth.errors.phoneInvalid');
+      } else if (errorMessage.includes('Network error') || errorMessage.includes('NETWORK_ERROR') || errorMessage.includes('timeout') || errorMessage.includes('Request timeout')) {
+        errorText = t('auth.errors.networkError');
       } else if (errorMessage.includes('Server error')) {
-        setAuthError(t('auth.errors.serverError'));
+        errorText = t('auth.errors.serverError');
       } else {
-        setAuthError(t('auth.errors.unknownError'));
+        errorText = t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.';
       }
+      
+      setAuthError(errorText);
+      setSidebarFormError(errorText);
     }
   };
 
@@ -858,86 +906,86 @@ export const LandingPageV2: FC = () => {
     [language]
   );
 
-  const footerLinkGroups = useMemo(
-    () =>
-      getLocaleValue<FooterLinkGroup[]>(
-        {
-          ru: [
-            {
-              title: 'Privacy policy',
-              items: [
-                { label: 'Политика конфиденциальности', href: '/privacy-policy', external: false },
-              ],
-            },
-            {
-              title: 'Service agreement',
-              items: [
-                { label: 'Пользовательское соглашение', href: '/terms', external: false },
-              ],
-            },
-            {
-              title: 'Risk disclosure',
-              items: [
-                { label: 'Предупреждение о рисках', href: '/risk-disclosure', external: false },
-              ],
-            },
-            {
-              title: 'Company',
-              items: [
-                { label: 'Компания', href: '/company', external: false },
-                { label: 'FAQ', href: '#faq', external: false },
-                { label: 'Контакты', href: '#', external: true },
-              ],
-            },
-            {
-              title: 'More',
-              items: [
-                { label: 'Демо-счёт', href: '#', external: true },
-                { label: 'Партнёрская программа', href: 'https://partner.blockmind.company/', external: true },
-              ],
-            },
-          ],
-          en: [
-            {
-              title: 'Privacy policy',
-              items: [
-                { label: 'Privacy policy', href: '/privacy-policy', external: false },
-              ],
-            },
-            {
-              title: 'Service agreement',
-              items: [
-                { label: 'Service agreement', href: '/terms', external: false },
-              ],
-            },
-            {
-              title: 'Risk disclosure',
-              items: [
-                { label: 'Risk disclosure', href: '/risk-disclosure', external: false },
-              ],
-            },
-            {
-              title: 'Company',
-              items: [
-                { label: 'Company', href: '/company', external: false },
-                { label: 'FAQ', href: '#faq', external: false },
-                { label: 'Contacts', href: '#', external: true },
-              ],
-            },
-            {
-              title: 'More',
-              items: [
-                { label: 'Demo account', href: '#', external: true },
-                { label: 'Affiliate program', href: 'https://partner.blockmind.company/', external: true },
-              ],
-            },
-          ],
-          default: [],
-        },
-        language
-      ),
-    [language]
-  );
+  const footerLinkGroups = useMemo(() => {
+    const partnerProgramUrl = getPartnerProgramUrl() || '#';
+    
+    return getLocaleValue<FooterLinkGroup[]>(
+      {
+        ru: [
+          {
+            title: 'Privacy policy',
+            items: [
+              { label: 'Политика конфиденциальности', href: '/privacy-policy', external: false },
+            ],
+          },
+          {
+            title: 'Service agreement',
+            items: [
+              { label: 'Пользовательское соглашение', href: '/terms', external: false },
+            ],
+          },
+          {
+            title: 'Risk disclosure',
+            items: [
+              { label: 'Предупреждение о рисках', href: '/risk-disclosure', external: false },
+            ],
+          },
+          {
+            title: 'Company',
+            items: [
+              { label: 'Компания', href: '/company', external: false },
+              { label: 'FAQ', href: '#faq', external: false },
+              { label: 'Контакты', href: '#', external: true },
+            ],
+          },
+          {
+            title: 'More',
+            items: [
+              { label: 'Демо-счёт', href: '#', external: true },
+              { label: 'Партнёрская программа', href: partnerProgramUrl, external: true },
+            ],
+          },
+        ],
+        en: [
+          {
+            title: 'Privacy policy',
+            items: [
+              { label: 'Privacy policy', href: '/privacy-policy', external: false },
+            ],
+          },
+          {
+            title: 'Service agreement',
+            items: [
+              { label: 'Service agreement', href: '/terms', external: false },
+            ],
+          },
+          {
+            title: 'Risk disclosure',
+            items: [
+              { label: 'Risk disclosure', href: '/risk-disclosure', external: false },
+            ],
+          },
+          {
+            title: 'Company',
+            items: [
+              { label: 'Company', href: '/company', external: false },
+              { label: 'FAQ', href: '#faq', external: false },
+              { label: 'Contacts', href: '#', external: true },
+            ],
+          },
+          {
+            title: 'More',
+            items: [
+              { label: 'Demo account', href: '#', external: true },
+              { label: 'Affiliate program', href: partnerProgramUrl, external: true },
+            ],
+          },
+        ],
+        default: [],
+      },
+      language
+    );
+  }, [language]);
 
   const currentYear = useMemo(() => new Date().getFullYear(), []);
 
@@ -960,7 +1008,7 @@ export const LandingPageV2: FC = () => {
               'Services are not available in several countries including USA, Canada, Hong Kong, EEA countries, Israel, Russia, and for persons under 18 years of age.',
             risk:
               'Risk warning: Trading Forex and leveraged instruments involves significant risk of losing your capital. Do not invest more than you can afford to lose and make sure you understand the risks. Consider your experience, objectives and seek independent advice if necessary.',
-            ownership: 'BlockMind LTD is the owner of the blockmind.company domain.',
+            ownership: 'BlockMind LTD',
             copy: `Copyright © ${currentYear} BlockMind. All rights reserved.`,
           },
           default: {
@@ -969,7 +1017,7 @@ export const LandingPageV2: FC = () => {
               'Services are not available in several countries including USA, Canada, Hong Kong, EEA countries, Israel, Russia, and for persons under 18 years of age.',
             risk:
               'Risk warning: Trading Forex and leveraged instruments involves significant risk of losing your capital. Do not invest more than you can afford to lose and make sure you understand the risks.',
-            ownership: 'BlockMind LTD is the owner of the blockmind.company domain.',
+            ownership: 'BlockMind LTD',
             copy: `Copyright © ${currentYear} BlockMind. All rights reserved.`,
           },
         },
@@ -1078,8 +1126,12 @@ export const LandingPageV2: FC = () => {
     return password.length >= 6;
   };
 
-  const handleSidebarSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSidebarSubmit = async (e?: React.FormEvent) => {
+    console.log('[LandingPageV2] handleSidebarSubmit вызван, sidebarMode:', sidebarMode);
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setSidebarFormError(null);
 
     const trimmedEmail = sidebarFormData.email.trim();
@@ -1125,19 +1177,18 @@ export const LandingPageV2: FC = () => {
 
     try {
       if (sidebarMode === 'login') {
-        await dispatch(loginWithEmail({ email: payload.email, password: payload.password })).unwrap();
-        await dispatch(checkAndRegisterUser()).unwrap();
-        navigate('/trading', { replace: true });
+        console.log('[LandingPageV2] Вызываем handleLogin из handleSidebarSubmit');
+        await handleLogin(payload);
       } else {
-        await dispatch(registerWithEmail({ email: payload.email, password: payload.password, phone: payload.phone, refId })).unwrap();
-        await dispatch(checkAndRegisterUser()).unwrap();
-        navigate('/trading', { replace: true });
+        console.log('[LandingPageV2] Вызываем handleRegister из handleSidebarSubmit');
+        await handleRegister(payload);
       }
       setSidebarFormError(null);
       setSidebarFormData({ email: '', phone: '', password: '', confirmPassword: '' });
     } catch (error: any) {
+      console.error('[LandingPageV2] Ошибка в handleSidebarSubmit:', error);
       const errorMessage = error?.message || error?.toString() || '';
-      if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials')) {
+      if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials') || errorMessage.includes('UNAUTHORIZED')) {
         setSidebarFormError(t('auth.errors.invalidCredentials'));
       } else if (errorMessage.includes('Email already exists') || errorMessage.includes('email already')) {
         setSidebarFormError(t('auth.errors.emailAlreadyExists'));
@@ -1145,8 +1196,10 @@ export const LandingPageV2: FC = () => {
         setSidebarFormError(t('auth.errors.invalidEmail'));
       } else if (errorMessage.includes('Password too short')) {
         setSidebarFormError(t('auth.errors.passwordTooShort'));
+      } else if (errorMessage.includes('Network error') || errorMessage.includes('NETWORK_ERROR')) {
+        setSidebarFormError(t('auth.errors.networkError'));
       } else {
-        setSidebarFormError(t('auth.errors.unknownError'));
+        setSidebarFormError(t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.');
       }
     }
   };
@@ -1686,7 +1739,22 @@ export const LandingPageV2: FC = () => {
             <div className={styles.sidebarError}>{authError}</div>
           )}
 
-          <form onSubmit={handleSidebarSubmit} className={styles.sidebarForm}>
+          <form 
+            className={styles.sidebarForm} 
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSidebarSubmit();
+              }
+            }}
+          >
             <div className={styles.sidebarFormGroup}>
               <label>{t('auth.email')}</label>
               <input
@@ -1781,7 +1849,16 @@ export const LandingPageV2: FC = () => {
               </>
             )}
 
-            <button type="submit" className={styles.sidebarSubmitBtn}>
+            <button 
+              type="button" 
+              className={styles.sidebarSubmitBtn}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Вызываем handleSidebarSubmit напрямую, без события формы
+                handleSidebarSubmit();
+              }}
+            >
               {sidebarMode === 'login' ? t('auth.loginButton') : t('landing.createAccount')}
             </button>
           </form>

@@ -62,11 +62,7 @@ export const fetchCurrencyCategories = createAsyncThunk<
             if (state.currency.categories.length > 0) {
                 return false;
             }
-            // Если была ошибка, не повторяем запрос бесконечно
-            // (пользователь может вручную повторить, если нужно)
-            if (state.currency.categoriesError) {
-                return false;
-            }
+            // Если была ошибка, позволяем повторить запрос (убрано ограничение для повторных попыток)
             return true;
         },
     }

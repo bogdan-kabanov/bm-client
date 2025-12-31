@@ -2,6 +2,8 @@
  * Утилиты для работы с партнерскими реферальными ссылками
  */
 
+import { getPartnerServerUrl } from './partnerServerUtils';
+
 const ENCODING_KEY = 'partner-ref-2025';
 
 /**
@@ -22,10 +24,17 @@ export async function decodePartnerRef(token: string): Promise<{
         if (shortIdMatch) {
             // Новый формат: короткий ID - запрашиваем данные через API
             try {
-                const hostname = typeof window !== 'undefined' ? window.location.hostname : 'blockmind.company';
-                const isProduction = hostname.includes('blockmind.company');
-                const partnerServer = isProduction ? 'partnerserver.blockmind.company' : 'partnerserver.velartrade.com';
-                const url = `https://${partnerServer}/api/referrals/short/${token}`;
+                const partnerServerUrl = getPartnerServerUrl();
+                
+                // Если партнерский сервер не настроен в env, не делаем запрос
+                if (!partnerServerUrl) {
+                    if (import.meta.env.DEV) {
+                        console.warn('[decodePartnerRef] VITE_PARTNER_SERVER_URL не настроен в .env файле');
+                    }
+                    return null;
+                }
+                
+                const url = `${partnerServerUrl}/api/referrals/short/${token}`;
 
                 console.log('[decodePartnerRef] Запрос информации о партнере:', url);
                 const response = await fetch(url, {
@@ -109,44 +118,40 @@ export async function decodePartnerRef(token: string): Promise<{
 
 export async function trackPartnerClick(partnerId: number, referralSlug: string, utmParams?: Record<string, string>) {
     try {
-        const { getApiBaseUrl } = await import('@src/shared/api');
-        const API_BASE = getApiBaseUrl();
-        const url = `${API_BASE}/affiliate/click`;
+        // Используем apiClient для правильной обработки CORS и ошибок
+        const { apiClient } = await import('@src/shared/api');
         const payload = {
             partnerId,
             referralSlug,
             ...utmParams,
         };
 
-        console.log('[trackPartnerClick] Отправка запроса на отслеживание клика:', {
-            url,
-            payload: { ...payload, ...(utmParams || {}) }
-        });
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text().catch(() => '');
-            console.error('[trackPartnerClick] ❌ Ошибка ответа сервера:', response.status, response.statusText, errorText);
-            return false;
+        if (import.meta.env.DEV) {
+            console.log('[trackPartnerClick] Отправка запроса на отслеживание клика:', {
+                payload: { ...payload, ...(utmParams || {}) }
+            });
         }
-        
-        const result = await response.json().catch(() => ({}));
-        console.log('[trackPartnerClick] ✅ Клик успешно отслежен:', result);
+
+        const result = await apiClient<{ success: boolean }>('/affiliate/click', {
+            method: 'POST',
+            body: payload,
+            noAuth: true, // Этот эндпоинт не требует авторизации
+        });
+
+        if (import.meta.env.DEV) {
+            console.log('[trackPartnerClick] ✅ Клик успешно отслежен:', result);
+        }
 
         return true;
     } catch (error) {
-        console.error('[trackPartnerClick] ❌ Ошибка при отслеживании клика:', error);
-        if (error instanceof Error) {
-            console.error('[trackPartnerClick] Детали ошибки:', error.message, error.stack);
+        // Не логируем ошибки в production, чтобы не засорять консоль
+        if (import.meta.env.DEV) {
+            console.error('[trackPartnerClick] ❌ Ошибка при отслеживании клика:', error);
+            if (error instanceof Error) {
+                console.error('[trackPartnerClick] Детали ошибки:', error.message, error.stack);
+            }
         }
+        // Возвращаем false, но не прерываем работу приложения
         return false;
     }
 }

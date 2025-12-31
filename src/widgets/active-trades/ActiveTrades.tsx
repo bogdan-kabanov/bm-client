@@ -631,13 +631,13 @@ const ActiveTradeItemComponent: React.FC<ActiveTradeItemComponentProps> = ({
         const expirationTime = trade.expirationTime && trade.expirationTime < 1e12 
           ? trade.expirationTime * 1000 
           : trade.expirationTime;
-        const createdAt = trade.createdAt && trade.createdAt < 1e12 
+        const created_at = trade.createdAt && trade.createdAt < 1e12 
           ? trade.createdAt * 1000 
           : trade.createdAt;
         
-        if (expirationTime && createdAt) {
-          const totalDuration = expirationTime - createdAt;
-          const elapsed = now - createdAt;
+        if (expirationTime && created_at) {
+          const totalDuration = expirationTime - created_at;
+          const elapsed = now - created_at;
           const remaining = expirationTime - now;
           // Изменено: показываем прошедшее время (заполнение слева направо)
           const progressPercent = totalDuration > 0 

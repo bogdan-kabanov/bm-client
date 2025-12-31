@@ -406,9 +406,9 @@ export const registerHandlers = (store: WebSocketStore, dispatch: AppDispatch) =
                     const entryPrice = tradeData.entryPrice;
                     const expirationTime = tradeData.expirationTime;
                     // ВАЖНО: используем серверное время, а не локальное время клиента
-                    const tradeTimestamp = tradeData.trade_timestamp || tradeData.tradeTimestamp || tradeData.serverTime || tradeData.createdAt || getServerTime();
-                    const createdAtRaw = typeof tradeTimestamp === 'number' ? tradeTimestamp : (tradeTimestamp?.getTime?.() || getServerTime());
-                    const createdAt = Math.floor(createdAtRaw);
+                    const trade_timestamp = tradeData.trade_timestamp || tradeData.tradeTimestamp || tradeData.serverTime || tradeData.createdAt || getServerTime();
+                    const created_at_raw = typeof trade_timestamp === 'number' ? trade_timestamp : (trade_timestamp?.getTime?.() || getServerTime());
+                    const created_at = Math.floor(created_at_raw);
                     
                     const baseCurrency = tradeData.baseCurrency || tradeData.base_currency;
                     const quoteCurrency = tradeData.quoteCurrency || tradeData.quote_currency;
@@ -432,7 +432,7 @@ export const registerHandlers = (store: WebSocketStore, dispatch: AppDispatch) =
                         entryPrice: entryPrice,
                         currentPrice: tradeData.currentPrice || entryPrice,
                         currentPriceAtTrade: tradeData.currentPriceAtTrade || entryPrice,
-                        createdAt: createdAt,
+                        createdAt: created_at,
                         symbol: symbol,
                         baseCurrency: baseCurrency,
                         quoteCurrency: quoteCurrency,

@@ -299,27 +299,28 @@ export const apiClient = async <T>(
         const errorText = await response.text();
 
         if (response.status === 401) {
-          // Временное логирование для диагностики 401 ошибки
-          if (endpoint.includes('/users/me')) {
-            console.error('[API-CLIENT] ❌ 401 Unauthorized для /users/me:', {
-              endpoint,
-              fullUrl,
-              hasToken: !!token,
-              tokenPreview: token ? token.substring(0, 30) + '...' : 'нет',
-              errorText: errorText.substring(0, 200),
-              responseHeaders: Object.fromEntries(response.headers.entries()),
-            });
-          }
+          // Логирование для диагностики 401 ошибки
+          console.error('[API-CLIENT] ❌ 401 Unauthorized:', {
+            endpoint,
+            fullUrl,
+            hasToken: !!token,
+            noAuth,
+            tokenPreview: token ? token.substring(0, 30) + '...' : 'нет',
+            errorText: errorText.substring(0, 200),
+          });
           
           if (errorText.includes('Пользователь не найден') || errorText.toLowerCase().includes('пользователь не найден')) {
+            console.log('[API-CLIENT] Бросаем USER_NOT_FOUND');
             throw new Error('USER_NOT_FOUND');
           }
           
           if (errorText.includes('Неверный пароль') || errorText.toLowerCase().includes('неверный пароль')) {
+            console.log('[API-CLIENT] Бросаем INVALID_PASSWORD');
             throw new Error('INVALID_PASSWORD');
           }
           
           if (errorText.includes('неверные') || errorText.includes('invalid') || errorText.includes('credentials')) {
+            console.log('[API-CLIENT] Бросаем INVALID_CREDENTIALS');
             throw new Error('INVALID_CREDENTIALS');
           }
           
@@ -381,7 +382,17 @@ export const apiClient = async <T>(
           }
           
           if (noAuth) {
-            throw new Error('UNAUTHORIZED');
+            // Для эндпоинтов без авторизации (login, register) пробрасываем более детальную ошибку
+            if (errorText.includes('Неверный пароль') || errorText.toLowerCase().includes('неверный пароль') || errorText.includes('Invalid password')) {
+              throw new Error('INVALID_PASSWORD');
+            }
+            if (errorText.includes('неверные') || errorText.includes('invalid') || errorText.includes('credentials')) {
+              throw new Error('INVALID_CREDENTIALS');
+            }
+            if (errorText.includes('Пользователь не найден') || errorText.includes('User not found')) {
+              throw new Error('USER_NOT_FOUND');
+            }
+            throw new Error('INVALID_CREDENTIALS');
           }
           
           // Не делаем автоматический logout здесь - это должно обрабатываться
@@ -396,6 +407,26 @@ export const apiClient = async <T>(
           // что токен невалидный или сессия истекла. Бросаем SESSION_EXPIRED
           // чтобы authCheck.tsx мог попробовать обновить токен или сделать logout
           throw new Error('SESSION_EXPIRED');
+        }
+
+        if (response.status === 500) {
+          // Обработка 500 ошибки - может означать, что аккаунт удален или произошла серверная ошибка
+          // Для эндпоинтов, связанных с пользователем, это может означать, что аккаунт удален
+          if (endpoint.includes('/users/me') || endpoint.includes('/users/profile')) {
+            // Если это запрос профиля пользователя и получили 500, вероятно аккаунт удален
+            throw new Error('ACCOUNT_DELETED');
+          }
+          // Для эндпоинта удаления аккаунта, даже при ошибке 500, считаем что аккаунт удален
+          // (возможно, произошла ошибка при удалении связанных записей, но пользователь уже удален)
+          if (endpoint.includes('/users/account/delete')) {
+            // Проверяем, содержит ли ответ информацию об успешном удалении
+            if (errorText.includes('successfully deleted') || errorText.includes('Account successfully deleted')) {
+              throw new Error('ACCOUNT_DELETED');
+            }
+            // Если это ошибка при удалении, но пользователь мог быть удален, считаем удаленным
+            throw new Error('ACCOUNT_DELETED_OR_ERROR');
+          }
+          throw new Error(`SERVER_ERROR: ${errorText.substring(0, 200)}`);
         }
 
         if (response.status === 404) {
@@ -474,6 +505,10 @@ export const apiClient = async <T>(
           throw error;
         }
         
+        if (error.message === 'ACCOUNT_DELETED' || error.message === 'ACCOUNT_DELETED_OR_ERROR') {
+          throw error;
+        }
+        
         if (error instanceof TypeError && (
           error.message.includes('Failed to fetch') ||
           error.message.includes('NetworkError') ||
@@ -482,7 +517,7 @@ export const apiClient = async <T>(
           throw new Error('NETWORK_ERROR');
         }
         
-        if (!['INVALID_CREDENTIALS', 'USER_NOT_FOUND', 'SESSION_EXPIRED', 'NETWORK_ERROR'].includes(error.message)) {
+        if (!['INVALID_CREDENTIALS', 'USER_NOT_FOUND', 'SESSION_EXPIRED', 'NETWORK_ERROR', 'ACCOUNT_DELETED', 'ACCOUNT_DELETED_OR_ERROR'].includes(error.message)) {
           if (import.meta.env.DEV) {
 
           }

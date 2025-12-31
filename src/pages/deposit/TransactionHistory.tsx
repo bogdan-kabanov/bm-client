@@ -140,9 +140,9 @@ export function TransactionHistory() {
         const combined = [...depositTransactions, ...withdrawalTransactions];
         
         return combined.sort((a, b) => {
-            const dateA = new Date(a.createdAt).getTime();
-            const dateB = new Date(b.createdAt).getTime();
-            return dateB - dateA;
+            const date_a = new Date(a.createdAt).getTime();
+            const date_b = new Date(b.createdAt).getTime();
+            return date_b - date_a;
         });
     }, [deposits, withdrawalHistory]);
 

@@ -48,9 +48,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [phoneValid, setPhoneValid] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [blurredFields, setBlurredFields] = useState<Set<string>>(new Set());
   const overlayRef = useRef<HTMLDivElement>(null);
+  const submitInProgressRef = useRef(false); // Ref для отслеживания выполнения без перерендера
 
   const getText = (key: string, fallback: string) => {
     const value = t(key);
@@ -66,6 +68,8 @@ const AuthModal: React.FC<AuthModalProps> = ({
       setPolicyAccepted(false);
       setTouchedFields(new Set());
       setBlurredFields(new Set());
+      setIsSubmitting(false); // Сбрасываем флаг при открытии модального окна
+      submitInProgressRef.current = false; // Reset ref on modal open
       // Блокируем скролл body когда модальное окно открыто
       if (typeof document !== 'undefined') {
         document.body.style.overflow = 'hidden';
@@ -100,9 +104,30 @@ const AuthModal: React.FC<AuthModalProps> = ({
     return password.length >= 6;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent, source?: string) => {
+    const callSource = source || (e ? 'form-event' : 'manual');
+    console.log('[AuthModal] 🔵 handleSubmit вызван', { isLogin, source: callSource, isSubmitting, submitInProgress: submitInProgressRef.current });
+    
+    // Защита от двойного вызова - проверяем и ref, и state
+    if (isSubmitting || submitInProgressRef.current) {
+      console.log('[AuthModal] ⚠️ handleSubmit уже выполняется, пропускаем', { isSubmitting, submitInProgress: submitInProgressRef.current });
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      return;
+    }
+    
+    if (e) {
+      e.preventDefault(); // Предотвращаем стандартное поведение формы
+      e.stopPropagation(); // Останавливаем всплытие события
+    }
+    
+    // Устанавливаем флаги
+    submitInProgressRef.current = true;
+    setIsSubmitting(true);
     setFormError(null);
+    console.log('[AuthModal] ✅ Флаги установлены, начинаем обработку');
     
     // Помечаем все поля как "тронутые" для показа ошибок
     setTouchedFields(new Set(['email', 'password', 'phone', 'confirmPassword']));
@@ -112,22 +137,26 @@ const AuthModal: React.FC<AuthModalProps> = ({
     // Валидация email
     if (!trimmedEmail) {
       setFormError(t('auth.errors.emailRequired'));
+      setIsSubmitting(false);
       return;
     }
 
     if (!validateEmail(trimmedEmail)) {
       setFormError(t('auth.errors.invalidEmail'));
+      setIsSubmitting(false);
       return;
     }
 
     // Валидация пароля
     if (!formData.password) {
       setFormError(t('auth.errors.passwordRequired'));
+      setIsSubmitting(false);
       return;
     }
 
     if (!validatePassword(formData.password)) {
       setFormError(t('auth.errors.passwordTooShort'));
+      setIsSubmitting(false);
       return;
     }
 
@@ -137,23 +166,27 @@ const AuthModal: React.FC<AuthModalProps> = ({
       const phoneTrimmed = (formData.phone || '').trim();
       if (!phoneTrimmed || !phoneValid) {
         setFormError(t('auth.errors.phoneInvalid'));
+        setIsSubmitting(false);
         return;
       }
 
       // Валидация подтверждения пароля
       if (!formData.confirmPassword) {
         setFormError(t('auth.errors.passwordRequired'));
+        setIsSubmitting(false);
         return;
       }
 
       if (formData.password !== formData.confirmPassword) {
         setFormError(t('landing.passwordsMustMatch'));
+        setIsSubmitting(false);
         return;
       }
 
       // Валидация политики
       if (!policyAccepted) {
         setFormError(t('auth.errors.termsNotAccepted'));
+        setIsSubmitting(false);
         return;
       }
     }
@@ -163,11 +196,40 @@ const AuthModal: React.FC<AuthModalProps> = ({
       email: trimmedEmail,
     };
 
-    if (isLogin) {
-      onLogin(payload);
-    } else {
-      onRegister(payload);
-    }
+    console.log('[AuthModal] Валидация пройдена, вызываем onLogin/onRegister');
+    
+    // Вызываем обработчики и сбрасываем флаг после завершения
+    const executeAuth = async () => {
+      try {
+        if (isLogin) {
+          console.log('[AuthModal] Вызываем onLogin с payload:', { email: payload.email, hasPassword: !!payload.password });
+          const result = onLogin(payload);
+          // Если функция возвращает Promise, ждем его
+          if (result && typeof result.then === 'function') {
+            await result;
+          }
+        } else {
+          console.log('[AuthModal] Вызываем onRegister');
+          const result = onRegister(payload);
+          // Если функция возвращает Promise, ждем его
+          if (result && typeof result.then === 'function') {
+            await result;
+          }
+        }
+      } catch (error) {
+        // Ошибка уже обработана в handleLogin/handleRegister
+        console.error('[AuthModal] Ошибка при выполнении авторизации:', error);
+      } finally {
+        // Сбрасываем флаги после небольшой задержки, чтобы предотвратить двойной вызов
+        setTimeout(() => {
+          console.log('[AuthModal] 🔄 Сбрасываем флаги isSubmitting');
+          submitInProgressRef.current = false;
+          setIsSubmitting(false);
+        }, 500);
+      }
+    };
+    
+    executeAuth();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -203,10 +265,41 @@ const AuthModal: React.FC<AuthModalProps> = ({
     <div 
       ref={overlayRef}
       className={styles.authModalOverlay} 
-      onClick={onClose} 
+      onClick={(e) => {
+        // Закрываем модальное окно только при клике непосредственно на overlay, а не на его дочерние элементы
+        // Проверяем, что клик был именно на overlay, а не на модальное окно или его содержимое
+        const target = e.target as HTMLElement;
+        const currentTarget = e.currentTarget as HTMLElement;
+        
+        // Закрываем только если клик был непосредственно на overlay (не на модальном окне или его содержимом)
+        if (target === currentTarget || target === overlayRef.current) {
+          // Дополнительная проверка: убеждаемся, что клик не был на модальном окне
+          const modalElement = currentTarget.querySelector(`.${styles.authModal}`);
+          if (modalElement && !modalElement.contains(target)) {
+            onClose();
+          }
+        }
+      }} 
+      onMouseDown={(e) => {
+        // Также обрабатываем mousedown для предотвращения закрытия при клике на кнопку
+        const target = e.target as HTMLElement;
+        const currentTarget = e.currentTarget as HTMLElement;
+        
+        // Если клик был не на overlay, останавливаем событие
+        if (target !== currentTarget && target !== overlayRef.current) {
+          e.stopPropagation();
+        }
+      }}
       style={{ display: open ? 'flex' : 'none' }}
     >
-      <div className={styles.authModal} onClick={e => e.stopPropagation()}>
+      <div 
+        className={styles.authModal} 
+        onClick={(e) => {
+          // Останавливаем всплытие всех событий клика внутри модального окна
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+        }}
+      >
         <button className={styles.closeBtn} onClick={onClose}>×</button>
 
         <div className={styles.modalHeader}>
@@ -246,7 +339,23 @@ const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className={styles.authForm}>
+        <form 
+          className={styles.authForm} 
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              console.log('[AuthModal] ⌨️ Enter нажат в форме');
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit(undefined, 'keydown-enter');
+            }
+          }}
+        >
           <div className={styles.formGroup}>
             <label htmlFor="auth-email">{t('auth.email')}</label>
             <div className={styles.inputWrapper}>
@@ -411,7 +520,29 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          <button type="submit" className={styles.submitBtn}>
+          <button 
+            type="button" 
+            className={styles.submitBtn}
+            onClick={(e) => {
+              console.log('[AuthModal] 🖱️ Клик по кнопке отправки');
+              // Полностью останавливаем все события
+              e.preventDefault();
+              e.stopPropagation();
+              if (e.nativeEvent) {
+                e.nativeEvent.stopImmediatePropagation();
+              }
+              // Предотвращаем всплытие события, чтобы не закрыть модальное окно
+              if (e.nativeEvent && e.nativeEvent.stopImmediatePropagation) {
+                e.nativeEvent.stopImmediatePropagation();
+              }
+              // Вызываем handleSubmit напрямую, без события формы
+              handleSubmit(undefined, 'button-click');
+            }}
+            onMouseDown={(e) => {
+              // Также останавливаем mousedown, чтобы предотвратить любые побочные эффекты
+              e.stopPropagation();
+            }}
+          >
             {isLogin ? t('auth.loginButton') : t('landing.createAccount')}
           </button>
         </form>

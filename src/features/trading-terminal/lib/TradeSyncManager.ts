@@ -750,10 +750,10 @@ export class TradeSyncManager {
       }
     }
 
-    const createdAt = data.createdAt ?? pendingData?.createdAt ?? this.context.getServerTime();
-    const expirationTime = data.expirationTime ??
+    const created_at = data.createdAt ?? pendingData?.createdAt ?? this.context.getServerTime();
+    const expiration_time = data.expirationTime ??
       (pendingData
-        ? createdAt + pendingData.expirationSeconds * 1000
+        ? created_at + pendingData.expirationSeconds * 1000
         : this.context.getServerTime() + 60000);
 
     const symbolInfo = resolveTradeSymbolInfo(
@@ -781,7 +781,7 @@ export class TradeSyncManager {
       currentPriceAtTrade: entryPrice,
       direction: (pendingData?.direction ?? data.direction) as 'buy' | 'sell',
       amount: pendingData?.amount ?? data.amount,
-      timestamp: createdAt,
+      timestamp: created_at,
     });
 
     pendingTradeDataRef.current = null;

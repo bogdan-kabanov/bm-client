@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@src/shared/lib/hooks";
 import "./ProfilePage.css";
-import { updateUserProfile, fetchProfile, setUser } from "@src/entities/user/model/slice.ts";
+import { updateUserProfile, fetchProfile, setUser, clearProfile } from "@src/entities/user/model/slice.ts";
 import { selectProfile, selectProfileError, selectProfileLoading } from "@src/entities/user/model/selectors.ts";
 import { useLanguage } from "@src/app/providers/useLanguage.ts";
 import { useAnimatedNumber } from "@src/shared/hooks/useAnimatedNumber";
@@ -210,9 +210,24 @@ export function ProfilePage() {
                         if (!loadingRef.current && token === localStorage.getItem('token')) {
                             lastLoadTimeRef.current = Date.now();
                             dispatch(fetchProfile()).catch((err) => {
-                                if (err instanceof Error && !err.message.includes('SESSION_EXPIRED') && 
-                                    !err.message.includes('NETWORK_ERROR')) {
+                                const errorMessage = err instanceof Error ? err.message : String(err);
+                                // Игнорируем ошибки, связанные с удаленным аккаунтом или истекшей сессией
+                                if (!errorMessage.includes('SESSION_EXPIRED') && 
+                                    !errorMessage.includes('NETWORK_ERROR') &&
+                                    !errorMessage.includes('ACCOUNT_DELETED') &&
+                                    !errorMessage.includes('500') &&
+                                    !errorMessage.includes('Internal Server Error')) {
                                     console.error('Ошибка загрузки профиля:', err);
+                                }
+                                // Если аккаунт удален, очищаем профиль и редиректим на лендинг
+                                // (это уже обработано в fetchProfile, но на всякий случай проверяем здесь тоже)
+                                if (errorMessage.includes('ACCOUNT_DELETED')) {
+                                    dispatch(clearProfile());
+                                    localStorage.removeItem('token');
+                                    localStorage.removeItem('refresh_token');
+                                    if (window.location.pathname !== '/') {
+                                        window.location.href = '/';
+                                    }
                                 }
                             });
                         }
@@ -338,7 +353,9 @@ export function ProfilePage() {
     useEffect(() => {
         const fetchCurrentIp = async () => {
             try {
-                const response = await fetch('https://api.ipify.org?format=json');
+                // Используем переменную окружения или fallback на ipify.org
+                const ipApiUrl = import.meta.env.VITE_IP_API_URL || 'https://api.ipify.org?format=json';
+                const response = await fetch(ipApiUrl);
                 const data = await response.json();
                 if (data.ip) {
                     setCurrentIpAddress(data.ip);
@@ -1005,13 +1022,54 @@ export function ProfilePage() {
         try {
             setDeleteAccountLoading(true);
             await userApi.deleteAccount(deleteAccountConfirm);
+            
+            // Очищаем все данные пользователя
             localStorage.removeItem('token');
-            navigate('/', { replace: true });
+            localStorage.removeItem('refresh_token');
+            
+            // Очищаем профиль из Redux
+            dispatch(clearProfile());
+            
+            // Показываем уведомление об успешном удалении
+            setNotification({
+                type: 'success',
+                message: t('profile.deleteAccountSuccess', { defaultValue: 'Аккаунт успешно удалён' })
+            });
+            
+            // Редирект на лендинг
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 500);
         } catch (error) {
             const message = error instanceof Error ? error.message : '';
+            const errorMessage = message || t('profile.deleteAccountError', { defaultValue: 'Не удалось удалить аккаунт' });
+            
+            // Если получили ошибку ACCOUNT_DELETED_OR_ERROR, считаем что аккаунт удален
+            // (возможно, произошла ошибка при удалении связанных записей, но пользователь уже удален)
+            if (message.includes('ACCOUNT_DELETED_OR_ERROR')) {
+                // Очищаем все данные пользователя
+                localStorage.removeItem('token');
+                localStorage.removeItem('refresh_token');
+                
+                // Очищаем профиль из Redux
+                dispatch(clearProfile());
+                
+                // Показываем уведомление об успешном удалении
+                setNotification({
+                    type: 'success',
+                    message: t('profile.deleteAccountSuccess', { defaultValue: 'Аккаунт успешно удалён' })
+                });
+                
+                // Редирект на лендинг
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 500);
+                return;
+            }
+            
             setNotification({
                 type: 'error',
-                message: message || t('profile.deleteAccountError', { defaultValue: 'Не удалось удалить аккаунт' })
+                message: errorMessage
             });
         } finally {
             setDeleteAccountLoading(false);

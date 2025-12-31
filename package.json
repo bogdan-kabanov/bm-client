@@ -1,11 +1,11 @@
 {
   "name": "web",
   "private": true,
-  "version": "1.10.865",
+  "version": "1.10.921",
   "type": "module",
   "scripts": {
-    "dev": "vite --config vite.config.dev.ts",
-    "build:dev": "vite build --config vite.config.dev.ts",
+    "dev": "vite",
+    "build:dev": "vite build",
     "build:production": "rm -rf dist-production && vite build --config vite.config.production.ts",
     "build": "vite build --config vite.config.production.ts",
     "lint": "eslint .",

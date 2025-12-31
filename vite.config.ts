@@ -1,21 +1,13 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import devConfig from './vite.config.dev';
 import productionConfig from './vite.config.production';
 import { resolve } from 'path';
 
 const envDir = resolve(__dirname, '..', 'env-config', 'client');
 const env = loadEnv('development', envDir, '');
 
-const DEFAULT_ALLOWED_HOSTS = [
-  'velartrade.com',
-  'www.velartrade.com',
-  'admin.velartrade.com',
-  'dashboard.velartrade.com',
-  'blockmind.company',
-  'www.blockmind.company',
-  'admin.blockmind.company',
-];
+// Allowed hosts теперь берутся только из переменных окружения
+const DEFAULT_ALLOWED_HOSTS: string[] = [];
 // Use only values from .env file, no fallbacks
 const API_BASE = env.VITE_API_BASE || '';
 const WS_BASE = env.VITE_WS_BASE || '';
@@ -93,7 +85,6 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
         // Максимально консервативные настройки для React 19
         passes: 1,
         unsafe: false,
@@ -240,15 +231,17 @@ export default defineConfig(({ mode }) => ({
     },
     cors: {
       origin: (origin, callback) => {
-        const allowedOrigins = [
-          'https://velartrade.com',
-          'https://www.velartrade.com',
-          'https://admin.velartrade.com',
-          'https://blockmind.company',
-          'https://www.blockmind.company',
-          'https://admin.blockmind.company',
-        ];
-        if (!origin || allowedOrigins.includes(origin)) {
+        // В dev режиме разрешаем все origins для локальной разработки
+        if (mode === 'development' || !process.env.NODE_ENV) {
+          callback(null, true);
+          return;
+        }
+        // В production используем только origins из переменных окружения
+        const allowedOriginsEnv = env.VITE_ALLOWED_ORIGINS || '';
+        const allowedOrigins = allowedOriginsEnv
+          ? allowedOriginsEnv.split(',').map(o => o.trim()).filter(o => o.length > 0)
+          : [];
+        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));

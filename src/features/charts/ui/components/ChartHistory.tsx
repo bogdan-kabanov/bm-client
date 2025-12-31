@@ -272,11 +272,20 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({
       
       // Детальное логирование для отладки
       if (!currencyInfo) {
-        console.error('[ChartHistory] ❌ Не удалось получить информацию о валюте', {
-          selectedBase,
-          getCurrencyInfoExists: !!getCurrencyInfoRef.current,
-          currenciesLoading
-        });
+        // Если валюты еще загружаются, это нормально - просто ждем
+        if (currenciesLoading) {
+          console.log('[ChartHistory] ⏳ Ожидание загрузки валют для получения информации о валюте', {
+            selectedBase,
+            currenciesLoading
+          });
+        } else {
+          // Если валюты уже загружены, но валюта не найдена - это может быть нормально, если валюта отсутствует в списке
+          console.warn('[ChartHistory] ⚠️ Информация о валюте не найдена после загрузки валют', {
+            selectedBase,
+            getCurrencyInfoExists: !!getCurrencyInfoRef.current,
+            currenciesLoading
+          });
+        }
         setIsLoading(false);
         return;
       }
@@ -290,13 +299,13 @@ export const ChartHistory: React.FC<ChartHistoryProps> = ({
             currenciesLoading
           });
         } else {
-          // Если валюты уже загружены, но ID все еще отрицательный - это ошибка
-          console.error('[ChartHistory] ❌ Invalid currency ID after currencies loaded', {
+          // Если валюты уже загружены, но ID все еще отрицательный - это может быть нормально для fallback валют
+          // Не показываем это как ошибку, так как это может быть ожидаемым поведением
+          console.warn('[ChartHistory] ⚠️ Invalid currency ID after currencies loaded (fallback currency?)', {
             selectedBase,
-            currencyInfo,
             id: currencyInfo.id,
             idType: typeof currencyInfo.id,
-            message: 'Currency ID must be a positive number after currencies are loaded'
+            message: 'Currency ID is not positive, skipping API request'
           });
         }
         setIsLoading(false);

@@ -39,10 +39,23 @@ export const currencyApi = {
         let categories: CurrencyCategory[] = [];
         if (Array.isArray(response)) {
           categories = response;
-        } else if (response?.data && Array.isArray(response.data)) {
-          categories = response.data;
-        } else if ((response as any).data && Array.isArray((response as any).data)) {
-          categories = (response as any).data;
+        } else if (response && typeof response === 'object') {
+          // Проверяем разные варианты структуры ответа
+          if ('data' in response && Array.isArray(response.data)) {
+            categories = response.data;
+          } else if ((response as any).data && Array.isArray((response as any).data)) {
+            categories = (response as any).data;
+          }
+        }
+        
+        // Логируем результат для отладки
+        if (categories.length === 0) {
+          console.warn('[currencyApi] Получен пустой массив категорий валют', {
+            responseType: typeof response,
+            isArray: Array.isArray(response),
+            hasData: response && typeof response === 'object' && 'data' in response,
+            responseKeys: response && typeof response === 'object' ? Object.keys(response) : []
+          });
         }
         
         // Сохраняем в кеш

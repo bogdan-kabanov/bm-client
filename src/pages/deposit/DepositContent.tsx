@@ -470,9 +470,9 @@ export function DepositContent({ showLanguageDropdown = true }: DepositContentPr
     const [selectedEwalletMethod, setSelectedEwalletMethod] = useState<any>(null);
     const sortedUserDeposits = useMemo(() => {
         return [...userDeposits].sort((a, b) => {
-            const dateA = new Date(a.createdAt).getTime();
-            const dateB = new Date(b.createdAt).getTime();
-            return dateA - dateB;
+            const date_a = new Date(a.createdAt).getTime();
+            const date_b = new Date(b.createdAt).getTime();
+            return date_a - date_b;
         });
     }, [userDeposits]);
 
