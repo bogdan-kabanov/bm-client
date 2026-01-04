@@ -8,6 +8,7 @@ import { convertToUSDSync } from '@src/shared/lib/currency/exchangeRates';
 import { validateTrade } from '@src/shared/lib/utils/tradeValidation';
 import { getServerTime as getGlobalServerTime } from '@src/shared/lib/serverTime';
 import { demoLog } from '@src/entities/demo-trading';
+import { readDemoBalance } from '@src/entities/demo-trading/balance';
 import { addActiveTrade, setCurrentPrice, setCurrentMarketPrice } from '@src/entities/trading/model/slice';
 import { selectSelectedBase, selectTradingMode, selectCurrentPrice } from '@src/entities/trading/model/selectors';
 import { tradePlacementService } from '../services/tradePlacementService';
@@ -62,12 +63,23 @@ export const useTradingOperations = ({
 
   const handleManualTrade = useCallback((direction: 'buy' | 'sell') => {
     console.log('[MANUAL_TRADE] ========== НАЧАЛО ОБРАБОТКИ ОБЫЧНОЙ СТАВКИ ==========');
-    const currentTradingMode = tradingModeRef.current;
+    // ВАЖНО: Используем актуальный tradingMode из Redux напрямую, а не через ref
+    // Ref может не успеть обновиться при переключении режима
+    const currentTradingMode = tradingMode; // Используем напрямую из Redux
     const currentSelectedBase = selectedBaseRef.current;
+    
+    console.log('[MANUAL_TRADE] 🔍 Состояние режима торговли:', {
+      'tradingMode (Redux)': tradingMode,
+      'tradingModeRef.current': tradingModeRef.current,
+      'currentTradingMode (используемый)': currentTradingMode,
+      'selectedBase': currentSelectedBase
+    });
     
     console.log('[MANUAL_TRADE] Начальные параметры:', {
       direction,
       tradingMode: currentTradingMode,
+      tradingModeFromRedux: tradingMode,
+      tradingModeFromRef: tradingModeRef.current,
       selectedBase: currentSelectedBase,
       amount: manualTradeAmountRef.current,
       expirationSeconds: expirationSecondsRef.current,
@@ -96,17 +108,31 @@ export const useTradingOperations = ({
       amountInUSD: amount,
     });
     
+    // ВАЖНО: Для демо режима используем demo_balance из userProfile, если доступен
+    // Если userProfile.demo_balance не определен (null/undefined), используем localStorage демо-баланс
+    // Для manual режима используем balance prop или balance из userProfile
+    const demoBalanceFromProfile = userProfile?.demo_balance;
+    const demoBalanceFromStorage = readDemoBalance();
     const currentBalance = currentTradingMode === 'demo' 
-      ? (userProfile?.demo_balance ?? 0)
+      ? (demoBalanceFromProfile !== undefined && demoBalanceFromProfile !== null 
+          ? demoBalanceFromProfile 
+          : demoBalanceFromStorage)
       : (balance ?? userProfile?.balance ?? 0);
     
-    console.log('[MANUAL_TRADE] Баланс:', {
+    console.log('[MANUAL_TRADE] 💰 ========== ВЫЧИСЛЕНИЕ БАЛАНСА ==========');
+    console.log('[MANUAL_TRADE] 💰 Параметры:', {
       tradingMode: currentTradingMode,
-      demoBalance: userProfile?.demo_balance,
-      realBalance: userProfile?.balance,
+      'userProfile?.demo_balance': demoBalanceFromProfile,
+      'demoBalanceFromStorage': demoBalanceFromStorage,
+      'userProfile?.balance': userProfile?.balance,
       balanceProp: balance,
       currentBalance,
+      isDemo: currentTradingMode === 'demo',
+      'demoBalanceSource': currentTradingMode === 'demo' 
+        ? (demoBalanceFromProfile !== undefined && demoBalanceFromProfile !== null ? 'userProfile' : 'localStorage')
+        : 'notDemo'
     });
+    console.log('[MANUAL_TRADE] 💰 =========================================');
     
     const expirationSec = parseInt(expirationSecondsRef.current || '30');
     
@@ -219,7 +245,7 @@ export const useTradingOperations = ({
       }
       
       console.error('[MANUAL_TRADE] ========== ОШИБКА: ЦЕНА НЕДОСТУПНА ==========');
-      showError(t('trading.priceNotAvailable') || 'Цена недоступна. Дождитесь загрузки графика.');
+      showError(t('trading.priceNotAvailable'));
       return;
     }
     console.log('[MANUAL_TRADE] ✅ Цена получена:', { price, priceSource });
@@ -251,7 +277,7 @@ export const useTradingOperations = ({
     // Получаем ID валюты из currencyInfo
     if (!getCurrencyInfo) {
       console.error('[MANUAL_TRADE] ❌ getCurrencyInfo не доступен');
-      showError(t('trading.errorCreatingTrade') || 'Информация о валюте недоступна');
+      showError(t('trading.currencyInfoUnavailable'));
       return;
     }
 
@@ -259,9 +285,30 @@ export const useTradingOperations = ({
     if (!currencyInfo || !currencyInfo.id) {
       console.error('[MANUAL_TRADE] ❌ Не удалось получить ID валюты', {
         selectedBase: selectedBaseRef.current,
-        currencyInfo
+        currencyInfo,
+        hasGetCurrencyInfo: !!getCurrencyInfo,
+        currencyInfoType: typeof currencyInfo,
+        currencyInfoId: currencyInfo?.id,
+        currencyInfoIdType: typeof currencyInfo?.id
       });
-      showError(t('trading.errorCreatingTrade') || 'Не удалось получить информацию о валюте');
+      
+      // Показываем более понятное сообщение об ошибке
+      const errorMessage = currencyInfo 
+        ? t('trading.currencyInfoError') || 'Currency information is incomplete'
+        : (t('trading.currencyNotFound', { currency: selectedBaseRef.current }) || `Currency "${selectedBaseRef.current}" not found. Please select another currency.`);
+      
+      showError(errorMessage);
+      return;
+    }
+    
+    // Проверяем, что ID валидный (положительное число)
+    if (currencyInfo.id <= 0 || !Number.isInteger(currencyInfo.id)) {
+      console.error('[MANUAL_TRADE] ❌ Невалидный ID валюты', {
+        selectedBase: selectedBaseRef.current,
+        currencyId: currencyInfo.id,
+        currencyIdType: typeof currencyInfo.id
+      });
+      showError(t('trading.invalidCurrencyId') || 'Invalid currency ID. Please select another currency.');
       return;
     }
 
@@ -269,7 +316,8 @@ export const useTradingOperations = ({
     const now = Math.floor(getServerTime());
     const tradeTimestamp = now;
 
-    const currentMode = tradingModeRef.current;
+    // ВАЖНО: Используем актуальный tradingMode из Redux, а не из ref
+    const currentMode = tradingMode;
     
     console.log('[MANUAL_TRADE] Параметры сделки:', {
       id: currencyId,
@@ -394,7 +442,7 @@ export const useTradingOperations = ({
               }
             } else {
               console.error('[MANUAL_TRADE] ❌ Сделка не создана, результат невалиден:', result);
-              showError(t('trading.errorCreatingTrade') || 'Ошибка создания ставки');
+              showError(t('trading.tradeCreationError'));
             }
           } catch (error: any) {
             console.error('[MANUAL_TRADE] ========== ИСКЛЮЧЕНИЕ В CALLBACK УСПЕХА ==========');
@@ -403,7 +451,7 @@ export const useTradingOperations = ({
               error,
               stack: error.stack,
             });
-            showError(error.message || t('trading.errorCreatingTrade') || 'Ошибка создания ставки');
+            showError(error.message || t('trading.tradeCreationError'));
           }
         },
         // Callback ошибки
@@ -422,7 +470,7 @@ export const useTradingOperations = ({
         error,
         stack: error.stack,
       });
-      showError(error.message || t('trading.errorCreatingTrade') || 'Ошибка создания ставки');
+      showError(error.message || t('trading.tradeCreationError'));
     }
   }, [
     wsSendMessage,
@@ -438,6 +486,8 @@ export const useTradingOperations = ({
     getServerTime,
     getPriceFromChart,
     getCurrencyInfo,
+    tradingMode, // Добавляем tradingMode как зависимость, чтобы использовать актуальное значение
+    selectedBaseRef,
   ]);
 
   return {

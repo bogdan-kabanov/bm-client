@@ -1,6 +1,8 @@
 import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import './ActiveTrades.css';
 import { useLanguage } from '@src/app/providers/useLanguage';
+import arrowUpIcon from '@src/assets/icons/arrow-up.svg';
+import arrowDownIcon from '@src/assets/icons/arrow-down.svg';
 import type { Currency } from '@src/shared/api';
 import { markIconUrlAsFailed, isIconUrlFailed } from '@src/features/trading-terminal/hooks/useCurrencyData';
 import { LOCAL_CURRENCY_ICONS, preloadCurrencyIcon } from '@src/features/trading-terminal/constants/currencyIcons';
@@ -10,7 +12,6 @@ import { selectProfile } from '@src/entities/user/model/selectors';
 import { formatCurrency } from '@src/shared/lib/currency/currencyUtils';
 import { preloadImage, isImageCached, getImagePriority } from '@src/shared/lib/imageOptimization';
 import { getServerTime } from '@src/shared/lib/serverTime';
-
 interface ActiveTrade {
   id: string;
   price: number;
@@ -34,6 +35,7 @@ interface ActiveTrade {
 interface ActiveTradesProps {
   getCurrencyInfo?: (baseCurrency: string) => Currency | undefined;
   resolveCurrencyIconUrls?: (currency?: Currency | null) => string[];
+  onOpenTradeSidebar?: (trade: any) => void;
 }
 
 const KNOWN_QUOTES = ['USDT', 'USDC', 'USD', 'BTC', 'ETH', 'EUR', 'GBP', 'TRY', 'RUB', 'BNB', 'BUSD'];
@@ -467,6 +469,7 @@ interface ActiveTradeItemComponentProps {
   getMarkerPrice?: (tradeId: string) => number | null;
   currentMarketPrice?: number | null;
   userCurrency: string;
+  onOpenTradeSidebar?: (trade: any) => void;
 }
 
 const ActiveTradeItemComponent: React.FC<ActiveTradeItemComponentProps> = ({
@@ -479,6 +482,7 @@ const ActiveTradeItemComponent: React.FC<ActiveTradeItemComponentProps> = ({
   getMarkerPrice,
   currentMarketPrice,
   userCurrency,
+  onOpenTradeSidebar,
 }) => {
   const markerPrice = getMarkerPrice ? (() => {
     try {
@@ -566,25 +570,48 @@ const ActiveTradeItemComponent: React.FC<ActiveTradeItemComponentProps> = ({
     />
   );
 
+  const handleOpenTradeDetails = () => {
+    if (!onOpenTradeSidebar) return;
+    // Преобразуем trade в формат для сайдбара
+    const tradeForSidebar = {
+      id: trade.id,
+      price: trade.price,
+      direction: trade.direction,
+      amount: trade.amount,
+      expiration_time: trade.expirationTime,
+      entry_price: trade.entryPrice,
+      current_price: currentMarketPrice,
+      created_at: trade.createdAt,
+      symbol: trade.symbol,
+      base_currency: trade.baseCurrency,
+      quote_currency: trade.quoteCurrency,
+      profit_percentage: trade.profitPercentage,
+    };
+    onOpenTradeSidebar(tradeForSidebar);
+  };
+
   return (
-    <div 
-      className={`trade-history-item ${trade.direction} ${isWin ? 'win' : 'loss'}`}
-    >
-      <div className="trade-history-row trade-history-row-top">
-        <div className="trade-currency-wrapper">
-          <div className="trade-currency-icon">
-            {currencyIcon}
+    <>
+      <div 
+        className={`trade-history-item ${trade.direction} ${isWin ? 'win' : 'loss'}`}
+        onClick={handleOpenTradeDetails}
+        style={{ cursor: 'pointer' }}
+      >
+        <div className="trade-history-row trade-history-row-top">
+          <div className="trade-currency-wrapper">
+            <div className="trade-currency-icon">
+              {currencyIcon}
+            </div>
+            <div className="trade-currency">
+              {currency}
+              {((trade as any).is_copied || (trade as any).isCopied) && (
+                <span className="copied-trade-marker" title="Сделка через подписку на сигнал трейдера">
+                  📋
+                </span>
+              )}
+            </div>
           </div>
-          <div className="trade-currency">
-            {currency}
-            {((trade as any).is_copied || (trade as any).isCopied) && (
-              <span className="copied-trade-marker" title="Сделка через подписку на сигнал трейдера">
-                📋
-              </span>
-            )}
-          </div>
-        </div>
-        <div className={`trade-profit ${isWin ? 'win' : 'loss'}`}>
+          <div className={`trade-profit ${isWin ? 'win' : 'loss'}`}>
           {(() => {
             // Для активных сделок показываем потенциальный выигрыш если в выигрыше, иначе 0
             // Для завершенных сделок показываем финальный результат
@@ -616,9 +643,13 @@ const ActiveTradeItemComponent: React.FC<ActiveTradeItemComponentProps> = ({
       </div>
       <div className="trade-history-row trade-history-row-bottom">
         <div className="trade-time">
-          <div className={`trade-arrow ${trade.direction === 'buy' ? 'arrow-up' : 'arrow-down'}`}>
-            {trade.direction === 'buy' ? '⬆' : '⬇'}
-          </div>
+          <img 
+            src={trade.direction === 'buy' ? arrowUpIcon : arrowDownIcon}
+            alt={trade.direction === 'buy' ? 'up' : 'down'}
+            className={`trade-arrow ${trade.direction === 'buy' ? 'arrow-up' : 'arrow-down'}`}
+            width="16"
+            height="16"
+          />
           {formatDate(trade.createdAt)}
         </div>
         <div className="trade-middle">
@@ -660,13 +691,15 @@ const ActiveTradeItemComponent: React.FC<ActiveTradeItemComponentProps> = ({
         }
         return null;
       })()}
-    </div>
+      </div>
+    </>
   );
 };
 
 export const ActiveTrades: React.FC<ActiveTradesProps> = ({ 
   getCurrencyInfo,
-  resolveCurrencyIconUrls
+  resolveCurrencyIconUrls,
+  onOpenTradeSidebar
 }) => {
   const tradingMode = useAppSelector(selectTradingMode);
   const currentMarketPrice = useAppSelector(selectCurrentMarketPrice);
@@ -752,6 +785,7 @@ export const ActiveTrades: React.FC<ActiveTradesProps> = ({
             getMarkerPrice={getMarkerPrice}
             currentMarketPrice={effectiveMarketPrice}
             userCurrency={userCurrency}
+            onOpenTradeSidebar={onOpenTradeSidebar}
           />
         ))}
       </div>

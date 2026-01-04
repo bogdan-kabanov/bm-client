@@ -233,16 +233,27 @@ export class WebSocketClient {
                     const currentState = this.ws?.readyState;
                     const isClosed = currentState === WebSocket.CLOSED || currentState === WebSocket.CLOSING;
                     
+                    // Логируем ошибку для диагностики
+                    if (this.errorCount <= 5 || this.reconnectAttempts === 0) {
+                        console.error(`[WebSocketClient] ❌ WebSocket error [attempt ${this.reconnectAttempts + 1}]:`, {
+                            error,
+                            readyState: currentState,
+                            isClosed,
+                            url: this.url,
+                            errorCount: this.errorCount,
+                        });
+                    }
+                    
                     if (wasConnecting && this.connectPromise && currentState !== WebSocket.OPEN) {
                         if (!isClosed) {
                             setTimeout(() => {
                                 if (this.connectPromise && this.ws?.readyState !== WebSocket.OPEN) {
-                                    this.connectPromise.reject(new Error('WebSocket connection error'));
+                                    this.connectPromise.reject(new Error('WebSocket connection error: Invalid frame header'));
                                     this.connectPromise = null;
                                 }
                             }, 100);
                         } else {
-                            this.connectPromise.reject(new Error('WebSocket connection error'));
+                            this.connectPromise.reject(new Error('WebSocket connection error: Invalid frame header'));
                             this.connectPromise = null;
                         }
                     }
@@ -254,6 +265,7 @@ export class WebSocketClient {
                                     try {
                                         this.ws.close();
                                     } catch (e) {
+                                        // Игнорируем ошибки при закрытии
                                     }
                                     this.ws = null;
                                 }

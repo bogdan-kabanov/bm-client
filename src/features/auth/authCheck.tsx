@@ -254,14 +254,45 @@ export const registerWithEmail = createAsyncThunk<
   'auth/registerWithEmail',
   async ({ email, password, phone, refId }, { rejectWithValue }) => {
     try {
+      // Если refId не передан, пытаемся получить из localStorage
+      let finalRefId = refId;
+      if (!finalRefId) {
+        try {
+          const savedRefId = localStorage.getItem('referral_id');
+          if (savedRefId) {
+            const refIdNum = parseInt(savedRefId, 10);
+            if (!isNaN(refIdNum) && refIdNum > 0) {
+              finalRefId = refIdNum;
+              console.log('[authCheck] ✅ Реферальный ID получен из localStorage:', finalRefId);
+            }
+          }
+        } catch (e) {
+          console.error('[authCheck] ❌ Ошибка получения referral_id из localStorage:', e);
+        }
+      }
+      
       // Получаем информацию о партнерской ссылке из localStorage
-      let partnerReferral: { partnerId: number; referralSlug: string } | undefined;
+      let partner_referral: { partner_id: number; referral_slug: string } | undefined;
       try {
         const partnerReferralStr = localStorage.getItem('partner_referral');
         console.log('[authCheck] 🔍 Проверка partner_referral в localStorage:', partnerReferralStr);
         if (partnerReferralStr) {
-          partnerReferral = JSON.parse(partnerReferralStr);
-          console.log('[authCheck] ✅ Партнерская ссылка найдена:', partnerReferral);
+          const parsed = JSON.parse(partnerReferralStr);
+          console.log('[authCheck] 📋 Распарсенный partner_referral:', parsed);
+          // Преобразуем camelCase в snake_case для совместимости
+          const partner_id = parsed.partnerId || parsed.partner_id;
+          const referral_slug = parsed.referralSlug || parsed.referral_slug;
+          
+          // Проверяем, что оба значения присутствуют
+          if (partner_id && referral_slug) {
+            partner_referral = {
+              partner_id: Number(partner_id),
+              referral_slug: String(referral_slug)
+            };
+            console.log('[authCheck] ✅ Партнерская ссылка найдена и валидна:', partner_referral);
+          } else {
+            console.warn('[authCheck] ⚠️ partner_referral неполный:', { partner_id, referral_slug, parsed });
+          }
         } else {
           console.warn('[authCheck] ⚠️ partner_referral не найден в localStorage');
         }
@@ -270,13 +301,13 @@ export const registerWithEmail = createAsyncThunk<
       }
       
       // Получаем промокод из URL из localStorage
-      let referralPromocode: string | undefined;
+      let referral_promocode: string | undefined;
       try {
         const promocodeStr = localStorage.getItem('referral_promocode');
         console.log('[authCheck] 🔍 Проверка referral_promocode в localStorage:', promocodeStr);
         if (promocodeStr) {
-          referralPromocode = promocodeStr;
-          console.log('[authCheck] ✅ Промокод из URL найден:', referralPromocode);
+          referral_promocode = promocodeStr;
+          console.log('[authCheck] ✅ Промокод из URL найден:', referral_promocode);
         }
       } catch (e) {
         console.error('[authCheck] ❌ Ошибка получения referral_promocode:', e);
@@ -284,27 +315,46 @@ export const registerWithEmail = createAsyncThunk<
       
       console.log('[authCheck] 📤 Отправка запроса регистрации:', {
         email,
-        hasRefId: !!refId,
-        refId,
-        hasPartnerReferral: !!partnerReferral,
-        partnerReferral,
-        hasReferralPromocode: !!referralPromocode,
-        referralPromocode
+        hasRefId: !!finalRefId,
+        ref_id: finalRefId,
+        hasPartnerReferral: !!partner_referral,
+        partner_referral: partner_referral ? {
+          partner_id: partner_referral.partner_id,
+          referral_slug: partner_referral.referral_slug
+        } : undefined,
+        hasReferralPromocode: !!referral_promocode,
+        referral_promocode
       });
       
-      const response = await authApi.register(email, password, phone, refId, partnerReferral, referralPromocode);
+      // Убеждаемся, что partner_referral содержит все необходимые поля перед отправкой
+      const finalPartnerReferral = partner_referral && partner_referral.partner_id && partner_referral.referral_slug 
+        ? partner_referral 
+        : undefined;
+      
+      if (partner_referral && !finalPartnerReferral) {
+        console.warn('[authCheck] ⚠️ partner_referral неполный, не отправляем:', partner_referral);
+      }
+      
+      const response = await authApi.register(email, password, phone, finalRefId, finalPartnerReferral, referral_promocode);
       localStorage.setItem('token', response.token);
       if (response.refresh_token) {
         localStorage.setItem('refresh_token', response.refresh_token);
       }
       
-      if (refId) {
+      if (finalRefId) {
         localStorage.removeItem('referral_id');
       }
       
-      if (partnerReferral) {
+      if (finalPartnerReferral) {
         localStorage.removeItem('partner_referral');
       }
+      
+      // НЕ удаляем referral_promocode из localStorage после регистрации,
+      // чтобы он был доступен на странице депозита
+      // Промокод будет удален после использования на странице депозита
+      // if (referralPromocode) {
+      //   localStorage.removeItem('referral_promocode');
+      // }
       
       return response;
     } catch (error: unknown) {
@@ -330,7 +380,36 @@ export const initiateGoogleAuth = createAsyncThunk<
   'auth/initiateGoogleAuth',
   async ({ refId, partnerReferral, state }, { rejectWithValue }) => {
     try {
-      const response = await authApi.initiateGoogleAuth(refId, partnerReferral, state);
+      // Если refId не передан, пытаемся получить из localStorage
+      let finalRefId = refId;
+      if (!finalRefId) {
+        try {
+          const savedRefId = localStorage.getItem('referral_id');
+          if (savedRefId) {
+            const refIdNum = parseInt(savedRefId, 10);
+            if (!isNaN(refIdNum) && refIdNum > 0) {
+              finalRefId = refIdNum;
+            }
+          }
+        } catch (e) {
+          // Игнорируем ошибки
+        }
+      }
+      
+      // Если partnerReferral не передан, пытаемся получить из localStorage
+      let finalPartnerReferral = partnerReferral;
+      if (!finalPartnerReferral) {
+        try {
+          const partnerReferralStr = localStorage.getItem('partner_referral');
+          if (partnerReferralStr) {
+            finalPartnerReferral = JSON.parse(partnerReferralStr);
+          }
+        } catch (e) {
+          // Игнорируем ошибки
+        }
+      }
+      
+      const response = await authApi.initiateGoogleAuth(finalRefId, finalPartnerReferral, state);
       return response;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'UNKNOWN_ERROR';

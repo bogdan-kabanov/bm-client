@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supportApi, notificationApi, type SupportMessage, type SupportTicket, type Notification, type NotificationReply } from '@src/shared/api';
 import { useWebSocket } from '@/src/entities/websoket/useWebSocket';
 import { useLanguage } from '@/src/app/providers/useLanguage';
+import { getApiBaseUrl } from '@src/shared/api/client';
 import { FaPaperPlane, FaImage, FaTimes } from 'react-icons/fa';
-import ChatIcon from '@src/assets/ChatIcon.png';
+import ChatIcon from '@src/assets/images/ChatIcon.png';
+import DownloadIcon from '@src/assets/download.svg';
 import './ChatPanel.css';
 
 interface ChatPanelProps {
@@ -16,6 +19,7 @@ type TabType = 'tickets' | 'notifications';
 type ViewMode = 'list' | 'chat';
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
+  const navigate = useNavigate();
   const websocket = useWebSocket();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<TabType>('tickets');
@@ -33,6 +37,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
   const [newTicketMessage, setNewTicketMessage] = useState('');
   const [newTicketSubject, setNewTicketSubject] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedImage, setSelectedImage] = useState<{ url: string; fileName: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +45,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
 
   const activeTicket = useMemo(() => tickets.find(t => t.id === activeTicketId) || null, [tickets, activeTicketId]);
   const activeNotification = useMemo(() => notifications.find(n => n.id === activeNotificationId) || null, [notifications, activeNotificationId]);
+  const hasActiveTicket = useMemo(() => tickets.some(ticket => ticket.status === 'open'), [tickets]);
 
   const addMessage = useCallback((message: SupportMessage) => {
     setMessages(prev => {
@@ -277,14 +283,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
     setSelectedFiles([]);
     
     try {
-      if (websocket?.isConnected) {
+      // Ensure message is not empty - server requires non-empty message
+      // If files are sent without text, send empty string - server will add placeholder
+      const messageToSend = messageContent || '';
+      
+      if (websocket?.isConnected && messageToSend.trim()) {
         // Для WebSocket пока отправляем только текст, файлы через API
-        websocket.sendMessage({ type: 'support_send_message', ticketId: activeTicketId, text: messageContent });
+        websocket.sendMessage({ type: 'support_send_message', ticketId: activeTicketId, text: messageToSend });
       }
       
       // Отправляем сообщение с файлами через API
-      if (messageContent || filesToSend.length > 0) {
-        const sentMessage = await supportApi.sendUserMessage(activeTicketId, messageContent || '', filesToSend);
+      if (messageToSend || filesToSend.length > 0) {
+        const sentMessage = await supportApi.sendUserMessage(activeTicketId, messageToSend, filesToSend);
         addMessage(sentMessage);
       }
       
@@ -359,7 +369,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    setSelectedFiles(prev => [...prev, ...imageFiles].slice(0, 10)); // Максимум 10 файлов
+    
+    // Validate file size (max 5MB per file)
+    const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+    const oversizedFiles = imageFiles.filter(file => file.size > maxFileSize);
+    
+    if (oversizedFiles.length > 0) {
+      const fileNames = oversizedFiles.map(f => f.name).join(', ');
+      alert(t('support.fileTooLarge') || `File size exceeds 5MB: ${fileNames}`);
+      // Only add files that are within size limit
+      const validFiles = imageFiles.filter(file => file.size <= maxFileSize);
+      setSelectedFiles(prev => [...prev, ...validFiles].slice(0, 10));
+    } else {
+      setSelectedFiles(prev => [...prev, ...imageFiles].slice(0, 10)); // Максимум 10 файлов
+    }
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -453,6 +477,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
     );
   }, [tickets, searchQuery]);
 
+  const filteredNotifications = useMemo(() => {
+    if (!searchQuery.trim()) return notifications;
+    const query = searchQuery.toLowerCase();
+    return notifications.filter(notification => 
+      notification.title?.toLowerCase().includes(query) || 
+      notification.message?.toLowerCase().includes(query) ||
+      notification.id.toString().includes(query)
+    );
+  }, [notifications, searchQuery]);
+
   const handleTicketClick = async (ticketId: number) => {
     setActiveTicketId(ticketId);
     setViewMode('chat');
@@ -476,6 +510,58 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
   const truncateText = (text: string, maxLength: number = 100): string => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
+  };
+
+  const renderMessageWithLinks = (message: string): React.ReactNode => {
+    // Ищем паттерн типа "Go to /promocodes" или "/promocodes" и делаем его ссылкой
+    const linkPattern = /(Go to\s+)?(\/promocodes)/gi;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkPattern.exec(message)) !== null) {
+      // Добавляем текст до ссылки
+      if (match.index > lastIndex) {
+        parts.push(message.substring(lastIndex, match.index));
+      }
+      
+      // Добавляем ссылку
+      const linkText = match[0].trim();
+      parts.push(
+        <a
+          key={`link-${match.index}`}
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/promocodes');
+            onClose();
+          }}
+          style={{
+            color: '#4a90e2',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            fontWeight: 500
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.textDecoration = 'underline';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.textDecoration = 'none';
+          }}
+        >
+          {linkText}
+        </a>
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // Добавляем оставшийся текст
+    if (lastIndex < message.length) {
+      parts.push(message.substring(lastIndex));
+    }
+    
+    return parts.length > 0 ? <>{parts}</> : message;
   };
 
   return (
@@ -542,8 +628,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
             <>
               {/* Кнопка создания тикета */}
               <div className="chat-panel__create-ticket-section">
-                <button onClick={handleCreateTicket} className="chat-panel__new-ticket-btn">
-                  {t('support.createTicket') || 'Создать тикет'}
+                <button 
+                  onClick={handleCreateTicket} 
+                  className={`chat-panel__new-ticket-btn ${hasActiveTicket ? 'has-active-ticket' : ''}`}
+                >
+                  {hasActiveTicket ? t('support.hasActiveTicket') : t('support.createTicket')}
                 </button>
               </div>
 
@@ -552,7 +641,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                 <input
                   type="text"
                   className="chat-panel__search-input"
-                  placeholder={t('common.search') || 'Поиск...'}
+                  placeholder={t('common.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -585,14 +674,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                 <div className="chat-panel__chats-list">
                   {filteredTickets.length === 0 ? (
                     <div className="chat-panel__empty-state">
-                      {tickets.length === 0 ? 'Нет тикетов' : 'Ничего не найдено'}
+                      {tickets.length === 0 ? t('trades.noTickets') : t('trades.nothingFound')}
                     </div>
                   ) : (
                     filteredTickets.map(ticket => (
                       <div
                         key={ticket.id}
                         onClick={() => handleTicketClick(ticket.id)}
-                        className="chat-panel__chat-card"
+                        className={`chat-panel__chat-card ${ticket.id === activeTicketId || ticket.status === 'open' ? 'active' : 'inactive'}`}
                       >
                         <img src={ChatIcon} alt="" className="chat-panel__chat-card-icon" />
                         <div className="chat-panel__chat-card-info">
@@ -611,12 +700,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
 
               {activeTab === 'notifications' && (
                 <div className="chat-panel__chats-list">
-                  {notifications.length === 0 ? (
+                  {filteredNotifications.length === 0 ? (
                     <div className="chat-panel__empty-state">
-                      {t('support.noNotifications')}
+                      {notifications.length === 0 ? t('support.noNotifications') : t('trades.nothingFound')}
                     </div>
                   ) : (
-                    notifications.map(notification => (
+                    filteredNotifications.map(notification => (
                       <div
                         key={notification.id}
                         className={`chat-panel__notification-card ${!notification.is_read ? 'unread' : ''} ${notification.allow_reply ? 'has-reply' : ''}`}
@@ -626,7 +715,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                         <div className="chat-panel__chat-card-info">
                           <div className="chat-panel__notification-card-header">
                             <div className="chat-panel__notification-card-title">
-                              {notification.title}
+                              <span className="chat-panel__notification-card-title-text">{notification.title}</span>
                               {notification.allow_reply && (
                                 <span className="chat-panel__notification-reply-icon" title="You can reply to this notification">💬</span>
                               )}
@@ -645,12 +734,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
           ) : (
             /* Режим чата */
             (activeTicket || activeNotification) && (
-              <>
+              <div className="chat-panel__chat-wrapper">
                 {activeTicket && (
                   <>
-                    <div className="chat-panel__chat-header">
-                      <span>{t('support.ticketLabel')}{activeTicket.id} ({activeTicket.status === 'open' ? t('support.statusOpen') : t('support.statusClosed')})</span>
-                    </div>
                     <div className="chat-panel__messages-container" ref={messagesContainerRef}>
                       {messages.length === 0 && (
                         <div className="chat-panel__welcome-message">
@@ -679,18 +765,52 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                             <span className="chat-panel__message-time">{formatMessageTime(m.createdAt)}</span>
                           </div>
                           <div className={`chat-panel__message-bubble ${m.sender_role === 'admin' ? 'admin' : 'user'}`}>
-                            {m.message && <div className="chat-panel__message-text">{m.message}</div>}
+                            {m.message && (() => {
+                              // Don't show "[Image attached]" text if there are files
+                              const imageAttachedText = t('support.imageAttached') || '[Image attached]';
+                              const isImageAttachedOnly = m.message.trim() === imageAttachedText || m.message.trim() === '[Image attached]' || m.message.trim() === '[Изображение прикреплено]';
+                              if (isImageAttachedOnly && m.files && m.files.length > 0) {
+                                return null;
+                              }
+                              return <div className="chat-panel__message-text">{renderMessageWithLinks(m.message)}</div>;
+                            })()}
                             {m.files && m.files.length > 0 && (
                               <div className="chat-panel__message-files">
-                                {m.files.map((file) => (
-                                  <img
-                                    key={file.id}
-                                    src={file.file_url}
-                                    alt={file.file_name}
-                                    className="chat-panel__message-file"
-                                    onClick={() => window.open(file.file_url, '_blank')}
-                                  />
-                                ))}
+                                {m.files.map((file) => {
+                                  // Build absolute URL for file
+                                  let fileUrl = file.file_url;
+                                  if (fileUrl && !fileUrl.startsWith('http://') && !fileUrl.startsWith('https://')) {
+                                    // If relative path (e.g., /support/uploads/filename.jpg), prepend API base URL
+                                    const baseUrl = getApiBaseUrl();
+                                    if (fileUrl.startsWith('/')) {
+                                      fileUrl = `${baseUrl}${fileUrl}`;
+                                    } else {
+                                      fileUrl = `${baseUrl}/${fileUrl}`;
+                                    }
+                                  }
+                                  return (
+                                    <img
+                                      key={file.id}
+                                      src={fileUrl}
+                                      alt={file.file_name}
+                                      className="chat-panel__message-file"
+                                      onClick={() => setSelectedImage({ url: fileUrl, fileName: file.file_name })}
+                                      onError={(e) => {
+                                        console.error('Error loading image:', {
+                                          fileUrl,
+                                          originalFileUrl: file.file_url,
+                                          fileName: file.file_name,
+                                          baseUrl: getApiBaseUrl(),
+                                          error: e
+                                        });
+                                        // Don't hide, show broken image icon instead
+                                      }}
+                                      onLoad={() => {
+                                        console.log('Image loaded successfully:', fileUrl);
+                                      }}
+                                    />
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -756,9 +876,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                 )}
                 {activeNotification && (
                   <>
-                    <div className="chat-panel__chat-header">
-                      <span>{activeNotification.title}</span>
-                    </div>
                     <div className="chat-panel__messages-container" ref={messagesContainerRef}>
                       <div className="chat-panel__message-item admin">
                         <div className="chat-panel__message-sender">
@@ -766,7 +883,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                           <span className="chat-panel__message-time">{formatMessageTime(activeNotification.createdAt)}</span>
                         </div>
                         <div className="chat-panel__message-bubble admin">
-                          <div className="chat-panel__message-text">{activeNotification.message}</div>
+                          {activeNotification.message && <div className="chat-panel__message-text">{renderMessageWithLinks(activeNotification.message)}</div>}
                         </div>
                       </div>
                       {notificationReplies.map(reply => (
@@ -776,7 +893,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                             <span className="chat-panel__message-time">{formatMessageTime(reply.createdAt)}</span>
                           </div>
                           <div className={`chat-panel__message-bubble ${reply.sender_role === 'admin' ? 'admin' : 'user'}`}>
-                            <div className="chat-panel__message-text">{reply.message}</div>
+                            {reply.message && <div className="chat-panel__message-text">{renderMessageWithLinks(reply.message)}</div>}
                           </div>
                         </div>
                       ))}
@@ -809,7 +926,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                     )}
                   </>
                 )}
-              </>
+              </div>
             )
           )}
         </div>
@@ -819,8 +936,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
         <div className="chat-panel__popup-overlay">
           <div className="chat-panel__popup">
             <h3>{t('support.error')}</h3>
-            <p>{t('support.cannotCreateWhileOpen')}</p>
-            <button onClick={closePopup} className="chat-panel__popup-close-btn">{t('common.close')}</button>
+            <div className="chat-panel__popup-content">
+              <p>{t('support.cannotCreateWhileOpen')}</p>
+              <button onClick={closePopup} className="chat-panel__popup-close-btn">{t('common.close')}</button>
+            </div>
           </div>
         </div>
       )}
@@ -864,6 +983,49 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose, t }) => {
                 {t('support.createTicket')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {selectedImage && (
+        <div 
+          className="chat-panel__image-modal-overlay"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div 
+            className="chat-panel__image-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="chat-panel__image-modal-close"
+              onClick={() => setSelectedImage(null)}
+              aria-label={t('common.close')}
+            >
+              <FaTimes />
+            </button>
+            <img 
+              src={selectedImage.url} 
+              alt={selectedImage.fileName}
+              className="chat-panel__image-modal-image"
+            />
+            <a
+              href={selectedImage.url}
+              download={selectedImage.fileName}
+              className="chat-panel__image-modal-download"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Trigger download
+                const link = document.createElement('a');
+                link.href = selectedImage.url;
+                link.download = selectedImage.fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
+              aria-label="Download image"
+            >
+              <img src={DownloadIcon} alt="Download" />
+            </a>
           </div>
         </div>
       )}

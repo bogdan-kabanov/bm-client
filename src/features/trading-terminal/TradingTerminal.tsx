@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, startTransition, useCallback, useMemo } from 'react';
-import { CopyTradingPanel } from './components/CopyTradingPanel';
+import { TopPartnersPanel } from './components/TopPartnersPanel';
+import { SubscriptionsPanel } from './components/SubscriptionsPanel';
 import { ChartHistory } from '@/src/features/charts/ui/components/ChartHistory';
 import CandlesCanvas, { CandlesCanvasHandle } from '@/src/features/charts/ui/components/CandlesCanvas';
 import './TradingTerminal.css';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import { useNotification } from '@src/shared/ui/notification';
-import backgroundChartImage from '@src/assets/background_chart.png';
+import backgroundChartImage from '@src/assets/images/backgrounds/background_chart.png';
 import { useWebSocket } from '@src/entities/websoket/useWebSocket';
 import { getServerTime as getGlobalServerTime } from '@src/shared/lib/serverTime';
 import { getTimeframeDurationMs } from '@/src/features/charts/ui/utils';
@@ -18,6 +19,7 @@ import { ChartTopBar } from './components/ChartTopBar';
 import { ChartToolbar } from './components/ChartToolbar';
 import { IndicatorsSidebar } from './components/IndicatorsSidebar';
 import { EraserSizeSlider } from './components/EraserSizeSlider';
+import { DrawingToolSettings } from './components/DrawingToolSettings';
 import { ChartNavigationButton } from './components/ChartNavigationButton';
 import { ChartNavigationMenu } from './components/ChartNavigationMenu';
 import { ChatPanel } from './components/ChatPanel';
@@ -38,9 +40,10 @@ import type { Currency } from '@src/shared/api';
 import type { TradeMessage } from '@src/entities/websoket/websocket-types';
 import type { TradingTerminalProps } from './types';
 import { useAppDispatch, useAppSelector } from '@src/shared/lib/hooks';
-import { selectCopyTradingSignalsMenuOpen, selectCopyTradingSubscriptions } from '@src/entities/copy-trading-signals/model/selectors';
-import { setMenuOpen } from '@src/entities/copy-trading-signals/model/slice';
+import { selectCopyTradingSignalsMenuOpen, selectCopyTradingSubscriptions, selectTopPartnersMenuOpen, selectSubscriptionsMenuOpen } from '@src/entities/copy-trading-signals/model/selectors';
+import { setMenuOpen, setTopPartnersMenuOpen, setSubscriptionsMenuOpen } from '@src/entities/copy-trading-signals/model/slice';
 import { tradingService } from '@src/entities/trading/services/TradingService';
+import { apiClient } from '@src/shared/api';
 import { normalizeCurrencyPair } from '@src/shared/lib/currencyPairUtils';
 import { convertToUSDSync, convertFromUSDSync } from '@src/shared/lib/currency/exchangeRates';
 import { formatCurrency } from '@src/shared/lib/currency/currencyUtils';
@@ -59,9 +62,11 @@ import {
   setCurrentMarketPrice,
   setPrices,
   setTradeHistory,
+  setNewTradesCount,
   addTradeHistory,
   setActiveTrades,
   setSelectedBase,
+  setSelectedCurrencyId,
   setQuoteCurrency,
   setTradingMode,
   setSpreadPercent,
@@ -73,9 +78,11 @@ import {
   selectTradingPrices,
   selectTradeHistory,
   selectSelectedBase,
+  selectSelectedCurrencyId,
   selectQuoteCurrency,
   selectTradingMode,
   selectTradeHistoryByMode,
+  selectActiveTrades,
   selectActiveTradesByMode,
   selectSpreadPercent,
   selectHoveredButton,
@@ -141,44 +148,101 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
   const [showDrawingToolsMenu, setShowDrawingToolsMenu] = useState(false);
   const [selectedDrawingTool, setSelectedDrawingTool] = useState<'line' | 'freehand' | 'eraser' | 'rectangle' | 'circle' | 'arrow' | 'horizontal' | 'vertical' | 'text' | 'parallel' | 'fibonacci' | 'channel' | 'trendline' | 'zone' | null>(null);
   const [eraserRadius, setEraserRadius] = useState<number>(10);
+  const [drawingColor, setDrawingColor] = useState<string>('#ffa500');
+  const [drawingLineWidth, setDrawingLineWidth] = useState<number>(2);
   const [selectionMode, setSelectionMode] = useState(false);
   const tradingTerminalRef = useRef<HTMLDivElement | null>(null);
   const mainChartContainerRef = useRef<HTMLDivElement | null>(null);
   
   // Redux селекторы
-  const selectedBase = useAppSelector(selectSelectedBase);
+  const selectedBase = useAppSelector(selectSelectedBase); // Только для отображения
+  const selectedCurrencyId = useAppSelector(selectSelectedCurrencyId); // Основной идентификатор
   const tradingMode = useAppSelector(selectTradingMode);
   const currentPrice = useAppSelector(selectCurrentPrice);
   const tradeHistory = useAppSelector(selectTradeHistory);
   const currentMarketPrice = useAppSelector(selectCurrentMarketPrice);
   const showCopyTradingSignalsMenu = useAppSelector(selectCopyTradingSignalsMenuOpen);
+  const showTopPartnersMenu = useAppSelector(selectTopPartnersMenuOpen);
+  const showSubscriptionsMenu = useAppSelector(selectSubscriptionsMenuOpen);
   const spreadPercent = useAppSelector(selectSpreadPercent);
   const hoveredButton = useAppSelector(selectHoveredButton);
   
-  // Получаем состояние чата для взаимного исключения с CopyTradingPanel
+  // Получаем состояние чата для взаимного исключения с панелями
   const { isOpen: isChatOpen, closeChat } = useChatDropdown();
   
   // Refs для отслеживания предыдущих состояний
   const prevChatOpenRef = useRef(isChatOpen);
-  const prevCopyTradingOpenRef = useRef(showCopyTradingSignalsMenu);
+  const prevTopPartnersOpenRef = useRef(showTopPartnersMenu);
+  const prevSubscriptionsOpenRef = useRef(showSubscriptionsMenu);
   
-  // Взаимное исключение: при открытии чата закрываем CopyTradingPanel
+  // Взаимное исключение: при открытии чата закрываем панели
   useEffect(() => {
     const chatJustOpened = isChatOpen && !prevChatOpenRef.current;
-    if (chatJustOpened && showCopyTradingSignalsMenu) {
-      dispatch(setMenuOpen(false));
+    if (chatJustOpened) {
+      if (showTopPartnersMenu) {
+        dispatch(setTopPartnersMenuOpen(false));
+      }
+      if (showSubscriptionsMenu) {
+        dispatch(setSubscriptionsMenuOpen(false));
+      }
+      // Закрываем другие попапы
+      window.dispatchEvent(new CustomEvent('closeLanguageCurrencyModal'));
+      window.dispatchEvent(new CustomEvent('closeBonusPopup'));
     }
     prevChatOpenRef.current = isChatOpen;
-  }, [isChatOpen, showCopyTradingSignalsMenu, dispatch]);
+  }, [isChatOpen, showTopPartnersMenu, showSubscriptionsMenu, dispatch]);
   
-  // Взаимное исключение: при открытии CopyTradingPanel закрываем чат
+  // Взаимное исключение: при открытии панелей закрываем чат и другие панели
   useEffect(() => {
-    const copyTradingJustOpened = showCopyTradingSignalsMenu && !prevCopyTradingOpenRef.current;
-    if (copyTradingJustOpened && isChatOpen) {
-      closeChat();
+    const topPartnersJustOpened = showTopPartnersMenu && !prevTopPartnersOpenRef.current;
+    if (topPartnersJustOpened) {
+      if (isChatOpen) {
+        closeChat();
+      }
+      if (showSubscriptionsMenu) {
+        dispatch(setSubscriptionsMenuOpen(false));
+      }
+      // Закрываем другие попапы
+      window.dispatchEvent(new CustomEvent('closeLanguageCurrencyModal'));
+      window.dispatchEvent(new CustomEvent('closeBonusPopup'));
     }
-    prevCopyTradingOpenRef.current = showCopyTradingSignalsMenu;
-  }, [showCopyTradingSignalsMenu, isChatOpen, closeChat]);
+    prevTopPartnersOpenRef.current = showTopPartnersMenu;
+  }, [showTopPartnersMenu, isChatOpen, showSubscriptionsMenu, closeChat, dispatch]);
+
+  useEffect(() => {
+    const subscriptionsJustOpened = showSubscriptionsMenu && !prevSubscriptionsOpenRef.current;
+    if (subscriptionsJustOpened) {
+      if (isChatOpen) {
+        closeChat();
+      }
+      if (showTopPartnersMenu) {
+        dispatch(setTopPartnersMenuOpen(false));
+      }
+      // Закрываем другие попапы
+      window.dispatchEvent(new CustomEvent('closeLanguageCurrencyModal'));
+      window.dispatchEvent(new CustomEvent('closeBonusPopup'));
+    }
+    prevSubscriptionsOpenRef.current = showSubscriptionsMenu;
+  }, [showSubscriptionsMenu, isChatOpen, showTopPartnersMenu, closeChat, dispatch]);
+
+  // Закрываем сайдбары при получении события
+  useEffect(() => {
+    const handleCloseSidebars = () => {
+      if (showTopPartnersMenu) {
+        dispatch(setTopPartnersMenuOpen(false));
+      }
+      if (showSubscriptionsMenu) {
+        dispatch(setSubscriptionsMenuOpen(false));
+      }
+      if (isChatOpen) {
+        closeChat();
+      }
+    };
+    window.addEventListener('closeSidebars', handleCloseSidebars);
+    return () => {
+      window.removeEventListener('closeSidebars', handleCloseSidebars);
+    };
+  }, [showTopPartnersMenu, showSubscriptionsMenu, isChatOpen, closeChat, dispatch]);
 
   
   // Отслеживаем состояние WebSocket
@@ -218,27 +282,119 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     setSelectedCategoryId,
     favoriteCurrencies,
     setFavoriteCurrencies,
-    getCurrencyInfo,
-    updateSelectedCurrencyInfo,
+    getCurrencyById,
     setForcedCurrency,
+    forcedCurrency,
     resolveCurrencyIconUrls,
     resolveCurrencyAveragePrice,
-  } = useCurrencyData(selectedBase);
+  } = useCurrencyData();
   
-  const handleBaseChange = (base: string) => {
-    console.log('[TradingTerminal] handleBaseChange вызван', {
-      newBase: base,
-      previousBase: selectedBase,
-      timestamp: Date.now()
-    });
-    updateSelectedCurrencyInfo(base);
+  // Инициализация selectedCurrencyId при первой загрузке валют
+  const hasInitializedCurrencyIdRef = useRef(false);
+  useEffect(() => {
+    // Если валюты загружены и selectedCurrencyId уже установлен - проверяем валидность
+    if (
+      !currenciesLoading &&
+      currencyCategories.length > 0 &&
+      selectedCurrencyId &&
+      !hasInitializedCurrencyIdRef.current
+    ) {
+      // Проверяем, что валюта с таким ID существует
+      const currency = getCurrencyById(selectedCurrencyId);
+      if (currency) {
+        console.log('[TradingTerminal] ✅ selectedCurrencyId валиден', {
+          currencyId: selectedCurrencyId,
+          currency: `${currency.base_currency}_${currency.quote_currency}`
+        });
+        setForcedCurrency(selectedCurrencyId);
+        hasInitializedCurrencyIdRef.current = true;
+        return;
+      } else {
+        console.warn('[TradingTerminal] ⚠️ selectedCurrencyId не найден, сбрасываем', {
+          currencyId: selectedCurrencyId
+        });
+        dispatch(setSelectedCurrencyId(null));
+      }
+    }
+    
+    // Если валюты загружены, selectedCurrencyId не установлен, но selectedBase есть - инициализируем
+    if (
+      !currenciesLoading &&
+      currencyCategories.length > 0 &&
+      !selectedCurrencyId &&
+      !hasInitializedCurrencyIdRef.current &&
+      selectedBase
+    ) {
+      // Ищем валюту по selectedBase (приоритет USDT, затем USD, затем максимальный profit_percentage)
+      let foundCurrency: Currency | null = null;
+      for (const category of currencyCategories) {
+        const list = category.currencies ?? [];
+        const matching = list.filter(
+          (c) => c.base_currency.toUpperCase() === selectedBase.toUpperCase() && c.is_active
+        );
+        
+        if (matching.length > 0) {
+          // Приоритет: USDT > USD > максимальный profit_percentage
+          const usdtCurrency = matching.find(c => c.quote_currency === 'USDT');
+          if (usdtCurrency) {
+            foundCurrency = usdtCurrency;
+            break;
+          }
+          const usdCurrency = matching.find(c => c.quote_currency === 'USD');
+          if (usdCurrency) {
+            foundCurrency = usdCurrency;
+            break;
+          }
+          foundCurrency = matching.reduce((prev, curr) => {
+            const prevProfit = prev.profit_percentage ?? 0;
+            const currProfit = curr.profit_percentage ?? 0;
+            return currProfit > prevProfit ? curr : prev;
+          });
+          break;
+        }
+      }
+      
+      if (foundCurrency?.id) {
+        const currencyId = typeof foundCurrency.id === 'number' ? foundCurrency.id : parseInt(String(foundCurrency.id), 10);
+        console.log('[TradingTerminal] Инициализация selectedCurrencyId', {
+          selectedBase,
+          currencyId,
+          currency: `${foundCurrency.base_currency}_${foundCurrency.quote_currency}`
+        });
+        dispatch(setSelectedCurrencyId(currencyId));
+        setForcedCurrency(currencyId);
+        hasInitializedCurrencyIdRef.current = true;
+      }
+    }
+  }, [currenciesLoading, currencyCategories, selectedCurrencyId, selectedBase, dispatch, setForcedCurrency, getCurrencyById]);
+  
+  const handleBaseChange = (base: string, quote?: string) => {
+    // Находим валюту по base+quote и устанавливаем её ID
+    let currencyId: number | null = null;
+    if (quote) {
+      for (const category of currencyCategories) {
+        const list = category.currencies ?? [];
+        const found = list.find(
+          (c) => 
+            c.base_currency.toUpperCase() === base.toUpperCase() && 
+            c.quote_currency.toUpperCase() === quote.toUpperCase() && 
+            c.is_active
+        );
+        if (found?.id) {
+          currencyId = typeof found.id === 'number' ? found.id : parseInt(String(found.id), 10);
+          break;
+        }
+      }
+    }
+    
+    if (currencyId) {
+      dispatch(setSelectedCurrencyId(currencyId));
+      setForcedCurrency(currencyId);
+    }
+    
+    // Обновляем selectedBase только для отображения symbol
     dispatch(setSelectedBase(base));
     props.onBaseChange(base);
-    console.log('[TradingTerminal] handleBaseChange завершен', {
-      newBase: base,
-      dispatchCalled: true,
-      propsOnBaseChangeCalled: true
-    });
   };
   const userCurrency = 'USD'; // UserProfile не содержит поле currency
   const balance = props.balance || 0;
@@ -251,7 +407,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
   const [isChartNavigationMenuOpen, setIsChartNavigationMenuOpen] = useState(false);
   
   // Функция для вычисления позиции калькулятора внутри графика
-  // СТРОГО ограничивает калькулятор границами main-chart-wrapper
+  // СТРОГО ограничивает калькулятор границами chart-section-wrapper
   const calculateCalculatorPosition = useCallback((inputPosition: { left: number; top: number }, calculatorWidth: number) => {
     // Используем requestAnimationFrame для получения актуальных размеров после рендера
     return new Promise<{ left: number; top: number }>((resolve) => {
@@ -263,19 +419,11 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
           return;
         }
         
-        // Находим main-chart-wrapper внутри контейнера (где рендерится калькулятор)
-        const chartWrapper = chartContainer.querySelector('.main-chart-wrapper') as HTMLElement;
-        if (!chartWrapper) {
-          console.warn('[TradingTerminal] main-chart-wrapper не найден, используем позицию по умолчанию');
-          resolve({ left: 16, top: 16 });
-          return;
-        }
-        
-        // Получаем границы wrapper относительно viewport
-        const wrapperRect = chartWrapper.getBoundingClientRect();
+        // Получаем границы контейнера относительно viewport
+        const wrapperRect = chartContainer.getBoundingClientRect();
         
         // inputPosition содержит координаты относительно viewport (из getBoundingClientRect)
-        // Преобразуем их в координаты относительно main-chart-wrapper
+        // Преобразуем их в координаты относительно chart-section-wrapper
         // Важно: используем scrollLeft и scrollTop для учета прокрутки
         const scrollLeft = chartWrapper.scrollLeft || 0;
         const scrollTop = chartWrapper.scrollTop || 0;
@@ -367,21 +515,14 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
       requestAnimationFrame(() => {
         const chartContainer = mainChartContainerRef.current;
         if (!chartContainer) {
-          console.warn('[TradingTerminal] chartContainer не найден, используем позицию по умолчанию');
+          console.warn('[TradingTerminal] chart-section-wrapper не найден, используем позицию по умолчанию');
           resolve({ left: 16, top: 16 });
           return;
         }
         
-        const chartWrapper = chartContainer.querySelector('.main-chart-wrapper') as HTMLElement;
-        if (!chartWrapper) {
-          console.warn('[TradingTerminal] main-chart-wrapper не найден, используем позицию по умолчанию');
-          resolve({ left: 16, top: 16 });
-          return;
-        }
-        
-        const wrapperRect = chartWrapper.getBoundingClientRect();
-        const scrollLeft = chartWrapper.scrollLeft || 0;
-        const scrollTop = chartWrapper.scrollTop || 0;
+        const wrapperRect = chartContainer.getBoundingClientRect();
+        const scrollLeft = chartContainer.scrollLeft || 0;
+        const scrollTop = chartContainer.scrollTop || 0;
         
         // Преобразуем координаты инпута в координаты относительно графика
         const inputRelativeTop = inputPosition.top - wrapperRect.top + scrollTop;
@@ -463,6 +604,18 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     };
   }, [handleTimeCalculatorOpen]);
 
+  // Глобальная функция для открытия сайдбара с данными сделки
+  useEffect(() => {
+    (window as any).__tradingTerminalOpenTradeSidebar = (trade: any) => {
+      if (chartHandleRef.current?.openTradeSidebar) {
+        chartHandleRef.current.openTradeSidebar(trade);
+      }
+    };
+    return () => {
+      delete (window as any).__tradingTerminalOpenTradeSidebar;
+    };
+  }, []);
+
   // Сохраняем handleInvestmentCalculatorOpen в глобальный объект для доступа из TradingControlsPanel
   useEffect(() => {
     (window as any).__tradingTerminalOpenInvestmentCalculator = (position: { left: number; top: number }) => {
@@ -484,11 +637,10 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
           // Вычисляем отступ так, чтобы активная область свечей заканчивалась ровно над панелью
           // Получаем позицию панели относительно контейнера графика
           const chartSectionWrapper = tradingControlsRef.current.closest('.chart-section-wrapper');
-          const mainChartWrapper = chartSectionWrapper?.querySelector('.main-chart-wrapper');
           let newHeight = 0;
           
-          if (mainChartWrapper && tradingControlsRef.current) {
-            const wrapperRect = mainChartWrapper.getBoundingClientRect();
+          if (chartSectionWrapper && tradingControlsRef.current) {
+            const wrapperRect = chartSectionWrapper.getBoundingClientRect();
             const panelRect = tradingControlsRef.current.getBoundingClientRect();
             // Вычисляем расстояние от верха контейнера до начала панели
             const panelTop = panelRect.top - wrapperRect.top;
@@ -771,11 +923,16 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     };
   }, []);
 
-  // Закрываем CopyTradingPanel при переходе на другую вкладку браузера
+  // Закрываем панели при переходе на другую вкладку браузера
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden && showCopyTradingSignalsMenu) {
-        dispatch(setMenuOpen(false));
+      if (document.hidden) {
+        if (showTopPartnersMenu) {
+          dispatch(setTopPartnersMenuOpen(false));
+        }
+        if (showSubscriptionsMenu) {
+          dispatch(setSubscriptionsMenuOpen(false));
+        }
       }
     };
 
@@ -783,7 +940,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [showCopyTradingSignalsMenu, dispatch]);
+  }, [showTopPartnersMenu, showSubscriptionsMenu, dispatch]);
 
   // Периодическое обновление цены из графика в Redux для активных сделок
   useEffect(() => {
@@ -825,7 +982,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     userProfile: props.userProfile,
     balance: props.balance,
     chartHandleRef,
-    getCurrencyInfo,
+    getCurrencyById,
     getPriceFromChart: useCallback(() => {
       console.log('[TRADE_PLACEMENT] getPriceFromChart вызван', {
         hasChartHandle: !!chartHandleRef.current,
@@ -944,7 +1101,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     wsOnMessage,
     isConnected,
     handleTradesWithRigging: useCallback((trades: any[]) => {
-      if (trades.length > 0 && wsSendMessage && getCurrencyInfo) {
+      if (trades.length > 0 && wsSendMessage) {
         const currencyIds = new Set<number>();
         trades.forEach((trade: any) => {
           // Получаем id из сделки или ищем по символу
@@ -967,37 +1124,39 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                   break;
                 }
               }
-              // Если не нашли по символу, пробуем через getCurrencyInfo
-              if (!currencyId) {
-                const currencyInfo = getCurrencyInfo(base);
-                if (currencyInfo?.id) {
-                  currencyId = currencyInfo.id;
-                }
-              }
-            } else if (trade.baseCurrency) {
-              // Если нет разделителя, используем baseCurrency
-              const currencyInfo = getCurrencyInfo(trade.baseCurrency);
-              if (currencyInfo?.id) {
-                currencyId = currencyInfo.id;
-              }
-            }
-          } else if (!currencyId && trade.baseCurrency) {
-            const currencyInfo = getCurrencyInfo(trade.baseCurrency);
-            if (currencyInfo?.id) {
-              currencyId = currencyInfo.id;
+              // Работаем только по ID - если ID не найден, пропускаем
             }
           }
+          // Работаем только по ID - если ID не найден, пропускаем
           
+          // Validate currencyId before adding to set
           if (currencyId) {
-            currencyIds.add(currencyId);
+            const currencyIdNum = typeof currencyId === 'number' ? currencyId : Number(currencyId);
+            if (Number.isInteger(currencyIdNum) && currencyIdNum > 0) {
+              currencyIds.add(currencyIdNum);
+            } else {
+              console.warn('[TradingTerminal] Invalid currency ID for subscription:', {
+                currencyId,
+                currencyIdType: typeof currencyId,
+                tradeSymbol: trade.symbol,
+                tradeBaseCurrency: trade.baseCurrency
+              });
+            }
           }
         });
         
         currencyIds.forEach(currencyId => {
-          const key = `currency_${currencyId}`;
+          // Double-check validation before subscribing
+          const currencyIdNum = typeof currencyId === 'number' ? currencyId : Number(currencyId);
+          if (!Number.isInteger(currencyIdNum) || currencyIdNum <= 0) {
+            console.warn('[TradingTerminal] Skipping invalid currency ID:', currencyId);
+            return;
+          }
+          
+          const key = `currency_${currencyIdNum}`;
           if (!customQuotesSubscribedRef.current.has(key)) {
             try {
-              wsSendMessage({ type: 'subscribe-custom-quotes', id: currencyId, timeframe } as any);
+              wsSendMessage({ type: 'subscribe-custom-quotes', id: currencyIdNum, timeframe } as any);
               customQuotesSubscribedRef.current.add(key);
             } catch (error) {
               console.error('[TradingTerminal] Ошибка подписки на котировки для сделки:', error);
@@ -1005,7 +1164,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
           }
         });
       }
-    }, [wsSendMessage, timeframe, getCurrencyInfo, currencyCategories]),
+    }, [wsSendMessage, timeframe, currencyCategories]),
   });
 
   // Запрос данных при монтировании компонента
@@ -1013,10 +1172,65 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
   useEffect(() => {
     // Запрашиваем данные через HTTP, если есть userId и режим manual/demo
     if (props.userProfile?.id && (tradingMode === 'manual' || tradingMode === 'demo')) {
-      // Запрашиваем историю сделок через HTTP
-      tradingService.requestTradeHistory(50, 0, tradingMode).catch((error) => {
-        console.error('[TRADE_HISTORY] Ошибка HTTP запроса истории:', error);
-      });
+      // Запрашиваем историю сделок через HTTP используя apiClient и dispatch напрямую
+      (async () => {
+        try {
+          const params = new URLSearchParams({
+            limit: '50',
+            offset: '0',
+          });
+          params.append('mode', tradingMode);
+          
+          const response = await apiClient<{ trades: any[]; count: number; newTradesCount?: number }>(
+            `/trading/history?${params.toString()}`
+          );
+          
+          const tradesData = response?.data?.trades || response?.trades;
+          const newTradesCount = response?.data?.newTradesCount ?? response?.newTradesCount ?? 0;
+          
+          // Сохраняем счетчик новых сделок
+          dispatch(setNewTradesCount(newTradesCount));
+          
+          if (tradesData && Array.isArray(tradesData)) {
+            const transformedTrades: TradeHistoryEntry[] = tradesData.map((trade: any) => {
+              const isDemo = trade.isDemo === true || trade.is_demo === true;
+              return {
+                id: String(trade.id ?? ''),
+                price: trade.price ?? trade.entryPrice ?? 0,
+                direction: trade.direction,
+                amount: trade.amount ?? 0,
+                entryPrice: trade.entryPrice ?? trade.price ?? 0,
+                exitPrice: trade.exitPrice ?? trade.price ?? 0,
+                profit: trade.profit ?? 0,
+                profitPercent: trade.profitPercent ?? trade.profit_percent ?? 0,
+                isWin: trade.isWin ?? trade.is_win ?? false,
+                createdAt: typeof trade.createdAt === 'number' 
+                  ? trade.createdAt 
+                  : (trade.created_at ? (typeof trade.created_at === 'number' ? trade.created_at : new Date(trade.created_at).getTime()) : Date.now()),
+                completedAt: typeof trade.completedAt === 'number' && trade.completedAt > 0
+                  ? trade.completedAt
+                  : (trade.completed_at ? (typeof trade.completed_at === 'number' && trade.completed_at > 0 ? trade.completed_at : (trade.completed_at ? new Date(trade.completed_at).getTime() : null)) : null),
+                expirationTime: typeof trade.expirationTime === 'number'
+                  ? trade.expirationTime
+                  : (trade.expiration_time ? (typeof trade.expiration_time === 'number' ? trade.expiration_time : new Date(trade.expiration_time).getTime()) : null),
+                symbol: trade.symbol ?? trade.pair ?? null,
+                baseCurrency: trade.baseCurrency ?? trade.base_currency ?? null,
+                quoteCurrency: trade.quoteCurrency ?? trade.quote_currency ?? null,
+                isDemo: isDemo,
+                is_demo: trade.is_demo ?? isDemo,
+                is_copied: trade.is_copied ?? trade.isCopied ?? false,
+                copy_subscription_id: trade.copy_subscription_id ?? trade.copySubscriptionId ?? null,
+                copied_from_user_id: trade.copied_from_user_id ?? trade.copiedFromUserId ?? null,
+              };
+            });
+            
+            const sortedTrades = transformedTrades.sort((a, b) => b.completedAt - a.completedAt);
+            dispatch(setTradeHistory(sortedTrades));
+          }
+        } catch (error) {
+          console.error('[TRADE_HISTORY] Ошибка HTTP запроса истории:', error);
+        }
+      })();
       
       // Запрашиваем активные сделки через HTTP и обновляем Redux напрямую
       // serverTime из ответа уже используется для синхронизации в requestActiveTrades
@@ -1030,12 +1244,11 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
         console.error('[TRADE_HISTORY] Ошибка HTTP запроса активных сделок:', error);
       });
     }
-  }, [tradingMode, props.userProfile?.id]);
+  }, [tradingMode, props.userProfile?.id, dispatch]);
 
   // Хук для переподключения графика
-  // Получаем currencyId для текущей валютной пары
-  const currencyInfoForReconnect = getCurrencyInfo ? getCurrencyInfo(selectedBase) : null;
-  const currencyIdForReconnect = currencyInfoForReconnect?.id || null;
+  // Используем selectedCurrencyId или forcedCurrency
+  const currencyIdForReconnect = forcedCurrency || selectedCurrencyId;
   
   useChartReconnection({
     wsSendMessage,
@@ -1053,26 +1266,41 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
 
   // Хук для WebSocket подписок
   const activeTrades = useAppSelector(selectActiveTradesByMode);
+  // Для отслеживания маркеров используем ВСЕ активные сделки (независимо от режима)
+  const allActiveTrades = useAppSelector(selectActiveTrades);
   
-  // Отслеживаем изменения активных сделок и удаляем маркеры для завершенных сделок
-  const prevActiveTradesRef = useRef<typeof activeTrades>([]);
+  // Отслеживаем изменения активных сделок и удаляем маркеры только для действительно завершенных сделок
+  const prevAllActiveTradesRef = useRef<typeof allActiveTrades>([]);
   useEffect(() => {
     if (chartHandleRef.current?.removeBetMarkerByTradeId) {
-      const prevTradeIds = new Set(prevActiveTradesRef.current.map(t => t.id));
-      const currentTradeIds = new Set(activeTrades.map(t => t.id));
+      const prevTradeIds = new Set(prevAllActiveTradesRef.current.map(t => t.id));
+      const currentTradeIds = new Set(allActiveTrades.map(t => t.id));
+      const now = Date.now();
       
-      // Находим сделки, которые были удалены
+      // Находим сделки, которые были удалены из ВСЕХ активных сделок
       prevTradeIds.forEach(tradeId => {
         if (!currentTradeIds.has(tradeId)) {
-          // Сделка была удалена, удаляем соответствующий маркер
-          chartHandleRef.current?.removeBetMarkerByTradeId?.(tradeId);
-          console.log('[TradingTerminal] Маркер удален для завершенной сделки', { tradeId });
+          // Проверяем, действительно ли сделка истекла, а не просто была отфильтрована по режиму
+          const prevTrade = prevAllActiveTradesRef.current.find(t => t.id === tradeId);
+          if (prevTrade && prevTrade.expirationTime) {
+            const expirationTime = prevTrade.expirationTime < 1e12 
+              ? prevTrade.expirationTime * 1000 
+              : prevTrade.expirationTime;
+            
+            // Удаляем маркер только если сделка действительно истекла
+            if (expirationTime <= now) {
+              chartHandleRef.current?.removeBetMarkerByTradeId?.(tradeId);
+              console.log('[TradingTerminal] Маркер удален для завершенной сделки', { tradeId, expirationTime, now });
+            }
+          }
         }
       });
     }
     
-    prevActiveTradesRef.current = activeTrades;
-  }, [activeTrades]);
+    prevAllActiveTradesRef.current = allActiveTrades;
+  }, [allActiveTrades]);
+
+
   
   const { customQuotesSubscribedRef } = useWebSocketSubscriptions({
     wsSendMessage,
@@ -1083,7 +1311,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     tradingMode,
     activeTrades,
     handleTradesWithRigging: useCallback((trades: any[]) => {
-      if (trades.length > 0 && wsSendMessage && getCurrencyInfo) {
+      if (trades.length > 0 && wsSendMessage) {
         const currencyIds = new Set<number>();
         trades.forEach((trade: any) => {
           // Получаем id из сделки или ищем по символу
@@ -1106,37 +1334,39 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                   break;
                 }
               }
-              // Если не нашли по символу, пробуем через getCurrencyInfo
-              if (!currencyId) {
-                const currencyInfo = getCurrencyInfo(base);
-                if (currencyInfo?.id) {
-                  currencyId = currencyInfo.id;
-                }
-              }
-            } else if (trade.baseCurrency) {
-              // Если нет разделителя, используем baseCurrency
-              const currencyInfo = getCurrencyInfo(trade.baseCurrency);
-              if (currencyInfo?.id) {
-                currencyId = currencyInfo.id;
-              }
-            }
-          } else if (!currencyId && trade.baseCurrency) {
-            const currencyInfo = getCurrencyInfo(trade.baseCurrency);
-            if (currencyInfo?.id) {
-              currencyId = currencyInfo.id;
+              // Работаем только по ID - если ID не найден, пропускаем
             }
           }
+          // Работаем только по ID - если ID не найден, пропускаем
           
+          // Validate currencyId before adding to set
           if (currencyId) {
-            currencyIds.add(currencyId);
+            const currencyIdNum = typeof currencyId === 'number' ? currencyId : Number(currencyId);
+            if (Number.isInteger(currencyIdNum) && currencyIdNum > 0) {
+              currencyIds.add(currencyIdNum);
+            } else {
+              console.warn('[TradingTerminal] Invalid currency ID for subscription:', {
+                currencyId,
+                currencyIdType: typeof currencyId,
+                tradeSymbol: trade.symbol,
+                tradeBaseCurrency: trade.baseCurrency
+              });
+            }
           }
         });
         
         currencyIds.forEach(currencyId => {
-          const key = `currency_${currencyId}`;
+          // Double-check validation before subscribing
+          const currencyIdNum = typeof currencyId === 'number' ? currencyId : Number(currencyId);
+          if (!Number.isInteger(currencyIdNum) || currencyIdNum <= 0) {
+            console.warn('[TradingTerminal] Skipping invalid currency ID:', currencyId);
+            return;
+          }
+          
+          const key = `currency_${currencyIdNum}`;
           if (!customQuotesSubscribedRef.current.has(key)) {
             try {
-              wsSendMessage({ type: 'subscribe-custom-quotes', id: currencyId, timeframe } as any);
+              wsSendMessage({ type: 'subscribe-custom-quotes', id: currencyIdNum, timeframe } as any);
               customQuotesSubscribedRef.current.add(key);
             } catch (error) {
               console.error('[TradingTerminal] Ошибка подписки на котировки для сделки:', error);
@@ -1144,7 +1374,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
           }
         });
       }
-    }, [wsSendMessage, timeframe, getCurrencyInfo, currencyCategories]),
+    }, [wsSendMessage, timeframe, currencyCategories]),
   });
 
   // Очищаем маркеры и активные сделки при смене пары или таймфрейма
@@ -1186,13 +1416,12 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     console.log('[TradingTerminal] Запрос на загрузку дополнительных свечей. Текущее количество:', currentCandlesCount);
     
     try {
-      const currencyInfo = getCurrencyInfo ? getCurrencyInfo(selectedBase) : null;
-      if (!currencyInfo || !currencyInfo.id) {
+      const currencyId = forcedCurrency || selectedCurrencyId;
+      if (!currencyId) {
         console.error('[TradingTerminal] ❌ Не удалось получить ID валюты для запроса свечей');
         return 0;
       }
 
-      const currencyId = currencyInfo.id;
 
       // Используем новый метод getCandlesByRange
       // 0 - самая свежая свеча, для получения более старых увеличиваем индексы
@@ -1403,26 +1632,33 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
       console.error('[TradingTerminal] Ошибка загрузки дополнительных свечей:', error);
       return 0;
     }
-  }, [selectedBase, timeframe, getCurrencyInfo]);
+  }, [selectedCurrencyId, forcedCurrency, timeframe]);
 
   // Ref для хранения текущего id для правильной отписки
   const currencyIdRef = useRef<number | null>(null);
 
   // Подписка на котировки для текущей валютной пары (по ID)
   useEffect(() => {
-    // Используем isConnected вместо isReady для более быстрой подписки
-    // isReady может обновляться с задержкой из-за интервала проверки
     if (!isConnected || !wsSendMessage) {
       console.log('[TradingTerminal] ⏳ Ожидание WebSocket подключения...', { isConnected, hasWsSendMessage: !!wsSendMessage });
       return;
     }
 
-    // Получаем информацию о валюте и используем её ID
-    const currencyInfo = getCurrencyInfo ? getCurrencyInfo(selectedBase) : null;
-    const currencyId = currencyInfo?.id;
+    // Используем selectedCurrencyId или forcedCurrency (приоритет forcedCurrency)
+    const currencyId = forcedCurrency || selectedCurrencyId;
+    
+    console.log('[TradingTerminal] Подписка на котировки', {
+      selectedCurrencyId,
+      forcedCurrency,
+      currencyId,
+      previousId: currencyIdRef.current
+    });
     
     if (!currencyId) {
-      console.warn('[TradingTerminal] ❌ Не удалось получить id для подписки:', selectedBase);
+      console.warn('[TradingTerminal] ❌ Не удалось получить id для подписки:', {
+        selectedCurrencyId,
+        forcedCurrency
+      });
       currencyIdRef.current = null;
       return;
     }
@@ -1449,8 +1685,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
       console.log('[TradingTerminal] 📤 Отправка подписки на котировки:', {
         type: 'subscribe-custom-quotes',
         id: currencyId,
-        timeframe: timeframe,
-        selectedBase: selectedBase
+        timeframe: timeframe
       });
       wsSendMessage({ 
         type: 'subscribe-custom-quotes', 
@@ -1466,7 +1701,6 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     return () => {
       try {
         const currentId = currencyIdRef.current;
-        // Проверяем, что соединение еще активно перед отпиской
         if (currentId && isConnected && wsSendMessage) {
           wsSendMessage({ 
             type: 'unsubscribe-custom-quotes', 
@@ -1475,11 +1709,10 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
           } as any);
         }
       } catch (error) {
-        // Игнорируем ошибки при отписке, если соединение уже закрыто
-        // Это нормальная ситуация при размонтировании компонента
+        // Игнорируем ошибки при отписке
       }
     };
-  }, [isConnected, wsSendMessage, selectedBase, timeframe, getCurrencyInfo]);
+  }, [isConnected, wsSendMessage, selectedCurrencyId, forcedCurrency, timeframe]);
 
   // Сохраняем handlePriceUpdate в ref для стабильной ссылки
   const handlePriceUpdateRef = useRef(handlePriceUpdate);
@@ -1515,28 +1748,53 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
 
       // Проверяем, что сообщение относится к текущей валютной паре и таймфрейму
       // Используем актуальные значения из refs для избежания stale closures
-      // Получаем символ из currencyInfo для сравнения
-      const currentCurrencyInfo = getCurrencyInfo ? getCurrencyInfo(selectedBaseRef.current) : null;
-      if (!currentCurrencyInfo) {
+      // Получаем валюту по ID для сравнения
+      const currentCurrencyId = forcedCurrency || selectedCurrencyId;
+      if (!currentCurrencyId) {
         // Log removed to reduce console noise
         return;
       }
+      
+      // Получаем информацию о валюте по ID
+      const currentCurrency = getCurrencyById(currentCurrencyId);
+      if (!currentCurrency || !currentCurrency.symbol) {
+        console.warn('[TradingTerminal] ⚠️ Валюта не найдена для ID:', currentCurrencyId);
+        return;
+      }
+      
       // Нормализуем символ из БД (может быть в формате EUR/USD+ или EURUSD)
-      const symbolFromDb = currentCurrencyInfo.symbol.replace(/\+$/, ''); // Убираем + в конце
+      const symbolFromDb = currentCurrency.symbol.replace(/\+$/, ''); // Убираем + в конце
       const currentSymbol = normalizeCurrencyPair(symbolFromDb);
       const currentTimeframe = timeframeRef.current;
       
       // Сравниваем нормализованные символы
       const normalizedTopicSymbol = normalizeCurrencyPair(topicSymbol);
       
-      const selectedBase = selectedBaseRef.current;
       const symbolMismatch = normalizedTopicSymbol !== currentSymbol;
       const timeframeMismatch = quoteTimeframe !== currentTimeframe;
       
       if (symbolMismatch || timeframeMismatch) {
-        // Log removed to reduce console noise
+        console.log('[TradingTerminal] ⚠️ Пропуск сообщения - несоответствие:', {
+          topicSymbol,
+          normalizedTopicSymbol,
+          currentSymbol,
+          symbolFromDb,
+          quoteTimeframe,
+          currentTimeframe,
+          currencyId: currentCurrencyId,
+          currency: `${currentCurrency.base_currency}_${currentCurrency.quote_currency}`
+        });
         return;
       }
+      
+      console.log('[TradingTerminal] ✅ Обработка WebSocket сообщения:', {
+        topicSymbol,
+        normalizedTopicSymbol,
+        currentSymbol,
+        quoteTimeframe,
+        currentTimeframe,
+        currencyId: currentCurrencyId
+      });
       
       // Log removed to reduce console noise
 
@@ -1560,11 +1818,18 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
       // Обновляем свечи
       // ВАЖНО: Дополнительная проверка актуальных значений перед обновлением состояния
       // Это защита от race condition, когда валютная пара меняется во время обработки сообщения
-      const checkCurrencyInfo = getCurrencyInfo ? getCurrencyInfo(selectedBaseRef.current) : null;
-      if (!checkCurrencyInfo) {
+      const checkCurrencyId = forcedCurrency || selectedCurrencyId;
+      if (!checkCurrencyId) {
         return;
       }
-      const checkSymbolFromDb = checkCurrencyInfo.symbol.replace(/\+$/, ''); // Убираем + в конце
+      
+      // Получаем информацию о валюте для проверки
+      const checkCurrency = getCurrencyById(checkCurrencyId);
+      if (!checkCurrency || !checkCurrency.symbol) {
+        return;
+      }
+      
+      const checkSymbolFromDb = checkCurrency.symbol.replace(/\+$/, ''); // Убираем + в конце
       const checkNormalizedSymbol = normalizeCurrencyPair(checkSymbolFromDb);
       const normalizedTopicSymbolCheck = normalizeCurrencyPair(topicSymbol);
       const checkTimeframe = timeframeRef.current;
@@ -1626,7 +1891,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     return () => {
       unsubscribe();
     };
-  }, [isConnected, wsOnMessage, getCurrencyInfo]);
+  }, [isConnected, wsOnMessage, forcedCurrency, selectedCurrencyId, getCurrencyById]);
 
   // Ref to track loadedCandles without causing interval restarts
   const loadedCandlesRef = useRef(loadedCandles);
@@ -1832,13 +2097,16 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
   }, [loadMoreTradeHistory, requestTradeHistory]);
 
   // Получаем валюту котировки для отображения
-  const currencyInfoForQuote = getCurrencyInfo(selectedBase);
-  const quoteCurrency = currencyInfoForQuote?.quote_currency || 'USDT';
+  const currencyForQuote = getCurrencyById(forcedCurrency || selectedCurrencyId);
+  const quoteCurrency = currencyForQuote?.quote_currency || 'USDT';
 
   // Мемоизируем объект данных для PricePanel, чтобы не создавать новый при каждом вызове
   // Теперь используем данные из Redux
-  const pricePanelDataMemo = useMemo(() => ({
-    currentPrice: currentPrice,
+  // Используем currentMarketPrice как fallback для currentPrice, чтобы кнопки были активны сразу при получении тиков
+  const pricePanelDataMemo = useMemo(() => {
+    const effective_current_price = currentPrice ?? currentMarketPrice;
+    return {
+    currentPrice: effective_current_price,
     price1: price1,
     price2: price2,
     priceDiff: priceDiff,
@@ -1860,17 +2128,18 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
     hasMoreHistory,
     setHoveredButton: setHoveredButtonCallback,
     quoteCurrency,
-    getCurrencyInfo,
+    getCurrencyById,
     resolveCurrencyIconUrls,
     currentMarketPrice: currentMarketPrice,
     requestTradeHistory: requestTradeHistory,
-  }), [
-    currentPrice, price1, price2, priceDiff, priceDiffPercent, spreadPercent,
+    };
+  }, [
+    currentPrice, currentMarketPrice, price1, price2, priceDiff, priceDiffPercent, spreadPercent,
     tradeHistory, manualTradeAmount, updateManualTradeAmount, handleManualTrade,
     formatPrice, formatHMS, parsedExpiration, changeExpiration, setExpirationSecondsWithRef,
     quickPresets, loadMoreTradeHistoryWrapper, isLoadingMoreHistory, hasMoreHistory,
-    setHoveredButtonCallback, quoteCurrency, getCurrencyInfo, resolveCurrencyIconUrls,
-    currentMarketPrice, requestTradeHistory, selectedBase
+    setHoveredButtonCallback, quoteCurrency, resolveCurrencyIconUrls,
+    requestTradeHistory, selectedBase
   ]);
   
   useEffect(() => {
@@ -1914,9 +2183,15 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
       {/* Main Chart Section */}
       <div className="terminal-main">
         <div 
-          className={`chart-section-wrapper ${isChartNavigationMenuOpen ? 'chart-navigation-active' : ''}`}
+          className={`chart-section-wrapper ${isChartNavigationMenuOpen ? 'chart-navigation-active' : ''} ${showIndicatorsMenu ? 'indicators-sidebar-open' : ''}`}
+          ref={mainChartContainerRef}
+          data-gradient={hoveredButton || undefined}
           style={{
-            '--bg-image': `url(${backgroundChartImage})`
+            '--bg-image': `url(${backgroundChartImage})`,
+            backgroundImage: `url(${backgroundChartImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
           } as React.CSSProperties}
         >
           <ChartTopBar
@@ -1929,32 +2204,19 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
               setSelectedCategoryId,
               favoriteCurrencies,
               setFavoriteCurrencies,
-              getCurrencyInfo,
+              getCurrencyById,
               resolveCurrencyIconUrls,
               resolveCurrencyAveragePrice,
             }}
           />
-
-          {/* Main Chart */}
-          <div className="main-chart-container" ref={mainChartContainerRef}>
-            <div 
-              className={`main-chart-wrapper ${isChartNavigationMenuOpen ? 'chart-navigation-active' : ''} ${showIndicatorsMenu ? 'indicators-sidebar-open' : ''}`}
-              data-gradient={hoveredButton || undefined}
-              style={{
-                backgroundImage: `url(${backgroundChartImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              } as React.CSSProperties}
-            >
+          <div className="chart-content-wrapper">
               <ChartHistory
-                key={`chart-history-${selectedBase}-${timeframe}`}
+                key={`chart-history-${selectedCurrencyId || forcedCurrency}-${timeframe}`}
                 selectedBase={selectedBase}
+                currencyId={forcedCurrency || selectedCurrencyId}
                 timeframe={timeframe}
-                getCurrencyInfo={getCurrencyInfo}
                 onCandlesLoaded={handleCandlesLoaded}
                 reloadTrigger={chartReloadTrigger}
-                currenciesLoading={currenciesLoading}
               />
               {loadedCandles.length > 0 && (
                 <CandlesCanvas
@@ -1968,6 +2230,8 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                   currencyPair={selectedBase}
                   activeIndicators={activeIndicators}
                   eraserRadius={eraserRadius}
+                  drawingColor={drawingColor}
+                  drawingLineWidth={drawingLineWidth}
                   chartView={chartView}
                   onLoadMore={handleLoadMoreCandles}
                   onCandleUpdate={(candle) => {
@@ -1991,7 +2255,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
               )}
               {/* Chart component removed */}
               
-              {/* Time Calculator внутри main-chart-wrapper */}
+              {/* Time Calculator внутри chart-section-wrapper */}
               {showTimeCalculator && (
                 <TimeCalculator
                   position={timeCalculatorPosition}
@@ -2005,7 +2269,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                 />
               )}
               
-              {/* Investment Calculator внутри main-chart-wrapper */}
+              {/* Investment Calculator внутри chart-section-wrapper */}
               {showInvestmentCalculator && (
                 <InvestmentCalculator
                   position={investmentCalculatorPosition}
@@ -2022,12 +2286,12 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
               
               {/* Chart Navigation Button and Menu */}
               {(() => {
-                const selectedCurrency = currencyCategories
-                  .flatMap(cat => cat.currencies || [])
-                  .find(curr => curr.base_currency === selectedBase);
-                const currencyIcon = selectedCurrency && getCurrencyInfo && resolveCurrencyIconUrls
-                  ? resolveCurrencyIconUrls(getCurrencyInfo(selectedCurrency.base_currency))[0] || null
+                // Получаем валюту по ID для отображения
+                const selectedCurrency = getCurrencyById(forcedCurrency || selectedCurrencyId);
+                const currencyIcon = selectedCurrency && resolveCurrencyIconUrls
+                  ? resolveCurrencyIconUrls(selectedCurrency)[0] || null
                   : selectedCurrency?.icon || null;
+                
                 
                 return (
                   <>
@@ -2037,6 +2301,7 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                       isMenuOpen={isChartNavigationMenuOpen}
                       onClick={() => setIsChartNavigationMenuOpen(!isChartNavigationMenuOpen)}
                       displayName={selectedCurrency?.display_name}
+                      quoteCurrency={selectedCurrency?.quote_currency}
                     />
                     <ChartNavigationMenu
                       isOpen={isChartNavigationMenuOpen}
@@ -2046,8 +2311,10 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                       currencyCategories={currencyCategories}
                       currenciesLoading={currenciesLoading}
                       selectedCategoryId={selectedCategoryId}
+                      setForcedCurrency={setForcedCurrency}
+                      forcedCurrency={forcedCurrency}
                       setSelectedCategoryId={setSelectedCategoryId}
-                      getCurrencyInfo={getCurrencyInfo}
+                      getCurrencyById={getCurrencyById}
                       resolveCurrencyIconUrls={resolveCurrencyIconUrls}
                       resolveCurrencyAveragePrice={resolveCurrencyAveragePrice}
                       favoriteCurrencies={favoriteCurrencies}
@@ -2071,12 +2338,12 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                       quickPresets={quickPresets}
                       setHoveredButton={setHoveredButtonCallback}
                       isProcessing={props.isProcessing}
-                      currentPrice={currentPrice}
+                      currentPrice={pricePanelDataMemo.currentPrice}
                       tradingMode={tradingMode}
                       onTradingModeChange={props.onTradingModeChange}
                       isTradingActive={props.isTradingActive}
                       selectedBase={selectedBase}
-                      getCurrencyInfo={getCurrencyInfo}
+                      getCurrencyById={getCurrencyById}
                       resolveCurrencyIconUrls={resolveCurrencyIconUrls}
                       currencyCategories={currencyCategories}
                       currenciesLoading={currenciesLoading}
@@ -2085,36 +2352,9 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                       isDisabled={isAddSignalModalOpen}
                     />
               </div>
-            </div>
-            
-            <IndicatorsSidebar
-              isOpen={showIndicatorsMenu}
-              onClose={() => setShowIndicatorsMenu(false)}
-              activeIndicators={activeIndicators}
-              toggleIndicator={toggleIndicator}
-              t={t}
-            />
-          </div>
-
-          <CopyTradingPanel
-            isOpen={showCopyTradingSignalsMenu}
-            onClose={() => dispatch(setMenuOpen(false))}
-            t={t}
-          />
-          
-          <ChatPanelWrapper />
-          
-          {/* Eraser Size Slider */}
-          <EraserSizeSlider
-            isOpen={selectedDrawingTool === 'eraser'}
-            eraserRadius={eraserRadius}
-            onRadiusChange={(radius) => {
-              setEraserRadius(radius);
-            }}
-          />
-          
-          {/* Chart Toolbar */}
-          <ChartToolbar
+              
+              {/* Chart Toolbar */}
+              <ChartToolbar
                 timeframe={timeframe}
                 setTimeframe={setTimeframe}
                 t={t}
@@ -2141,11 +2381,57 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                   }
                 }}
                 onChartViewChange={cycleChartView}
-          />
-              
-          {/* Add Signal Modal */}
-          {props.onOpenAddSignalModal && (
-                <AddSignalModal
+              />
+          </div>
+            
+            <IndicatorsSidebar
+              isOpen={showIndicatorsMenu}
+              onClose={() => setShowIndicatorsMenu(false)}
+              activeIndicators={activeIndicators}
+              toggleIndicator={toggleIndicator}
+              t={t}
+            />
+
+            <TopPartnersPanel
+              isOpen={showTopPartnersMenu}
+              onClose={() => dispatch(setTopPartnersMenuOpen(false))}
+              t={t}
+            />
+            
+            <SubscriptionsPanel
+              isOpen={showSubscriptionsMenu}
+              onClose={() => dispatch(setSubscriptionsMenuOpen(false))}
+              t={t}
+            />
+            
+            <ChatPanelWrapper />
+        </div>
+        
+        {/* Eraser Size Slider */}
+        <EraserSizeSlider
+          isOpen={selectedDrawingTool === 'eraser'}
+          eraserRadius={eraserRadius}
+          onRadiusChange={(radius) => {
+            setEraserRadius(radius);
+          }}
+        />
+        
+        {/* Drawing Tool Settings */}
+        <DrawingToolSettings
+          is_open={selectedDrawingTool !== null && selectedDrawingTool !== 'eraser'}
+          line_width={drawingLineWidth}
+          color={drawingColor}
+          on_line_width_change={(width) => {
+            setDrawingLineWidth(width);
+          }}
+          on_color_change={(color) => {
+            setDrawingColor(color);
+          }}
+        />
+            
+        {/* Add Signal Modal */}
+        {props.onOpenAddSignalModal && (
+          <AddSignalModal
                   isOpen={isAddSignalModalOpen}
                   onClose={() => setIsAddSignalModalOpen(false)}
                   onSubmit={async (pair: string, value: string, direction: 'up' | 'down', time: number) => {
@@ -2215,12 +2501,9 @@ export const TradingTerminal = (props: TradingTerminalProps) => {
                     }, 1000);
                   }}
                   investmentAmount={manualTradeAmount ? parseFloat(manualTradeAmount.replace(',', '.')) || 0 : 0}
-                />
-          )}
+          />
+        )}
 
-        </div>
-
-        {/* Bottom Small Chart removed to allow main chart to occupy full height */}
       </div>
     </div>
   );

@@ -49,10 +49,16 @@ export const syntheticQuotesApi = {
       noAuth: true,
     }),
 
-  getCandlesHistory: (id: number, timeframe: string = '15s', limit: number = 500, endTime?: number) => {
+  getCandlesHistory: (id: number, timeframe: string = '15s', limit: number = 500, endTime?: number, startTime?: number, tradeId?: string) => {
     const params: Record<string, string> = { id: id.toString(), timeframe, limit: limit.toString() };
     if (endTime) {
       params.endTime = endTime.toString();
+    }
+    if (startTime) {
+      params.start = startTime.toString();
+    }
+    if (tradeId) {
+      params.tradeId = tradeId;
     }
     const queryString = new URLSearchParams(params).toString();
     return apiClient<{ success: boolean; data: SyntheticCandle[] }>(`/synthetic-quotes/candles?${queryString}`, {

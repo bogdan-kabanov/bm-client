@@ -13,7 +13,7 @@ import { updateUserProfile, setUser } from "@src/entities/user/model/slice";
 import { LanguageCurrencyModal } from "@src/widgets/language-currency-modal/LanguageCurrencyModal";
 import { logout } from "@src/features/auth/authCheck";
 import { userApi } from "@src/shared/api/user/userApi";
-import userIcon from "@src/assets/avatar.svg";
+import userIcon from "@src/assets/icons/avatar.svg";
 import "./ProfilePopup.css";
 
 interface ProfilePopupProps {
@@ -133,11 +133,17 @@ export function ProfilePopup({ isOpen, onClose }: ProfilePopupProps) {
     const handleOpenLanguageModal = useCallback(() => {
         setModalTab('language');
         setIsLanguageCurrencyModalOpen(true);
+        // Закрываем другие попапы и сайдбары
+        window.dispatchEvent(new CustomEvent('closeBonusPopup'));
+        window.dispatchEvent(new CustomEvent('closeSidebars'));
     }, []);
 
     const handleOpenCurrencyModal = useCallback(() => {
         setModalTab('currency');
         setIsLanguageCurrencyModalOpen(true);
+        // Закрываем другие попапы и сайдбары
+        window.dispatchEvent(new CustomEvent('closeBonusPopup'));
+        window.dispatchEvent(new CustomEvent('closeSidebars'));
     }, []);
 
     const handleLogoutRequest = useCallback(() => {
@@ -281,6 +287,41 @@ export function ProfilePopup({ isOpen, onClose }: ProfilePopupProps) {
             };
         }
     }, [logoutConfirm, closeLogoutConfirm]);
+
+    useEffect(() => {
+        const handleDocumentClick = (event: MouseEvent) => {
+            if (!isOpen || logoutConfirm || isLanguageCurrencyModalOpen) return;
+            const target = event.target as Node;
+            if (popupRef.current && !popupRef.current.contains(target)) {
+                onClose();
+            }
+        };
+
+        if (isOpen && !logoutConfirm && !isLanguageCurrencyModalOpen) {
+            document.addEventListener('mousedown', handleDocumentClick);
+            return () => {
+                document.removeEventListener('mousedown', handleDocumentClick);
+            };
+        }
+    }, [isOpen, logoutConfirm, isLanguageCurrencyModalOpen, onClose]);
+
+    // Сбрасываем состояние модалки языка/валюты при закрытии ProfilePopup
+    useEffect(() => {
+        if (!isOpen) {
+            setIsLanguageCurrencyModalOpen(false);
+        }
+    }, [isOpen]);
+
+    // Закрываем LanguageCurrencyModal при получении события
+    useEffect(() => {
+        const handleCloseLanguageCurrencyModal = () => {
+            setIsLanguageCurrencyModalOpen(false);
+        };
+        window.addEventListener('closeLanguageCurrencyModal', handleCloseLanguageCurrencyModal);
+        return () => {
+            window.removeEventListener('closeLanguageCurrencyModal', handleCloseLanguageCurrencyModal);
+        };
+    }, []);
 
     if (!isOpen) return null;
 
@@ -543,15 +584,18 @@ export function ProfilePopup({ isOpen, onClose }: ProfilePopupProps) {
                     <div
                         className="profile-popup__avatar-upload-overlay"
                         role="presentation"
-                        onClick={() => {
-                            setIsAvatarUploadModalOpen(false);
-                            setAvatarError(null);
+                        onMouseDown={(e) => {
+                            if (e.target === e.currentTarget) {
+                                setIsAvatarUploadModalOpen(false);
+                                setAvatarError(null);
+                            }
                         }}
                     />
                     <div
                         className="profile-popup__avatar-upload-modal"
                         role="dialog"
                         aria-modal="true"
+                        onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="profile-popup__avatar-upload-header">
@@ -582,9 +626,17 @@ export function ProfilePopup({ isOpen, onClose }: ProfilePopupProps) {
                                 style={{ display: 'none' }}
                                 id="avatar-upload-input"
                             />
-                            <label
-                                htmlFor="avatar-upload-input"
+                            <div
                                 className="profile-popup__avatar-upload-label"
+                                onMouseDown={(e) => {
+                                    e.stopPropagation();
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!avatarUploading && avatarInputRef.current) {
+                                        avatarInputRef.current.click();
+                                    }
+                                }}
                                 style={{
                                     cursor: avatarUploading ? 'not-allowed' : 'pointer',
                                     opacity: avatarUploading ? 0.6 : 1
@@ -606,7 +658,7 @@ export function ProfilePopup({ isOpen, onClose }: ProfilePopupProps) {
                                 <span className="profile-popup__avatar-upload-hint">
                                     {t('profile.avatarHint', { defaultValue: 'PNG, JPG, WEBP or GIF up to 5 MB' }) || 'PNG, JPG, WEBP or GIF up to 5 MB'}
                                 </span>
-                            </label>
+                            </div>
                             {avatarError && (
                                 <div className="profile-popup__avatar-upload-error">
                                     {avatarError}

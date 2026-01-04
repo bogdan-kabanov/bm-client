@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { NewDepositContent } from "./NewDepositContent";
 import { WithdrawalContent } from "@src/pages/withdrawal/WithdrawalContent";
 import { TransactionHistory } from "./TransactionHistory";
+import { PromocodesContent } from "./PromocodesContent";
 import { TradingHeader } from "@src/widgets/trading-header/TradingHeader";
 import { useLanguage } from "@src/app/providers/useLanguage";
 import { SidebarProvider } from "@src/shared/contexts/SidebarContext";
@@ -20,12 +21,13 @@ export function DepositPage() {
         if (location.pathname.includes('/withdraw')) return 'withdraw';
         if (location.pathname.includes('/transaction-history')) return 'history';
         if (location.pathname.includes('/deposit/payment')) return 'payment';
+        if (location.pathname.includes('/promocodes')) return 'promocodes';
         return 'deposit';
     };
     
-    const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'history' | 'payment'>(getActiveTab);
+    const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'history' | 'payment' | 'promocodes'>(getActiveTab);
     
-    const handleTabChange = (tab: 'deposit' | 'withdraw' | 'history') => {
+    const handleTabChange = (tab: 'deposit' | 'withdraw' | 'history' | 'promocodes') => {
         setActiveTab(tab);
         if (tab === 'deposit') {
             navigate('/deposit');
@@ -33,6 +35,8 @@ export function DepositPage() {
             navigate('/withdraw');
         } else if (tab === 'history') {
             navigate('/transaction-history');
+        } else if (tab === 'promocodes') {
+            navigate('/promocodes');
         }
     };
     
@@ -63,9 +67,9 @@ function DepositPageContent({
     navigate: ReturnType<typeof useNavigate>;
     location: ReturnType<typeof useLocation>;
     t: ReturnType<typeof useLanguage>['t'];
-    activeTab: 'deposit' | 'withdraw' | 'history';
-    setActiveTab: (tab: 'deposit' | 'withdraw' | 'history') => void;
-    handleTabChange: (tab: 'deposit' | 'withdraw' | 'history') => void;
+    activeTab: 'deposit' | 'withdraw' | 'history' | 'promocodes';
+    setActiveTab: (tab: 'deposit' | 'withdraw' | 'history' | 'promocodes') => void;
+    handleTabChange: (tab: 'deposit' | 'withdraw' | 'history' | 'promocodes') => void;
 }) {
     const { hideLeftPanel } = useSidebar();
     
@@ -105,7 +109,13 @@ function DepositPageContent({
                         className={`deposit-nav-tab ${activeTab === 'history' ? 'active' : ''}`}
                         onClick={() => handleTabChange('history')}
                     >
-                        {t('withdrawal.withdrawalHistory', { defaultValue: 'Transaction history' })}
+                        {t('payments.paymentsHistory', { defaultValue: 'Payments History' })}
+                    </button>
+                    <button
+                        className={`deposit-nav-tab ${activeTab === 'promocodes' ? 'active' : ''}`}
+                        onClick={() => handleTabChange('promocodes')}
+                    >
+                        {t('payments.promocodesTab', { defaultValue: 'Promocodes' })}
                     </button>
                 </nav>
                 
@@ -113,6 +123,7 @@ function DepositPageContent({
                     {activeTab === 'deposit' && <NewDepositContent />}
                     {activeTab === 'withdraw' && <WithdrawalContent />}
                     {activeTab === 'history' && <TransactionHistory />}
+                    {activeTab === 'promocodes' && <PromocodesContent />}
                 </div>
             </div>
         </div>

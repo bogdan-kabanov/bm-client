@@ -2,8 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { winLossApi, type UserWinLossConfig, type UserWinLossStats } from '@src/shared/api';
 import { switchVariant, validateVariantConfig } from '@src/entities/winloss/lib/variantSwitcher';
+import { useLanguage } from '@src/app/providers/useLanguage';
 
 export function useWinLossConfig(userId: number | null) {
+  const { t } = useLanguage();
   const [config, setConfig] = useState<UserWinLossConfig | null>(null);
   const [stats, setStats] = useState<UserWinLossStats | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export function useWinLossConfig(userId: number | null) {
         setConfig(response.data);
       }
     } catch (err: any) {
-      setError(err?.message || 'Ошибка загрузки конфигурации');
+      setError(err?.message || t('admin.winLoss.loadConfigError'));
     } finally {
       setLoading(false);
     }
@@ -36,7 +38,7 @@ export function useWinLossConfig(userId: number | null) {
         setStats(response.data);
       }
     } catch (err: any) {
-      const errorMessage = err?.message || 'Ошибка загрузки статистики';
+      const errorMessage = err?.message || t('admin.winLoss.loadStatsError');
 
       if (err?.message?.includes('UNAUTHORIZED') || err?.message?.includes('SESSION_EXPIRED')) {
         setError(errorMessage);
@@ -62,7 +64,7 @@ export function useWinLossConfig(userId: number | null) {
       const updatedConfig = { ...config!, ...newConfig };
       const validation = validateVariantConfig(updatedConfig as UserWinLossConfig);
       if (!validation.valid) {
-        setError(validation.error || 'Ошибка валидации');
+        setError(validation.error || t('admin.winLoss.validationError'));
         return false;
       }
 
@@ -76,7 +78,7 @@ export function useWinLossConfig(userId: number | null) {
       }
       return false;
     } catch (err: any) {
-      setError(err?.message || 'Ошибка сохранения конфигурации');
+      setError(err?.message || t('admin.winLoss.saveConfigError'));
       return false;
     } finally {
       setLoading(false);

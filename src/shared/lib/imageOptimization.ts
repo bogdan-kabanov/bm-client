@@ -199,12 +199,22 @@ const loadImage = (
   
   img.onerror = () => {
     // Помечаем URL как неудачный перед попыткой fallback
+    // Не логируем ошибку здесь, так как 404 для отсутствующих иконок - это нормальное поведение
     markUrlAsFailed(url);
     loadingUrls.delete(url);
     tryFallback(url, fallbackUrl, resolve);
   };
   
-  img.src = url;
+  // Устанавливаем src после установки обработчиков
+  // Это предотвратит немедленную загрузку до установки обработчиков
+  try {
+    img.src = url;
+  } catch (error) {
+    // Если не удалось установить src, помечаем как неудачный
+    markUrlAsFailed(url);
+    loadingUrls.delete(url);
+    tryFallback(url, fallbackUrl, resolve);
+  }
 };
 
 // Вспомогательная функция для попытки использовать fallback

@@ -3,6 +3,7 @@ import { websocketStore } from '@src/entities/websoket/websocket.store';
 import { WebSocketMessage, TradeMessage, TradePlacedMessage, ManualTradeExpiredMessage } from '@src/entities/websoket/websocket-types';
 import {
     setTradeHistory,
+    setNewTradesCount,
     addTradeHistory,
     setTradeMarkers,
     setCurrentPrice,
@@ -106,6 +107,12 @@ export class TradingService {
         const data = message.data;
         const tradeId = data.tradeId;
 
+        // Убеждаемся, что completedAt всегда установлен
+        let completedAt = data.completedAt;
+        if (!completedAt || completedAt <= 0) {
+            // Если completedAt не установлен, используем текущее время
+            completedAt = Date.now();
+        }
 
         const historyEntry: TradeHistoryEntry = {
             id: tradeId,
@@ -117,8 +124,8 @@ export class TradingService {
             profit: data.profit,
             profitPercent: data.profitPercent,
             isWin: data.isWin,
-            createdAt: data.completedAt - 60000,
-            completedAt: data.completedAt,
+            createdAt: completedAt - 60000, // Используем completedAt для вычисления createdAt
+            completedAt: completedAt,
             symbol: data.symbol || null,
             baseCurrency: (data as any).baseCurrency || (data as any).base_currency || null,
             quoteCurrency: (data as any).quoteCurrency || (data as any).quote_currency || null,
@@ -129,7 +136,18 @@ export class TradingService {
             copied_from_user_id: (data as any).copiedFromUserId || (data as any).copied_from_user_id || null,
         };
 
+        console.log('[TradingService] ✅ Добавление завершенной сделки в историю', {
+            tradeId,
+            completedAt: historyEntry.completedAt,
+            historyEntry,
+        });
+
         this.dispatch(addTradeHistory(historyEntry));
+        
+        console.log('[TradingService] 📊 Сделка добавлена, счетчик должен увеличиться', {
+            tradeId,
+            completedAt: historyEntry.completedAt,
+        });
     }
 
     private handlePriceUpdate(message: any): void {
@@ -223,15 +241,87 @@ export class TradingService {
                 params.append('mode', mode);
             }
             
-            const response = await apiClient<{ trades: TradeHistoryEntry[]; count: number }>(
+            const response = await apiClient<{ trades: any[]; count: number; newTradesCount?: number }>(
                 `/trading/history?${params.toString()}`
             );
             
-            if (this.dispatch && response.trades) {
-                this.dispatch(setTradeHistory(response.trades));
+            const tradesData = response?.data?.trades || response?.trades;
+            const newTradesCount = response?.data?.newTradesCount ?? response?.newTradesCount ?? 0;
+            
+            console.log('[TRADE_HISTORY] HTTP ответ от /trading/history:', {
+                hasResponse: !!response,
+                hasTrades: !!tradesData,
+                tradesCount: tradesData?.length ?? 0,
+                newTradesCount,
+                mode,
+                firstTrade: tradesData?.[0]
+            });
+            
+            // Сохраняем счетчик новых сделок
+            if (this.dispatch) {
+                this.dispatch(setNewTradesCount(newTradesCount));
+            }
+            
+            if (this.dispatch && tradesData && Array.isArray(tradesData)) {
+                // Трансформируем данные для правильной обработки isDemo/is_demo
+                const transformedTrades: TradeHistoryEntry[] = tradesData.map((trade: any) => {
+                    const isDemo = trade.isDemo === true || trade.is_demo === true;
+                    return {
+                        id: String(trade.id ?? ''),
+                        price: trade.price ?? trade.entryPrice ?? 0,
+                        direction: trade.direction,
+                        amount: trade.amount ?? 0,
+                        entryPrice: trade.entryPrice ?? trade.price ?? 0,
+                        exitPrice: trade.exitPrice ?? trade.price ?? 0,
+                        profit: trade.profit ?? 0,
+                        profitPercent: trade.profitPercent ?? trade.profit_percent ?? 0,
+                        isWin: trade.isWin ?? trade.is_win ?? false,
+                        createdAt: typeof trade.createdAt === 'number' 
+                            ? trade.createdAt 
+                            : (trade.created_at ? (typeof trade.created_at === 'number' ? trade.created_at : new Date(trade.created_at).getTime()) : Date.now()),
+                        completedAt: typeof trade.completedAt === 'number' && trade.completedAt > 0
+                            ? trade.completedAt
+                            : (trade.completed_at ? (typeof trade.completed_at === 'number' && trade.completed_at > 0 ? trade.completed_at : (trade.completed_at ? new Date(trade.completed_at).getTime() : null)) : null),
+                        expirationTime: typeof trade.expirationTime === 'number'
+                            ? trade.expirationTime
+                            : (trade.expiration_time ? (typeof trade.expiration_time === 'number' ? trade.expiration_time : new Date(trade.expiration_time).getTime()) : null),
+                        symbol: trade.symbol ?? trade.pair ?? null,
+                        baseCurrency: trade.baseCurrency ?? trade.base_currency ?? null,
+                        quoteCurrency: trade.quoteCurrency ?? trade.quote_currency ?? null,
+                        isDemo: isDemo,
+                        is_demo: trade.is_demo ?? isDemo,
+                        is_copied: trade.is_copied ?? trade.isCopied ?? false,
+                        copy_subscription_id: trade.copy_subscription_id ?? trade.copySubscriptionId ?? null,
+                        copied_from_user_id: trade.copied_from_user_id ?? trade.copiedFromUserId ?? null,
+                    };
+                });
+                
+                // Сортируем по completedAt в порядке убывания
+                const sortedTrades = transformedTrades.sort((a, b) => b.completedAt - a.completedAt);
+                
+                console.log('[TRADE_HISTORY] Трансформированные сделки:', {
+                    count: sortedTrades.length,
+                    firstTrade: sortedTrades[0],
+                    allHaveIsDemo: sortedTrades.every(t => t.isDemo !== undefined || t.is_demo !== undefined)
+                });
+                
+                this.dispatch(setTradeHistory(sortedTrades));
+            } else {
+                console.warn('[TRADE_HISTORY] Нет данных для обновления Redux:', {
+                    hasDispatch: !!this.dispatch,
+                    hasResponse: !!response,
+                    hasTrades: !!response?.trades,
+                    isArray: Array.isArray(response?.trades)
+                });
+                if (this.dispatch) {
+                    this.dispatch(setTradeHistory([]));
+                }
             }
         } catch (error) {
             console.error('[TRADE_HISTORY] HTTP ошибка запроса истории сделок:', error);
+            if (this.dispatch) {
+                this.dispatch(setTradeHistory([]));
+            }
         }
     }
 
@@ -253,24 +343,42 @@ export class TradingService {
             
             if (response.trades && Array.isArray(response.trades)) {
                 const activeTrades: ActiveTrade[] = response.trades.map((trade: any) => {
-                    const created_at = trade.createdAt;
-                    if (!created_at || !Number.isFinite(created_at) || created_at <= 0) {
-                        console.warn('[TRADE_HISTORY] requestActiveTrades: невалидный createdAt в данных сервера', {
+                    // Безопасная обработка createdAt
+                    let created_at: number;
+                    if (typeof trade.createdAt === 'number' && Number.isFinite(trade.createdAt) && trade.createdAt > 0) {
+                        created_at = trade.createdAt;
+                    } else {
+                        console.warn('[TRADE_HISTORY] requestActiveTrades: невалидный createdAt в данных сервера, используем fallback', {
                             tradeId: trade.id,
                             createdAt: trade.createdAt,
                             trade: trade
                         });
+                        created_at = Date.now(); // fallback: текущее время
                     }
+
+                    // Безопасная обработка expirationTime
+                    let expiration_time: number;
+                    if (typeof trade.expirationTime === 'number' && Number.isFinite(trade.expirationTime) && trade.expirationTime > 0) {
+                        expiration_time = trade.expirationTime;
+                    } else {
+                        console.warn('[TRADE_HISTORY] requestActiveTrades: невалидный expirationTime в данных сервера, используем fallback', {
+                            tradeId: trade.id,
+                            expirationTime: trade.expirationTime,
+                            trade: trade
+                        });
+                        expiration_time = created_at + 30000; // fallback: +30 секунд от createdAt
+                    }
+
                     return {
                         id: trade.id,
                         price: trade.price || trade.entryPrice,
                         direction: trade.direction,
                         amount: trade.amount,
-                        expirationTime: trade.expirationTime,
+                        expirationTime: expiration_time,
                         entryPrice: trade.entryPrice || trade.price,
                         currentPrice: trade.currentPrice || null,
                         currentPriceAtTrade: trade.currentPriceAtTrade || trade.currentPrice || null,
-                        createdAt: created_at, // ВАЖНО: используем только данные с сервера
+                        createdAt: created_at,
                         symbol: trade.symbol || trade.pair || null,
                         baseCurrency: trade.baseCurrency || trade.base_currency || null,
                         quoteCurrency: trade.quoteCurrency || trade.quote_currency || null,

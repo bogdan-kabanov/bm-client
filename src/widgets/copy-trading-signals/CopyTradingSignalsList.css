@@ -2,26 +2,23 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    background: rgba(26, 28, 40, 1);
-    flex: 1;
+    height: 100%;
     min-height: 0;
     max-height: 100%;
-    overflow: hidden
+    gap: 16px;
+    overflow: hidden;
 }
 
 .copy-trading-signals-list .signals-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 18px 12px;
-    background-color: rgba(28, 30, 44, 1);
 }
 
 .copy-trading-signals-list .signals-header .signals-title {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
     color: #fff;
-    margin: 0
 }
 
 .copy-trading-signals-list .signals-header .signals-actions {
@@ -288,27 +285,35 @@
 }
 
 .copy-trading-signals-list .signals-content {
-    flex: 1;
+    flex: 1 1 0;
     overflow-y: auto;
     overflow-x: hidden;
-    min-height: 0
+    min-height: 0;
+}
+
+.copy-trading-signals-list .signals-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 .copy-trading-signals-list .signals-content::-webkit-scrollbar {
-    width: 6px
+    width: 4px;
 }
 
 .copy-trading-signals-list .signals-content::-webkit-scrollbar-track {
-    background: #ffffff0d
+    background: #ffffff0d;
+    border-radius: 2px;
 }
 
 .copy-trading-signals-list .signals-content::-webkit-scrollbar-thumb {
-    background: #fff3;
-    border-radius: 3px
+    background:  #5a5ee8;
+    border-radius: 2px;
+    transition: background 0.2s ease;
+    min-height: 30px;
 }
 
 .copy-trading-signals-list .signals-content::-webkit-scrollbar-thumb:hover {
-    background: #ffffff4d
+    background: #6b70f0;
 }
 
 .copy-trading-signals-list .signals-content .signals-loading,.copy-trading-signals-list .signals-content .signals-empty {
@@ -321,18 +326,16 @@
 .copy-trading-signals-list .signals-content .signals-items {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 8px;
     padding: 0;
-    position: relative;
-    overflow: visible;
-    isolation: isolate;
+    min-height: min-content;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item {
-    background: rgba(36, 39, 56, 1);
     border: none;
-    border-radius: 0;
-    padding: 12px 21px;
+    border-radius: 8px;
+    background-color: #14172A;
+    padding: 18.5px;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -348,91 +351,25 @@
     position: relative;
 }
 
-.copy-trading-signals-list .signals-content .signals-items g2 > .signal-item {
-    background: rgba(26, 28, 40, 1);
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item:nth-child(2n) {
-    background: rgba(28, 30, 44, 1)
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item:hover {
-    background: #ffffff0a
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-disabled {
-    opacity: .5;
-    filter: grayscale(.3);
-    pointer-events: none
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-inactive {
-    opacity: 0.4;
-    filter: grayscale(0.2);
-    z-index: 1;
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item:not(.signal-item-inactive) {
-    z-index: 10;
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-disabled .signal-left .signal-pair,.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-disabled .signal-left .signal-value {
-    color: #fff6
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-disabled .signal-left .signal-copied {
-    color: #ffffff4d
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-disabled .signal-right .signal-right-bottom .signal-direction,.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-disabled .signal-right .signal-right-bottom .signal-profit {
-    opacity: .5
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item.signal-item-disabled .signal-right .signal-timer {
-    color: #fff6
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item:first-child {
-    border-top: none
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item:last-child {
-    border-bottom: none
-}
-
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     flex: 1 1 auto;
-    min-width: 0;
-}
-
-.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-pair-row {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    flex-wrap: nowrap;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-pair {
-    font-size: 12.65px;
-    font-weight: 600;
+    font-size: 14px;
     color: #fff;
     line-height: 1.2;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 0;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-value {
-    font-size: 12.65px;
-    font-weight: 600;
+    font-size: 14px;
     color: #fff;
     line-height: 1.2;
     white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-copied {
@@ -440,12 +377,14 @@
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-top .signal-copied {
-    font-size: 15px;
-    color: #ffffff80;
+    display: none;
+}
+
+.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-copied {
+    font-size: 14px;
+    color: #7D7C8C;
     line-height: 1.2;
-    flex-shrink: 0;
     white-space: nowrap;
-    text-align: right;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right {
@@ -453,16 +392,15 @@
     flex-direction: column;
     align-items: flex-end;
     justify-content: space-between;
-    gap: 5px;
+    gap: 6px;
     flex: 0 0 auto;
-    min-width: 0;
     height: 100%;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-top {
     display: flex;
     align-items: flex-end;
-    justify-content: center;
+    justify-content: flex-end;
     flex-shrink: 0;
 }
 
@@ -470,18 +408,27 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    justify-content: center;
+    justify-content: flex-end;
     flex-shrink: 0;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-direction {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
     font-size: 13.8px;
     font-weight: 600;
     line-height: 1
 }
 
+.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-direction .signal-arrow {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-direction.up {
-    color: #32ac41
+    color: #22C55E
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-direction.down {
@@ -489,12 +436,11 @@
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-profit {
-    font-size: 12.65px;
-    font-weight: 600
+    font-size: 14px;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-profit.positive {
-    color: #32ac41
+    color: #22C55E
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-bottom .signal-profit.negative {
@@ -506,24 +452,24 @@
     align-items: center;
     gap: 9px;
     width: 100%;
-    margin-top: 2.3px
+    margin-top: 2.3px;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-progress {
     flex: 1;
-    height: 4px;
-    background: #ffffff14;
+    height: 2px;
+    background: #292E41;
     border-radius: 2px;
-    overflow: hidden;
     position: relative;
-    min-width: 0;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-progress .signal-progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, rgba(247, 216, 59, 1) 33%, rgba(58, 203, 74, 1) 100%);
+    background: #484BD7;
     border-radius: 1px;
-    position: relative
+    position: relative;
+    transition: width 0.3s ease-out;
+    will-change: width;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-progress .signal-progress-bar:after {
@@ -532,34 +478,43 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 30%;
-    background: linear-gradient(90deg,transparent 0%,rgba(73,255,0,.3) 100%)
+    width: 0%;
+    background: #484BD7;
+}
+
+.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-timer {
+    font-size: 14px;
+    color: #7D7C8C;
+    line-height: 1.2;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-timer {
-    font-size: 11.5px;
-    color: #ffffffb3;
-    font-weight: 500;
-    flex-shrink: 0
+    display: none;
 }
 
-.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-copy-btn {
+.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-top .signal-copy-btn {
     padding: 6px 14px;
-    background: #0995ff;
-    border-radius: 3px;
+    background: #484BD7;
+    border-radius: 4px;
     color: #fff;
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 14px;
+    font-weight: 400;
     cursor: pointer;
     line-height: 1.2;
     white-space: nowrap;
+    display: flex;
+    gap: 4px;
 }
 
-.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-copy-btn:disabled {
+.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-right .signal-right-top .signal-copy-btn:disabled {
     background: #ffffff1a;
     color: #fff6;
     cursor: not-allowed;
     opacity: .5
+}
+
+.copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-copy-btn {
+    display: none;
 }
 
 .copy-trading-signals-list .signals-content .signals-items .signal-item .signal-left .signal-progress-wrapper .signal-subscribe-btn {
@@ -593,17 +548,3 @@
     border-color: #32ac41;
 }
 
-/* iPhone адаптация для прокрутки */
-@media (max-width: 428px) {
-    .copy-trading-signals-list {
-        overflow: visible;
-        min-height: 0;
-        height: auto;
-    }
-
-    .copy-trading-signals-list .signals-content {
-        overflow-y: visible;
-        overflow-x: hidden;
-        height: auto;
-    }
-}

@@ -21,10 +21,19 @@ export const SignalsPanel: React.FC<SignalsPanelProps> = ({
   isBothOpen = false,
 }) => {
   const { t } = useLanguage();
+  const [isOpening, setIsOpening] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsOpening(true);
+      const timer = setTimeout(() => setIsOpening(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   return (
     <aside
-      className={`signals-panel ${isBothOpen ? 'split' : ''}`}
+      className={`signals-panel ${isBothOpen ? 'split' : ''} ${!isOpen ? 'signals-panel--closing' : ''} ${isOpening ? 'signals-panel--opening' : ''}`}
       role="dialog"
       aria-label={t('copyTrading.signalsTitle')}
     >

@@ -3,8 +3,8 @@ import { useLanguage } from '@src/app/providers/useLanguage';
 import { LanguageContext } from '@src/app/providers/LanguageProvider';
 import { useCurrencyData } from '@src/features/trading-terminal/hooks/useCurrencyData';
 import { useAppSelector, useAppDispatch } from '@src/shared/lib/hooks';
-import { selectSelectedBase } from '@src/entities/trading/model/selectors';
-import { setSelectedBase } from '@src/entities/trading/model/slice';
+import { selectSelectedBase, selectSelectedCurrencyId } from '@src/entities/trading/model/selectors';
+import { setSelectedBase, setSelectedCurrencyId } from '@src/entities/trading/model/slice';
 import type { Currency, CurrencyCategory } from '@src/shared/api';
 import { formatPrice, formatPercent } from '@src/features/trading-terminal/utils/formatUtils';
 import './FavoritePairs.css';
@@ -14,7 +14,8 @@ export const FavoritePairs: React.FC = () => {
   const languageContext = useContext(LanguageContext);
   const t = languageContext?.t || ((key: string, params?: { defaultValue?: string }) => params?.defaultValue || key);
   const dispatch = useAppDispatch();
-  const selectedBase = useAppSelector(selectSelectedBase);
+  const selectedBase = useAppSelector(selectSelectedBase); // Только для отображения
+  const selectedCurrencyId = useAppSelector(selectSelectedCurrencyId); // Основной идентификатор
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
@@ -35,9 +36,11 @@ export const FavoritePairs: React.FC = () => {
     currenciesLoading,
     favoriteCurrencies,
     setFavoriteCurrencies,
-    getCurrencyInfo,
+    getCurrencyById,
     resolveCurrencyIconUrls,
-  } = useCurrencyData(selectedBase);
+    setForcedCurrency,
+    forcedCurrency,
+  } = useCurrencyData();
 
   // Группируем валютные пары по категориям
   const currencyPairsByCategory = useMemo(() => {
@@ -54,7 +57,6 @@ export const FavoritePairs: React.FC = () => {
 
       const pairs: Array<{ base: string; quote: string; currency: Currency }> = [];
       const list = category.currencies ?? [];
-      const seenBases = new Set<string>();
 
       for (const currency of list) {
         // Показываем только активные валюты (is_active === true)
@@ -62,13 +64,7 @@ export const FavoritePairs: React.FC = () => {
           continue;
         }
 
-        // Убираем дубликаты по base_currency (берем первую пару для каждой базы)
-        const baseCurrency = currency.base_currency.toUpperCase();
-        if (seenBases.has(baseCurrency)) {
-          continue;
-        }
-        seenBases.add(baseCurrency);
-
+        // Добавляем все валютные пары без дедупликации по base_currency
         pairs.push({
           base: currency.base_currency,
           quote: currency.quote_currency,
@@ -132,16 +128,34 @@ export const FavoritePairs: React.FC = () => {
   }, [currencyPairsByCategory]);
 
   // Получаем информацию об избранных валютных парах
+  // favoriteCurrencies теперь хранит пары в формате BASE_QUOTE
   const favoritePairsInfo = useMemo(() => {
-    return favoriteCurrencies.map((base) => {
-      const currency = getCurrencyInfo(base);
+    return favoriteCurrencies.map((pairKey) => {
+      // Парсим формат BASE_QUOTE или BASE/QUOTE
+      const parts = pairKey.includes('_') ? pairKey.split('_') : pairKey.split('/');
+      const base = parts[0] || '';
+      const quote = parts[1] || 'USDT';
+      
+      // Ищем валюту по base и quote
+      let currency: Currency | null = null;
+      for (const category of currencyCategories) {
+        const found = category.currencies?.find(
+          (c) => c.base_currency === base && c.quote_currency === quote && c.is_active
+        );
+        if (found) {
+          currency = found;
+          break;
+        }
+      }
+      
       return {
         base,
-        quote: currency?.quote_currency || 'USDT',
-        currency: currency || null,
+        quote,
+        currency,
+        pairKey, // Сохраняем оригинальный ключ для удаления
       };
     });
-  }, [favoriteCurrencies, getCurrencyInfo]);
+  }, [favoriteCurrencies, currencyCategories]);
 
   // Проверяем необходимость прокрутки
   const checkScrollButtons = useCallback(() => {
@@ -362,7 +376,11 @@ export const FavoritePairs: React.FC = () => {
   // Закрытие выпадающего списка при клике вне его
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isClickInsideDropdown = dropdownRef.current?.contains(target);
+      const isClickInsideMenu = menuRef.current?.contains(target);
+      
+      if (!isClickInsideDropdown && !isClickInsideMenu) {
         setIsDropdownOpen(false);
         setSearchQuery('');
       }
@@ -391,38 +409,80 @@ export const FavoritePairs: React.FC = () => {
     }
   }, [isDropdownOpen]);
 
-  // Добавление в избранное
+  // Добавление в избранное (теперь используем формат BASE_QUOTE)
   const handleAddFavorite = useCallback(
-    (baseCurrency: string) => {
-      if (favoriteCurrencies.includes(baseCurrency)) {
+    (baseCurrency: string, quoteCurrency: string, event?: React.MouseEvent) => {
+      if (event) {
+        event.stopPropagation();
+      }
+      // Создаем уникальный ключ в формате BASE_QUOTE
+      const pairKey = `${baseCurrency}_${quoteCurrency}`;
+      if (favoriteCurrencies.includes(pairKey)) {
         return;
       }
       if (favoriteCurrencies.length >= 6) {
         return;
       }
-      setFavoriteCurrencies([...favoriteCurrencies, baseCurrency]);
-      setIsDropdownOpen(false);
-      setSearchQuery('');
+      setFavoriteCurrencies([...favoriteCurrencies, pairKey]);
     },
     [favoriteCurrencies, setFavoriteCurrencies]
   );
 
-  // Удаление из избранного
+  // Удаление из избранного (теперь используем формат BASE_QUOTE)
   const handleRemoveFavorite = useCallback(
-    (baseCurrency: string) => {
-      setFavoriteCurrencies(favoriteCurrencies.filter((base) => base !== baseCurrency));
+    (baseCurrency: string, quoteCurrency: string) => {
+      const pairKey = `${baseCurrency}_${quoteCurrency}`;
+      setFavoriteCurrencies(favoriteCurrencies.filter((key) => key !== pairKey));
     },
     [favoriteCurrencies, setFavoriteCurrencies]
   );
 
-  // Выбор валютной пары
+  // Выбор валютной пары - работает ТОЛЬКО по ID
   const handlePairSelect = useCallback(
-    (baseCurrency: string) => {
-      console.log('[FavoritePairs] handlePairSelect вызван', { baseCurrency, selectedBase });
-      // Используем только Redux для единого источника истины
-      dispatch(setSelectedBase(baseCurrency));
+    (baseCurrency: string, quoteCurrency: string) => {
+      console.log('[FavoritePairs] handlePairSelect вызван', { 
+        baseCurrency, 
+        quoteCurrency, 
+        selectedCurrencyId,
+        currentForcedCurrency: forcedCurrency
+      });
+      
+      // Находим валюту по base+quote и получаем её ID
+      let currencyId: number | null = null;
+      for (const category of currencyCategories) {
+        const list = category.currencies ?? [];
+        const found = list.find(
+          (c) => 
+            c.base_currency.toUpperCase() === baseCurrency.toUpperCase() && 
+            c.quote_currency.toUpperCase() === quoteCurrency.toUpperCase() && 
+            c.is_active
+        );
+        if (found?.id) {
+          currencyId = typeof found.id === 'number' ? found.id : parseInt(String(found.id), 10);
+          break;
+        }
+      }
+      
+      if (currencyId) {
+        console.log('[FavoritePairs] Устанавливаем currencyId', { baseCurrency, quoteCurrency, currencyId });
+        // Устанавливаем ID валютной пары в Redux (основной идентификатор)
+        dispatch(setSelectedCurrencyId(currencyId));
+        // Также устанавливаем в локальный state для совместимости
+        setForcedCurrency(currencyId);
+        // Обновляем selectedBase только для отображения symbol
+        dispatch(setSelectedBase(baseCurrency));
+      } else {
+        console.warn('[FavoritePairs] Не удалось найти валюту', { baseCurrency, quoteCurrency });
+      }
+      
+      console.log('[FavoritePairs] handlePairSelect завершен', { 
+        baseCurrency, 
+        quoteCurrency,
+        currencyId,
+        currencyIdSet: !!currencyId
+      });
     },
-    [dispatch, selectedBase]
+    [dispatch, selectedCurrencyId, setForcedCurrency, forcedCurrency, currencyCategories]
   );
 
   return (
@@ -433,7 +493,18 @@ export const FavoritePairs: React.FC = () => {
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         aria-label={t('trading.addFavoritePair', { defaultValue: 'Добавить избранную пару' })}
       >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          className="favorite-pairs__add-icon"
+          width="100%"
+          height="100%"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ display: "block" }}
+        >
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
@@ -463,19 +534,42 @@ export const FavoritePairs: React.FC = () => {
 
           {/* Поисковая строка */}
           <div className="favorite-pairs__search">
-            <svg className="favorite-pairs__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-            <input
-              ref={searchInputRef}
-              type="text"
-              className="favorite-pairs__search-input"
-              placeholder={t('trading.searchPairs', { defaultValue: 'Search currency pairs...' })}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div className="favorite-pairs__search-wrapper">
+              <svg className="favorite-pairs__search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M7.33333 12.6667C10.2789 12.6667 12.6667 10.2789 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M14 14L11.1 11.1"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                className="favorite-pairs__search-input"
+                placeholder={t('trading.searchPairs', { defaultValue: 'Search currency pairs...' })}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  className="favorite-pairs__search-clear"
+                  onClick={() => setSearchQuery('')}
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="favorite-pairs__dropdown-content">
@@ -531,77 +625,120 @@ export const FavoritePairs: React.FC = () => {
               </div>
             ) : filteredPairs.length > 0 ? (
               <div className="favorite-pairs__table-wrapper">
-                <table className="favorite-pairs__table">
-                  <thead>
-                    <tr>
-                      <th className="favorite-pairs__table-header favorite-pairs__table-header--asset">ASSET</th>
-                      <th className="favorite-pairs__table-header favorite-pairs__table-header--price">AVERAGE PRICE (24H)</th>
-                      <th className="favorite-pairs__table-header favorite-pairs__table-header--profit">PROFIT 30S+</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPairs.map((pair) => {
-                      const isFavorite = favoriteCurrencies.includes(pair.base);
-                      const iconUrls = pair.currency ? resolveCurrencyIconUrls(pair.currency) : [];
-                      const averagePrice = pair.currency 
-                        ? (pair.currency.average_price ?? pair.currency.avg_price ?? null)
-                        : null;
-                      const profitPercentage = pair.currency?.profit_percentage ?? null;
-                      const displayName = pair.currency?.display_name || pair.base;
+                <div className="favorite-pairs__table">
+                  {/* Заголовки таблицы */}
+                  <div className="favorite-pairs__table-header">
+                    <div className="favorite-pairs__table-header-cell favorite-pairs__table-header--asset">
+                      {t('trading.currencyControls.asset', { defaultValue: 'Asset' })}
+                    </div>
+                    <div className="favorite-pairs__table-header-cell favorite-pairs__table-header--price">
+                      {t('trading.currencyControls.averagePrice24h', { defaultValue: 'Average Price (24h)' })}
+                    </div>
+                    <div className="favorite-pairs__table-header-cell favorite-pairs__table-header--profit">
+                      {t('trading.currencyControls.profit30s', { defaultValue: 'Profit 30s+' })}
+                    </div>
+                  </div>
+                  {/* Строки таблицы */}
+                  {filteredPairs.map((pair) => {
+                    const pairKey = `${pair.base}_${pair.quote}`;
+                    const isFavorite = favoriteCurrencies.includes(pairKey);
+                    const iconUrls = pair.currency ? resolveCurrencyIconUrls(pair.currency) : [];
+                    const averagePrice = pair.currency 
+                      ? (pair.currency.average_price ?? pair.currency.avg_price ?? null)
+                      : null;
+                    const profitPercentage = pair.currency?.profit_percentage ?? null;
+                    const displayName = pair.currency?.display_name || pair.base;
+                    
+                      // Проверяем, является ли эта пара активной ТОЛЬКО по ID
+                      let isActive = false;
+                      const currentCurrencyId = forcedCurrency || selectedCurrencyId;
+                      if (currentCurrencyId && pair.currency?.id) {
+                        // Сравниваем ID напрямую - это единственный надежный способ
+                        const pairId = typeof pair.currency.id === 'number' ? pair.currency.id : parseInt(String(pair.currency.id), 10);
+                        isActive = pairId === currentCurrencyId;
+                      }
                       
                       return (
-                        <tr
-                          key={`${pair.base}-${pair.quote}`}
-                          className={`favorite-pairs__table-row ${isFavorite ? 'is-favorite' : ''}`}
-                          onClick={() => {
-                            handlePairSelect(pair.base);
-                            if (!isFavorite && favoriteCurrencies.length < 6) {
-                              handleAddFavorite(pair.base);
-                            }
-                            setIsDropdownOpen(false);
-                          }}
-                        >
-                          <td className="favorite-pairs__table-cell favorite-pairs__table-cell--asset">
-                            <div className="favorite-pairs__asset-info">
-                              <div className="favorite-pairs__pair-icon">
-                                {iconUrls.length > 0 ? (
-                                  <img src={iconUrls[0]} alt={pair.base} onError={(e) => {
+                      <div
+                        key={pair.currency?.id ?? `${pair.base}_${pair.quote}`}
+                        className={`favorite-pairs__table-row ${isFavorite ? 'is-favorite' : ''} ${isActive ? 'active' : ''}`}
+                        onClick={() => {
+                          handlePairSelect(pair.base, pair.quote);
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                      >
+                        <div className="favorite-pairs__table-cell favorite-pairs__table-cell--asset">
+                          <div className="favorite-pairs__asset-info">
+                            <div className="favorite-pairs__pair-icon">
+                              {iconUrls.length > 0 ? (
+                                <img 
+                                  src={iconUrls[0]} 
+                                  alt={pair.base} 
+                                  className="favorite-pairs__pair-icon-img"
+                                  onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
-                                  }} />
-                                ) : (
-                                  <span className="favorite-pairs__pair-icon-fallback">{pair.base[0]}</span>
-                                )}
-                              </div>
-                              <div className="favorite-pairs__asset-details">
-                                <div className="favorite-pairs__asset-name">{displayName}</div>
-                                <div className="favorite-pairs__asset-pair">{pair.base}/{pair.quote}</div>
-                              </div>
+                                  }} 
+                                />
+                              ) : (
+                                <span className="favorite-pairs__pair-icon-fallback">{pair.base.substring(0, 2)}</span>
+                              )}
                             </div>
-                          </td>
-                          <td className="favorite-pairs__table-cell favorite-pairs__table-cell--price">
-                            {averagePrice !== null ? (
-                              <span className="favorite-pairs__price-value">
-                                {formatPrice(averagePrice, pair.base)}
-                              </span>
-                            ) : (
-                              <span className="favorite-pairs__price-value">—</span>
+                            <div className="favorite-pairs__asset-details">
+                              <div className="favorite-pairs__asset-name">{pair.currency?.symbol || displayName}</div>
+                            </div>
+                            {!isFavorite && favoriteCurrencies.length < 6 && (
+                              <button
+                                className="favorite-pairs__add-favorite-button"
+                                onClick={(e) => handleAddFavorite(pair.base, pair.quote, e)}
+                                aria-label={t('trading.addToFavorites', { defaultValue: 'Add to favorites' })}
+                                title={t('trading.addToFavorites', { defaultValue: 'Add to favorites' })}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                              </button>
                             )}
-                          </td>
-                          <td className="favorite-pairs__table-cell favorite-pairs__table-cell--profit">
-                            {profitPercentage !== null ? (
-                              <span className="favorite-pairs__profit-value">
-                                {formatPercent(profitPercentage)}
-                              </span>
-                            ) : (
-                              <span className="favorite-pairs__profit-value">—</span>
+                            {isFavorite && (
+                              <button
+                                className="favorite-pairs__remove-favorite-button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveFavorite(pair.base, pair.quote);
+                                }}
+                                aria-label={t('trading.removeFromFavorites', { defaultValue: 'Remove from favorites' })}
+                                title={t('trading.removeFromFavorites', { defaultValue: 'Remove from favorites' })}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                              </button>
                             )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          </div>
+                        </div>
+                        <div className="favorite-pairs__table-cell favorite-pairs__table-cell--price">
+                          {averagePrice !== null && averagePrice > 0 ? (
+                            <span className="favorite-pairs__price-value">
+                              {formatPrice(averagePrice, pair.base)}
+                            </span>
+                          ) : (
+                            <span className="favorite-pairs__price-value">--</span>
+                          )}
+                        </div>
+                        <div className="favorite-pairs__table-cell favorite-pairs__table-cell--profit">
+                          {profitPercentage !== null ? (
+                            <span className={`favorite-pairs__profit-value ${profitPercentage >= 0 ? 'positive' : 'negative'}`}>
+                              {formatPercent(profitPercentage)}
+                            </span>
+                          ) : (
+                            <span className="favorite-pairs__profit-value">—</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="favorite-pairs__no-results">
@@ -632,20 +769,30 @@ export const FavoritePairs: React.FC = () => {
           <div className="favorite-pairs__favorites-container" ref={favoritesContainerRef}>
             {favoritePairsInfo.map((pairInfo) => {
               const iconUrls = pairInfo.currency ? resolveCurrencyIconUrls(pairInfo.currency) : [];
+              // Проверяем, является ли эта пара активной ТОЛЬКО по ID
+              let isActive = false;
+              const currentCurrencyId = forcedCurrency || selectedCurrencyId;
+              if (currentCurrencyId && pairInfo.currency?.id) {
+                // Сравниваем ID напрямую - это единственный надежный способ
+                const pairId = typeof pairInfo.currency.id === 'number' ? pairInfo.currency.id : parseInt(String(pairInfo.currency.id), 10);
+                isActive = pairId === currentCurrencyId;
+              }
+              
               return (
                 <div
-                  key={pairInfo.base}
-                  className={`favorite-pairs__favorite-card ${selectedBase === pairInfo.base ? 'is-active' : ''}`}
+                  key={pairInfo.currency?.id ?? `${pairInfo.base}_${pairInfo.quote}`}
+                  className={`favorite-pairs__favorite-card ${isActive ? 'is-active' : ''}`}
+                  data-base={pairInfo.base}
                   onClick={(e) => {
-                    console.log('[FavoritePairs] Клик по карточке', { base: pairInfo.base, currentBase: selectedBase });
-                    handlePairSelect(pairInfo.base);
+                    console.log('[FavoritePairs] Клик по карточке', { base: pairInfo.base, quote: pairInfo.quote, currentBase: selectedBase });
+                    handlePairSelect(pairInfo.base, pairInfo.quote);
                   }}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handlePairSelect(pairInfo.base);
+                      handlePairSelect(pairInfo.base, pairInfo.quote);
                     }
                   }}
                 >
@@ -659,12 +806,12 @@ export const FavoritePairs: React.FC = () => {
                       <span className="favorite-pairs__favorite-icon-fallback">{pairInfo.base[0]}</span>
                     )}
                   </div>
-                  <span className="favorite-pairs__favorite-name">{pairInfo.base}</span>
+                  <span className="favorite-pairs__favorite-name">{pairInfo.currency?.symbol || `${pairInfo.base}/${pairInfo.quote}`}</span>
                   <button
                     className="favorite-pairs__favorite-remove"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRemoveFavorite(pairInfo.base);
+                      handleRemoveFavorite(pairInfo.base, pairInfo.quote);
                     }}
                     aria-label={t('trading.removeFavorite', { defaultValue: 'Удалить из избранного' })}
                   >

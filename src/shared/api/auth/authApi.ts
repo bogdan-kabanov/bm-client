@@ -19,10 +19,10 @@ export const authApi = {
       noAuth: true,
     }),
 
-  register: (email: string, password: string, phone?: string, refId?: number, partnerReferral?: { partnerId: number; referralSlug: string }, referralPromocode?: string) =>
+  register: (email: string, password: string, phone?: string, ref_id?: number, partner_referral?: { partner_id: number; referral_slug: string }, referral_promocode?: string) =>
     apiClient<{ token: string; refresh_token?: string; user: any }>('/auth/email/register', {
       method: 'POST',
-      body: { email, password, phone, refId, partnerReferral, referralPromocode },
+      body: { email, password, phone, ref_id, partner_referral, referral_promocode },
       noAuth: true,
     }),
 

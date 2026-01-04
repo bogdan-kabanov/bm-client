@@ -54,14 +54,18 @@ export async function decodePartnerRef(token: string): Promise<{
                     return null;
                 });
                 
-                if (!data || !data.partnerId || !data.referralSlug) {
+                // Поддерживаем оба формата: snake_case (приоритет) и camelCase (для обратной совместимости)
+                const partnerId = data.partner_id || data.partnerId;
+                const referralSlug = data.referral_slug || data.referralSlug;
+                
+                if (!data || !partnerId || !referralSlug) {
                     console.error('[decodePartnerRef] ❌ Неполные данные от API:', data);
                     return null;
                 }
                 
                 console.log('[decodePartnerRef] ✅ Данные партнера получены:', {
-                    partnerId: data.partnerId,
-                    referralSlug: data.referralSlug
+                    partnerId,
+                    referralSlug
                 });
                 
                 const utmParams: Record<string, string> = {};
@@ -81,8 +85,8 @@ export async function decodePartnerRef(token: string): Promise<{
                 if (data.utm_language) utmParams.utm_language = data.utm_language;
                 
                 return {
-                    partnerId: data.partnerId,
-                    referralSlug: data.referralSlug,
+                    partnerId,
+                    referralSlug,
                     utmParams: Object.keys(utmParams).length > 0 ? utmParams : undefined,
                 };
             } catch (error) {

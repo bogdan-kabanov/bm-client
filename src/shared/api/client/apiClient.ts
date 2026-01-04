@@ -2,14 +2,20 @@ import type { RequestOptions } from './types';
 
 export const getApiBaseUrl = (): string => {
   if (typeof window === 'undefined') {
-    return '/v3';
+    return '/api';
   }
 
   const envApiBase = import.meta.env.VITE_API_BASE;
   
   // Если в env указан полный URL, всегда используем его
   if (envApiBase && envApiBase.trim().length > 0 && envApiBase.includes('://')) {
-    return envApiBase.trim();
+    let url = envApiBase.trim();
+    // Для localhost заменяем https на http
+    const urlLower = url.toLowerCase();
+    if (urlLower.includes('localhost') || urlLower.includes('127.0.0.1')) {
+      url = url.replace(/^https:\/\//i, 'http://');
+    }
+    return url;
   }
   
   // Если указан относительный путь, используем его
@@ -465,6 +471,7 @@ export const apiClient = async <T>(
       const responseText = await response.text();
 
       if (!responseText) {
+        console.warn('[API-CLIENT] ⚠️ Пустой ответ от сервера:', { endpoint, status: response.status });
         return {} as T;
       }
 
@@ -472,7 +479,23 @@ export const apiClient = async <T>(
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
+        console.error('[API-CLIENT] ❌ Ошибка парсинга JSON:', { endpoint, responseText: responseText.substring(0, 200), parseError });
         throw new Error('INVALID_JSON_RESPONSE');
+      }
+
+      // Логирование для регистрации, чтобы понять структуру ответа
+      if (endpoint.includes('/auth/email/register')) {
+        console.log('[API-CLIENT] 📥 Ответ от регистрации:', {
+          endpoint,
+          status: response.status,
+          hasSuccess: !!data.success,
+          success: data.success,
+          hasData: !!data.data,
+          hasToken: !!data.data?.token,
+          hasUser: !!data.data?.user,
+          dataStructure: Object.keys(data),
+          fullData: data
+        });
       }
 
       if (data && data.success === true) {
@@ -491,8 +514,13 @@ export const apiClient = async <T>(
       } else if (Array.isArray(data)) {
         return data as T;
       } else if (data && typeof data === 'object') {
-        return data as T;
+        // Если успешный ответ, но нет поля success, все равно возвращаем данные
+        if (response.ok && response.status === 200) {
+          return data as T;
+        }
+        throw new Error('UNEXPECTED_RESPONSE_FORMAT');
       } else {
+        console.error('[API-CLIENT] ❌ Неожиданный формат ответа:', { endpoint, status: response.status, data });
         throw new Error('UNEXPECTED_RESPONSE_FORMAT');
       }
     } catch (error) {

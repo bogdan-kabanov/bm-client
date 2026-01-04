@@ -5,8 +5,10 @@ import { selectProfile } from '@src/entities/user/model/selectors';
 import { loginWithGoogle, checkAndRegisterUser } from '@src/features/auth/authCheck';
 import { AppSkeleton } from '@src/shared/ui/skeleton/AppSkeleton';
 import { getPublicSkeletonPreset } from '@src/shared/ui/skeleton/presets';
+import { useLanguage } from '@src/app/providers/useLanguage';
 
 export const GoogleCallbackPage = () => {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -29,7 +31,7 @@ export const GoogleCallbackPage = () => {
 
         if (!code) {
           setStatus('error');
-          setErrorMessage('Отсутствует код авторизации');
+          setErrorMessage(t('auth.missingAuthCode'));
           setTimeout(() => navigate('/', { replace: true }), 3000);
           return;
         }
@@ -50,7 +52,7 @@ export const GoogleCallbackPage = () => {
       } catch (error: any) {
 
         setStatus('error');
-        setErrorMessage(error?.message || 'Ошибка авторизации через Google');
+        setErrorMessage(error?.message || t('auth.googleAuthError'));
         
         // Очищаем URL от параметров
         window.history.replaceState({}, '', '/');

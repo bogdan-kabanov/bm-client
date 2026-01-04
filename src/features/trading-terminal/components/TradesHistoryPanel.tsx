@@ -17,6 +17,7 @@ interface TradesHistoryPanelProps {
   onRequestActiveTrades?: () => void;
   onRequestTradeHistory?: () => void;
   isBothOpen?: boolean;
+  onOpenTradeSidebar?: (trade: any) => void;
 }
 
 export const TradesHistoryPanel: React.FC<TradesHistoryPanelProps> = ({
@@ -32,12 +33,34 @@ export const TradesHistoryPanel: React.FC<TradesHistoryPanelProps> = ({
   onRequestActiveTrades,
   onRequestTradeHistory,
   isBothOpen = false,
+  onOpenTradeSidebar,
 }) => {
   const { t } = useLanguage();
+  const [isOpening, setIsOpening] = React.useState(false);
+  const [isSplitting, setIsSplitting] = React.useState(false);
+  const prevIsBothOpenRef = React.useRef(isBothOpen);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsOpening(true);
+      const timer = setTimeout(() => setIsOpening(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (isBothOpen && !prevIsBothOpenRef.current) {
+      // Переход с полной высоты на 50%
+      setIsSplitting(true);
+      const timer = setTimeout(() => setIsSplitting(false), 300);
+      return () => clearTimeout(timer);
+    }
+    prevIsBothOpenRef.current = isBothOpen;
+  }, [isBothOpen]);
 
   return (
     <aside
-      className={`trades-history-panel ${isBothOpen ? 'split' : ''}`}
+      className={`trades-history-panel ${isBothOpen ? 'split' : ''} ${!isOpen ? 'trades-history-panel--closing' : ''} ${isOpening ? 'trades-history-panel--opening' : ''} ${isSplitting ? 'trades-history-panel--splitting' : ''}`}
       role="dialog"
       aria-label={t('trading.tradeHistory')}
     >
@@ -57,6 +80,7 @@ export const TradesHistoryPanel: React.FC<TradesHistoryPanelProps> = ({
           resolveCurrencyIconUrls={resolveCurrencyIconUrls}
           onRequestActiveTrades={onRequestActiveTrades}
           onRequestTradeHistory={onRequestTradeHistory}
+          onOpenTradeSidebar={onOpenTradeSidebar}
         />
       </div>
     </aside>

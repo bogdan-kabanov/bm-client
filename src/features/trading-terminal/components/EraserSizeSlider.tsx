@@ -39,7 +39,10 @@ export const EraserSizeSlider: React.FC<EraserSizeSliderProps> = ({
         <div className="eraser-size-slider__preview">
           <div
             className="eraser-size-slider__preview-circle"
-            style={{ width: `${(eraserRadius / max) * 100}%`, height: `${(eraserRadius / max) * 100}%` }}
+            style={{ 
+              width: `${(eraserRadius / max) * 60}px`, 
+              height: `${(eraserRadius / max) * 60}px` 
+            }}
           />
         </div>
       </div>

@@ -46,7 +46,8 @@ export interface TradeHistoryEntry {
     profitPercent: number;
     isWin: boolean;
     createdAt: number;
-    completedAt: number;
+    completedAt: number | null;
+    expirationTime?: number | null;
     symbol?: string | null;
     baseCurrency?: string | null;
     quoteCurrency?: string | null;
@@ -103,9 +104,11 @@ export interface TradingState {
     tradeHistory: TradeHistoryEntry[];
     tradeMarkers: TradeMarker[];
     activeTrades: ActiveTrade[];
-    selectedBase: string;
+    selectedBase: string; // Используется только для отображения symbol
+    selectedCurrencyId: number | null; // Основной идентификатор валютной пары
     quoteCurrency: string;
     tradingMode: 'manual' | 'demo';
     ui: TradingTerminalUI;
     form: TradingFormState;
+    newTradesCount: number;
 }

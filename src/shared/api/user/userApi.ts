@@ -40,4 +40,8 @@ export const userApi = {
       method: 'DELETE',
       body: { confirm: confirmText },
     }),
+  updateLastViewedTradeHistoryAt: () =>
+    apiClient<{ success: boolean; message: string }>('/users/trade-history/viewed', {
+      method: 'PUT',
+    }),
 };

@@ -170,28 +170,11 @@ class TradePlacementService {
    */
   handleTradePlaced(message: any, fallbackOnSuccess?: (result: PlaceTradeResult) => void): void {
     try {
-      console.log('[TRADE_PLACEMENT] ========== НАЧАЛО ОБРАБОТКИ trade_placed ==========');
-      console.log('[TRADE_PLACEMENT] Получен ответ trade_placed от сервера', { 
-        message,
-        hasMessage: !!message,
-        messageType: typeof message,
-        messageKeys: message ? Object.keys(message) : [],
-        hasSuccess: message?.success,
-        successValue: message?.success,
-        hasData: !!message?.data,
-        dataKeys: message?.data ? Object.keys(message?.data) : []
-      });
       this.log('INFO', `Received trade_placed response from server`, { message });
 
       // Проверяем формат сообщения: { type: 'trade_placed', data: trade }
-      // Сервер отправляет { type: 'trade_placed', data: trade }, а не { success: true, data: trade }
+      // Сервер может отправлять как { type: 'trade_placed', data: trade }, так и { type: 'trade_placed', success: true, data: trade }
       if (!message || message.type !== 'trade_placed') {
-        console.warn('[TRADE_PLACEMENT] ⚠️ trade_placed response does not have correct type', { 
-          message,
-          hasMessage: !!message,
-          messageType: message?.type,
-          expectedType: 'trade_placed'
-        });
         this.log('WARN', `trade_placed response does not have correct type`, { message });
         return;
       }
@@ -206,7 +189,35 @@ class TradePlacementService {
       const requestId = this.findMatchingPendingTrade(data);
       
       if (!requestId) {
-        this.log('WARN', `No matching pending trade found for response`, { data });
+        // Пытаемся найти по любому pending trade (берем последний)
+        // Это fallback на случай, если matching не сработал из-за небольших различий в параметрах
+        const pendingTradesArray = Array.from(this.pendingTrades.entries());
+        if (pendingTradesArray.length > 0 && fallbackOnSuccess) {
+          const [lastRequestId, lastPendingTrade] = pendingTradesArray[pendingTradesArray.length - 1];
+          this.log('WARN', `Using fallback: last pending trade for response`, { 
+            lastRequestId, 
+            pendingTradesCount: pendingTradesArray.length,
+            data 
+          });
+          
+          // Очищаем таймаут
+          if (lastPendingTrade.timeoutId) {
+            clearTimeout(lastPendingTrade.timeoutId);
+          }
+          
+          // Сохраняем callback перед удалением
+          const { onSuccess } = lastPendingTrade;
+          this.pendingTrades.delete(lastRequestId);
+          
+          // Обрабатываем ответ
+          this.processTradePlacedResponse(data, onSuccess || fallbackOnSuccess);
+          return;
+        }
+        
+        this.log('WARN', `No matching pending trade found for response`, { 
+          pendingTradesCount: this.pendingTrades.size,
+          data 
+        });
         // Если есть fallback callback, используем его (для совместимости со старым кодом)
         if (fallbackOnSuccess) {
           this.processTradePlacedResponse(data, fallbackOnSuccess);

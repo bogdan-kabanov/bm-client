@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import productionConfig from './vite.config.production';
 import { resolve } from 'path';
 
-const envDir = resolve(__dirname, '..', 'env-config', 'client');
+const envDir = resolve(__dirname, '..');
 const env = loadEnv('development', envDir, '');
 
 // Allowed hosts теперь берутся только из переменных окружения
@@ -215,16 +215,34 @@ export default defineConfig(({ mode }) => ({
       ])
     ),
     hmr: (() => {
-      const hmrHost = env.VITE_HMR_HOST || process.env.VITE_HMR_HOST || '';
-      const hmrProtocol = env.VITE_HMR_PROTOCOL || process.env.VITE_HMR_PROTOCOL || '';
-      const hmrClientPort = Number(env.VITE_HMR_CLIENT_PORT || process.env.VITE_HMR_CLIENT_PORT || '');
+      const devPort = 5173; // Порт сервера разработки
+      const hmrHost = env.VITE_HMR_HOST || process.env.VITE_HMR_HOST || 'localhost';
+      const rawHmrClientPort = (env.VITE_HMR_CLIENT_PORT || process.env.VITE_HMR_CLIENT_PORT) 
+        ? Number(env.VITE_HMR_CLIENT_PORT || process.env.VITE_HMR_CLIENT_PORT) 
+        : undefined;
+      const hmrClientPort = rawHmrClientPort ?? (hmrHost.includes('velartrade.com') ? 443 : devPort);
+      const hmrProtocol = env.VITE_HMR_PROTOCOL || process.env.VITE_HMR_PROTOCOL || (hmrClientPort === 443 ? 'wss' : 'ws');
 
-      return {
+      // Если clientPort совпадает с devPort, не указываем его явно - Vite автоматически использует порт сервера
+      const hmrConfig: any = {
         host: hmrHost,
-        port: Number(env.VITE_HMR_SERVER_PORT || process.env.VITE_HMR_SERVER_PORT || ''),
         protocol: hmrProtocol,
-        clientPort: hmrClientPort,
       };
+      
+      // Указываем clientPort только если он отличается от порта сервера
+      if (hmrClientPort !== devPort) {
+        hmrConfig.clientPort = hmrClientPort;
+      }
+      
+      const hmrServerPort = (env.VITE_HMR_SERVER_PORT || process.env.VITE_HMR_SERVER_PORT)
+        ? Number(env.VITE_HMR_SERVER_PORT || process.env.VITE_HMR_SERVER_PORT)
+        : undefined;
+      
+      if (hmrServerPort !== undefined) {
+        hmrConfig.port = hmrServerPort;
+      }
+
+      return hmrConfig;
     })(),
     watch: {
       usePolling: false,

@@ -14,7 +14,7 @@
   border: 1px solid var(--button-border);
   background: var(--button-bg);
   color: var(--button-color);
-  font-size: 0.9375rem;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -43,7 +43,7 @@
 }
 
 .button--variant-primary {
-  --button-bg: linear-gradient(135deg, #0f8cff, #00a3ff);
+  --button-bg: #484BD7;
   --button-bg-hover: linear-gradient(135deg, #1294ff, #00afff);
   --button-border: rgba(15, 140, 255, 0.4);
   --button-shadow: 0 10px 24px rgba(15, 140, 255, 0.35);

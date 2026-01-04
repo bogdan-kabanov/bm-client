@@ -2,14 +2,14 @@
 
 .profile-popup {
     position: fixed;
+    padding: 16px;
     top: 70px;
     right: 20px;
     width: 0;
     max-width: 320px;
     max-height: calc(100vh - 100px);
-    background: #272b3a;
+    background: #191C32;
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     z-index: 9999;
     display: flex;
@@ -26,9 +26,8 @@
     pointer-events: auto;
 }
 
-/* Increased font sizes when visible */
 .profile-popup.visible .profile-popup__name {
-    font-size: 17px;
+    font-size: 16px;
 }
 
 .profile-popup.visible .profile-popup__id {
@@ -37,11 +36,11 @@
 
 .profile-popup.visible .profile-popup__level-badge {
     font-size: 13px;
-    padding: 3px 8px;
+    color: #22C55E;
 }
 
 .profile-popup.visible .profile-popup__info-label {
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .profile-popup.visible .profile-popup__info-value {
@@ -58,12 +57,10 @@
 
 /* Header */
 .profile-popup__header {
+    padding-bottom: 16px;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 14px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    flex-shrink: 0;
     gap: 12px;
 }
 
@@ -75,6 +72,7 @@
     min-width: 0;
 }
 
+/* Avatar */
 .profile-popup__avatar {
     position: relative;
     width: 48px;
@@ -108,19 +106,19 @@
 }
 
 .profile-popup__avatar--green {
-    box-shadow: 0 0 0 2px #5be58a;
+    box-shadow: 0 0 0 2px #484BD7;
 }
 
 .profile-popup__avatar--yellow {
-    box-shadow: 0 0 0 2px #fbbf24;
+    box-shadow: 0 0 0 2px #484BD7;
 }
 
 .profile-popup__avatar--purple {
-    box-shadow: 0 0 0 2px #c084fc;
+    box-shadow: 0 0 0 2px #484BD7;
 }
 
 .profile-popup__avatar--red {
-    box-shadow: 0 0 0 2px #f7525f;
+    box-shadow: 0 0 0 2px #484BD7;
 }
 
 .profile-popup__user-main {
@@ -139,8 +137,7 @@
 }
 
 .profile-popup__name {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 16px;
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
@@ -150,36 +147,26 @@
 
 .profile-popup__level-badge {
     font-size: 12px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 3px;
     line-height: 1.4;
     white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.profile-popup__level-badge--green {
-    background: rgba(91, 229, 138, 0.2);
-    color: #5be58a;
-    border: 1px solid rgba(91, 229, 138, 0.3);
 }
 
 .profile-popup__level-badge--yellow {
-    background: rgba(251, 191, 36, 0.2);
+    background: transparent;
     color: #fbbf24;
-    border: 1px solid rgba(251, 191, 36, 0.3);
+    border: none;
 }
 
 .profile-popup__level-badge--purple {
-    background: rgba(192, 132, 252, 0.2);
+    background: transparent;
     color: #c084fc;
-    border: 1px solid rgba(192, 132, 252, 0.3);
+    border: none;
 }
 
 .profile-popup__level-badge--red {
-    background: rgba(247, 82, 95, 0.2);
+    background: transparent;
     color: #f7525f;
-    border: 1px solid rgba(247, 82, 95, 0.3);
+    border: none;
 }
 
 .profile-popup__id {
@@ -198,14 +185,14 @@
 }
 
 .profile-popup__id-text {
-    color: inherit;
+    color: #7D7C8C;
 }
 
 .profile-popup__id-copy-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: #7D7C8C;
     opacity: 0.7;
     transition: opacity 0.2s ease, transform 0.2s ease;
     flex-shrink: 0;
@@ -273,12 +260,12 @@
 
 .profile-popup__content {
     flex: 1;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 12px 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
@@ -298,6 +285,30 @@
     align-items: flex-start;
     gap: 12px;
     padding: 8px 0;
+}
+
+.profile-popup__info-item--language {
+    align-items: center;
+}
+
+.profile-popup__info-item--currency {
+    position: relative;
+}
+
+.profile-popup__info-item--currency.profile-popup__info-item--editing {
+    align-items: center;
+}
+
+.profile-popup__info-item--action {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 0 -12px;
+}
+
+.profile-popup__info-item--action:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .profile-popup__info-label {
@@ -322,11 +333,7 @@
     color: rgba(0, 255, 140, 0.9);
 }
 
-/* Language button styles */
-.profile-popup__info-item--language {
-    align-items: center;
-}
-
+/* Language button */
 .profile-popup__language-button {
     display: inline-flex;
     align-items: center;
@@ -335,8 +342,8 @@
     padding: 0;
     border: none;
     background: transparent;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 400;
     color: #fff;
     text-align: right;
     line-height: 1.5;
@@ -365,16 +372,7 @@
     color: rgba(255, 255, 255, 0.9);
 }
 
-/* Currency editing styles */
-.profile-popup__info-item--currency {
-    position: relative;
-}
-
-.profile-popup__info-item--currency.profile-popup__info-item--editing {
-    align-items: center;
-}
-
-/* Currency dropdown styles */
+/* Currency dropdown */
 .profile-popup__currency-dropdown {
     position: relative;
     flex: 1;
@@ -529,15 +527,6 @@
     color: rgba(0, 154, 249, 0.7);
 }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 0.5;
-    }
-    50% {
-        opacity: 1;
-    }
-}
-
 .profile-popup__currency-cancel {
     width: 20px;
     height: 20px;
@@ -566,19 +555,16 @@
     cursor: not-allowed;
 }
 
-/* Action buttons in content */
-.profile-popup__info-item--action {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    border-radius: 4px;
-    padding: 8px 12px;
-    margin: 0 -12px;
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 
-.profile-popup__info-item--action:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
+/* Action buttons */
 .profile-popup__action-button {
     padding: 0;
     border: none;
@@ -598,8 +584,8 @@
 
 .profile-popup__verification-badge {
     display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 0;
+    border-radius: 0;
     font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
@@ -607,21 +593,21 @@
 }
 
 .profile-popup__verification-badge--verified {
-    background: rgba(0, 255, 140, 0.15);
+    background: transparent;
     color: rgba(0, 255, 140, 0.9);
-    border: 1px solid rgba(0, 255, 140, 0.3);
+    border: none;
 }
 
 .profile-popup__verification-badge--not-verified {
-    background: rgba(255, 255, 255, 0.08);
+    background: transparent;
     color: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: none;
 }
 
 /* Footer */
 .profile-popup__footer {
-    padding: 12px 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 16px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -636,8 +622,7 @@
 .profile-popup__open-profile-button {
     flex: 1;
     padding: 10px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.05);
+    background: #292E41;
     color: rgba(255, 255, 255, 0.9);
     font-size: 15px;
     font-weight: 500;
@@ -651,15 +636,13 @@
 
 .profile-popup__open-profile-button:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.25);
     color: #fff;
 }
 
 .profile-popup__deposit-button {
     flex: 1;
     padding: 10px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.05);
+    background: #484BD7;
     color: rgba(255, 255, 255, 0.9);
     font-size: 15px;
     font-weight: 500;
@@ -776,450 +759,6 @@
 
 .profile-popup__logout-btn--ghost:hover {
     background: rgba(255, 255, 255, 0.12);
-}
-
-/* Light theme for Profile and Payment pages */
-body.profile-page-active .profile-popup,
-html.profile-page-active .profile-popup,
-body:has(.profile-page-wrapper) .profile-popup,
-html:has(.profile-page-wrapper) .profile-popup,
-body:has(.deposit-page-wrapper) .profile-popup,
-html:has(.deposit-page-wrapper) .profile-popup {
-    background: #ffffff;
-    border: 1px solid #e5e5e5;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-body.profile-page-active .profile-popup__header,
-html.profile-page-active .profile-popup__header,
-body:has(.profile-page-wrapper) .profile-popup__header,
-html:has(.profile-page-wrapper) .profile-popup__header,
-body:has(.deposit-page-wrapper) .profile-popup__header,
-html:has(.deposit-page-wrapper) .profile-popup__header {
-    border-bottom-color: #e5e5e5;
-}
-
-body.profile-page-active .profile-popup__name,
-html.profile-page-active .profile-popup__name,
-body:has(.profile-page-wrapper) .profile-popup__name,
-html:has(.profile-page-wrapper) .profile-popup__name,
-body:has(.deposit-page-wrapper) .profile-popup__name,
-html:has(.deposit-page-wrapper) .profile-popup__name {
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__id,
-html.profile-page-active .profile-popup__id,
-body:has(.profile-page-wrapper) .profile-popup__id,
-html:has(.profile-page-wrapper) .profile-popup__id,
-body:has(.deposit-page-wrapper) .profile-popup__id,
-html:has(.deposit-page-wrapper) .profile-popup__id {
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__id:hover,
-html.profile-page-active .profile-popup__id:hover,
-body:has(.profile-page-wrapper) .profile-popup__id:hover,
-html:has(.profile-page-wrapper) .profile-popup__id:hover,
-body:has(.deposit-page-wrapper) .profile-popup__id:hover,
-html:has(.deposit-page-wrapper) .profile-popup__id:hover {
-    opacity: 0.7;
-}
-
-body.profile-page-active .profile-popup__id-copy-icon,
-html.profile-page-active .profile-popup__id-copy-icon,
-body:has(.profile-page-wrapper) .profile-popup__id-copy-icon,
-html:has(.profile-page-wrapper) .profile-popup__id-copy-icon,
-body:has(.deposit-page-wrapper) .profile-popup__id-copy-icon,
-html:has(.deposit-page-wrapper) .profile-popup__id-copy-icon {
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__id--copied .profile-popup__id-copy-icon,
-html.profile-page-active .profile-popup__id--copied .profile-popup__id-copy-icon,
-body:has(.profile-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
-html:has(.profile-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
-body:has(.deposit-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
-html:has(.deposit-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon {
-    color: #22c55e;
-}
-
-body.profile-page-active .profile-popup__info-label,
-html.profile-page-active .profile-popup__info-label,
-body:has(.profile-page-wrapper) .profile-popup__info-label,
-html:has(.profile-page-wrapper) .profile-popup__info-label,
-body:has(.deposit-page-wrapper) .profile-popup__info-label,
-html:has(.deposit-page-wrapper) .profile-popup__info-label {
-    color: #666;
-}
-
-body.profile-page-active .profile-popup__info-value,
-html.profile-page-active .profile-popup__info-value,
-body:has(.profile-page-wrapper) .profile-popup__info-value,
-html:has(.profile-page-wrapper) .profile-popup__info-value,
-body:has(.deposit-page-wrapper) .profile-popup__info-value,
-html:has(.deposit-page-wrapper) .profile-popup__info-value {
-    color: #333;
-}
-
-/* Light theme styles for currency dropdown */
-body.profile-page-active .profile-popup__currency-button,
-html.profile-page-active .profile-popup__currency-button,
-body:has(.profile-page-wrapper) .profile-popup__currency-button,
-html:has(.profile-page-wrapper) .profile-popup__currency-button,
-body:has(.deposit-page-wrapper) .profile-popup__currency-button,
-html:has(.deposit-page-wrapper) .profile-popup__currency-button {
-    background: #f5f5f5;
-    border-color: #e5e5e5;
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__currency-button:hover:not(:disabled),
-html.profile-page-active .profile-popup__currency-button:hover:not(:disabled),
-body:has(.profile-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
-html:has(.profile-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
-body:has(.deposit-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
-html:has(.deposit-page-wrapper) .profile-popup__currency-button:hover:not(:disabled) {
-    background: #e5e5e5;
-    border-color: #d5d5d5;
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__currency-button--open,
-html.profile-page-active .profile-popup__currency-button--open,
-body:has(.profile-page-wrapper) .profile-popup__currency-button--open,
-html:has(.profile-page-wrapper) .profile-popup__currency-button--open,
-body:has(.deposit-page-wrapper) .profile-popup__currency-button--open,
-html:has(.deposit-page-wrapper) .profile-popup__currency-button--open {
-    background: #e5e5e5;
-    border-color: #4092ff;
-}
-
-body.profile-page-active .profile-popup__currency-arrow,
-html.profile-page-active .profile-popup__currency-arrow,
-body:has(.profile-page-wrapper) .profile-popup__currency-arrow,
-html:has(.profile-page-wrapper) .profile-popup__currency-arrow,
-body:has(.deposit-page-wrapper) .profile-popup__currency-arrow,
-html:has(.deposit-page-wrapper) .profile-popup__currency-arrow {
-    color: #666;
-}
-
-body.profile-page-active .profile-popup__language-button,
-html.profile-page-active .profile-popup__language-button,
-body:has(.profile-page-wrapper) .profile-popup__language-button,
-html:has(.profile-page-wrapper) .profile-popup__language-button,
-body:has(.deposit-page-wrapper) .profile-popup__language-button,
-html:has(.deposit-page-wrapper) .profile-popup__language-button {
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__language-button:hover,
-html.profile-page-active .profile-popup__language-button:hover,
-body:has(.profile-page-wrapper) .profile-popup__language-button:hover,
-html:has(.profile-page-wrapper) .profile-popup__language-button:hover,
-body:has(.deposit-page-wrapper) .profile-popup__language-button:hover,
-html:has(.deposit-page-wrapper) .profile-popup__language-button:hover {
-    color: #4092ff;
-}
-
-body.profile-page-active .profile-popup__language-arrow,
-html.profile-page-active .profile-popup__language-arrow,
-body:has(.profile-page-wrapper) .profile-popup__language-arrow,
-html:has(.profile-page-wrapper) .profile-popup__language-arrow,
-body:has(.deposit-page-wrapper) .profile-popup__language-arrow,
-html:has(.deposit-page-wrapper) .profile-popup__language-arrow {
-    color: #666;
-}
-
-body.profile-page-active .profile-popup__language-button:hover .profile-popup__language-arrow,
-html.profile-page-active .profile-popup__language-button:hover .profile-popup__language-arrow,
-body:has(.profile-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
-html:has(.profile-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
-body:has(.deposit-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
-html:has(.deposit-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow {
-    color: #4092ff;
-}
-
-body.profile-page-active .profile-popup__currency-dropdown-list,
-html.profile-page-active .profile-popup__currency-dropdown-list,
-body:has(.profile-page-wrapper) .profile-popup__currency-dropdown-list,
-html:has(.profile-page-wrapper) .profile-popup__currency-dropdown-list,
-body:has(.deposit-page-wrapper) .profile-popup__currency-dropdown-list,
-html:has(.deposit-page-wrapper) .profile-popup__currency-dropdown-list {
-    background: #ffffff;
-    border-color: #e5e5e5;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-body.profile-page-active .profile-popup__currency-option,
-html.profile-page-active .profile-popup__currency-option,
-body:has(.profile-page-wrapper) .profile-popup__currency-option,
-html:has(.profile-page-wrapper) .profile-popup__currency-option,
-body:has(.deposit-page-wrapper) .profile-popup__currency-option,
-html:has(.deposit-page-wrapper) .profile-popup__currency-option {
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__currency-option:hover:not(:disabled),
-html.profile-page-active .profile-popup__currency-option:hover:not(:disabled),
-body:has(.profile-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
-html:has(.profile-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
-body:has(.deposit-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
-html:has(.deposit-page-wrapper) .profile-popup__currency-option:hover:not(:disabled) {
-    background: #f5f5f5;
-}
-
-body.profile-page-active .profile-popup__currency-option--active,
-html.profile-page-active .profile-popup__currency-option--active,
-body:has(.profile-page-wrapper) .profile-popup__currency-option--active,
-html:has(.profile-page-wrapper) .profile-popup__currency-option--active,
-body:has(.deposit-page-wrapper) .profile-popup__currency-option--active,
-html:has(.deposit-page-wrapper) .profile-popup__currency-option--active {
-    background: rgba(64, 146, 255, 0.1);
-    color: #4092ff;
-}
-
-body.profile-page-active .profile-popup__currency-option-code,
-html.profile-page-active .profile-popup__currency-option-code,
-body:has(.profile-page-wrapper) .profile-popup__currency-option-code,
-html:has(.profile-page-wrapper) .profile-popup__currency-option-code,
-body:has(.deposit-page-wrapper) .profile-popup__currency-option-code,
-html:has(.deposit-page-wrapper) .profile-popup__currency-option-code {
-    color: #999;
-}
-
-body.profile-page-active .profile-popup__currency-option--active .profile-popup__currency-option-code,
-html.profile-page-active .profile-popup__currency-option--active .profile-popup__currency-option-code,
-body:has(.profile-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
-html:has(.profile-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
-body:has(.deposit-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
-html:has(.deposit-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code {
-    color: rgba(64, 146, 255, 0.7);
-}
-
-body.profile-page-active .profile-popup__footer,
-html.profile-page-active .profile-popup__footer,
-body:has(.profile-page-wrapper) .profile-popup__footer,
-html:has(.profile-page-wrapper) .profile-popup__footer,
-body:has(.deposit-page-wrapper) .profile-popup__footer,
-html:has(.deposit-page-wrapper) .profile-popup__footer {
-    border-top-color: #e5e5e5;
-}
-
-body.profile-page-active .profile-popup__close,
-html.profile-page-active .profile-popup__close,
-body:has(.profile-page-wrapper) .profile-popup__close,
-html:has(.profile-page-wrapper) .profile-popup__close,
-body:has(.deposit-page-wrapper) .profile-popup__close,
-html:has(.deposit-page-wrapper) .profile-popup__close {
-    color: #666;
-}
-
-body.profile-page-active .profile-popup__close:hover,
-html.profile-page-active .profile-popup__close:hover,
-body:has(.profile-page-wrapper) .profile-popup__close:hover,
-html:has(.profile-page-wrapper) .profile-popup__close:hover,
-body:has(.deposit-page-wrapper) .profile-popup__close:hover,
-html:has(.deposit-page-wrapper) .profile-popup__close:hover {
-    background: #f5f5f5;
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__link-button,
-html.profile-page-active .profile-popup__link-button,
-body:has(.profile-page-wrapper) .profile-popup__link-button,
-html:has(.profile-page-wrapper) .profile-popup__link-button,
-body:has(.deposit-page-wrapper) .profile-popup__link-button,
-html:has(.deposit-page-wrapper) .profile-popup__link-button {
-    color: #4092ff;
-}
-
-body.profile-page-active .profile-popup__link-button:hover,
-html.profile-page-active .profile-popup__link-button:hover,
-body:has(.profile-page-wrapper) .profile-popup__link-button:hover,
-html:has(.profile-page-wrapper) .profile-popup__link-button:hover,
-body:has(.deposit-page-wrapper) .profile-popup__link-button:hover,
-html:has(.deposit-page-wrapper) .profile-popup__link-button:hover {
-    color: #2d6cc0;
-}
-
-/* Light theme for new elements */
-body.profile-page-active .profile-popup__action-button,
-html.profile-page-active .profile-popup__action-button,
-body:has(.profile-page-wrapper) .profile-popup__action-button,
-html:has(.profile-page-wrapper) .profile-popup__action-button,
-body:has(.deposit-page-wrapper) .profile-popup__action-button,
-html:has(.deposit-page-wrapper) .profile-popup__action-button {
-    color: #4092ff;
-}
-
-body.profile-page-active .profile-popup__action-button:hover,
-html.profile-page-active .profile-popup__action-button:hover,
-body:has(.profile-page-wrapper) .profile-popup__action-button:hover,
-html:has(.profile-page-wrapper) .profile-popup__action-button:hover,
-body:has(.deposit-page-wrapper) .profile-popup__action-button:hover,
-html:has(.deposit-page-wrapper) .profile-popup__action-button:hover {
-    color: #2d6cc0;
-}
-
-body.profile-page-active .profile-popup__verification-badge--verified,
-html.profile-page-active .profile-popup__verification-badge--verified,
-body:has(.profile-page-wrapper) .profile-popup__verification-badge--verified,
-html:has(.profile-page-wrapper) .profile-popup__verification-badge--verified,
-body:has(.deposit-page-wrapper) .profile-popup__verification-badge--verified,
-html:has(.deposit-page-wrapper) .profile-popup__verification-badge--verified {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
-    border-color: rgba(34, 197, 94, 0.3);
-}
-
-body.profile-page-active .profile-popup__verification-badge--not-verified,
-html.profile-page-active .profile-popup__verification-badge--not-verified,
-body:has(.profile-page-wrapper) .profile-popup__verification-badge--not-verified,
-html:has(.profile-page-wrapper) .profile-popup__verification-badge--not-verified,
-body:has(.deposit-page-wrapper) .profile-popup__verification-badge--not-verified,
-html:has(.deposit-page-wrapper) .profile-popup__verification-badge--not-verified {
-    background: rgba(0, 0, 0, 0.05);
-    color: #666;
-    border-color: #e5e5e5;
-}
-
-body.profile-page-active .profile-popup__footer,
-html.profile-page-active .profile-popup__footer,
-body:has(.profile-page-wrapper) .profile-popup__footer,
-html:has(.profile-page-wrapper) .profile-popup__footer,
-body:has(.deposit-page-wrapper) .profile-popup__footer,
-html:has(.deposit-page-wrapper) .profile-popup__footer {
-    border-top-color: #e5e5e5;
-}
-
-body.profile-page-active .profile-popup__open-profile-button,
-html.profile-page-active .profile-popup__open-profile-button,
-body:has(.profile-page-wrapper) .profile-popup__open-profile-button,
-html:has(.profile-page-wrapper) .profile-popup__open-profile-button,
-body:has(.deposit-page-wrapper) .profile-popup__open-profile-button,
-html:has(.deposit-page-wrapper) .profile-popup__open-profile-button {
-    background: #f5f5f5;
-    border-color: #e5e5e5;
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__open-profile-button:hover,
-html.profile-page-active .profile-popup__open-profile-button:hover,
-body:has(.profile-page-wrapper) .profile-popup__open-profile-button:hover,
-html:has(.profile-page-wrapper) .profile-popup__open-profile-button:hover,
-body:has(.deposit-page-wrapper) .profile-popup__open-profile-button:hover,
-html:has(.deposit-page-wrapper) .profile-popup__open-profile-button:hover {
-    background: #e5e5e5;
-    border-color: #d5d5d5;
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__deposit-button,
-html.profile-page-active .profile-popup__deposit-button,
-body:has(.profile-page-wrapper) .profile-popup__deposit-button,
-html:has(.profile-page-wrapper) .profile-popup__deposit-button,
-body:has(.deposit-page-wrapper) .profile-popup__deposit-button,
-html:has(.deposit-page-wrapper) .profile-popup__deposit-button {
-    background: #f5f5f5;
-    border-color: #e5e5e5;
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__deposit-button:hover,
-html.profile-page-active .profile-popup__deposit-button:hover,
-body:has(.profile-page-wrapper) .profile-popup__deposit-button:hover,
-html:has(.profile-page-wrapper) .profile-popup__deposit-button:hover,
-body:has(.deposit-page-wrapper) .profile-popup__deposit-button:hover,
-html:has(.deposit-page-wrapper) .profile-popup__deposit-button:hover {
-    background: #e5e5e5;
-    border-color: #d5d5d5;
-    color: #333;
-}
-
-body.profile-page-active .profile-popup__logout-button,
-html.profile-page-active .profile-popup__logout-button,
-body:has(.profile-page-wrapper) .profile-popup__logout-button,
-html:has(.profile-page-wrapper) .profile-popup__logout-button,
-body:has(.deposit-page-wrapper) .profile-popup__logout-button,
-html:has(.deposit-page-wrapper) .profile-popup__logout-button {
-    color: #666;
-}
-
-body.profile-page-active .profile-popup__logout-button:hover,
-html.profile-page-active .profile-popup__logout-button:hover,
-body:has(.profile-page-wrapper) .profile-popup__logout-button:hover,
-html:has(.profile-page-wrapper) .profile-popup__logout-button:hover,
-body:has(.deposit-page-wrapper) .profile-popup__logout-button:hover,
-html:has(.deposit-page-wrapper) .profile-popup__logout-button:hover {
-    background: rgba(255, 94, 94, 0.1);
-    color: #ff5e5e;
-}
-
-body.profile-page-active .profile-popup__info-item--action:hover,
-html.profile-page-active .profile-popup__info-item--action:hover,
-body:has(.profile-page-wrapper) .profile-popup__info-item--action:hover,
-html:has(.profile-page-wrapper) .profile-popup__info-item--action:hover,
-body:has(.deposit-page-wrapper) .profile-popup__info-item--action:hover,
-html:has(.deposit-page-wrapper) .profile-popup__info-item--action:hover {
-    background: rgba(0, 0, 0, 0.03);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .profile-popup {
-        width: 0;
-        max-width: calc(100vw - 20px);
-        max-height: calc(100vh - 80px);
-        top: 60px;
-        right: 10px;
-        left: auto;
-    }
-
-    .profile-popup.visible {
-        width: calc(100vw - 20px);
-    }
-
-    .profile-popup__header {
-        padding: 12px 14px;
-    }
-
-    .profile-popup__content {
-        padding: 10px 14px;
-    }
-
-    .profile-popup__footer {
-        padding: 10px 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .profile-popup__info-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-
-    .profile-popup__info-value {
-        text-align: left;
-    }
-
-    .profile-popup__currency-dropdown {
-        width: 100%;
-        justify-content: flex-start;
-    }
-
-    .profile-popup__currency-button {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .profile-popup__currency-dropdown-list {
-        left: 10px !important;
-        right: 10px !important;
-        width: auto;
-        max-width: calc(100vw - 20px);
-    }
 }
 
 /* Avatar upload modal */
@@ -1351,6 +890,381 @@ html:has(.deposit-page-wrapper) .profile-popup__info-item--action:hover {
     text-align: center;
 }
 
+/* Light theme for Profile and Payment pages - оптимизировано: объединены все селекторы */
+body.profile-page-active .profile-popup,
+html.profile-page-active .profile-popup,
+body:has(.profile-page-wrapper) .profile-popup,
+html:has(.profile-page-wrapper) .profile-popup,
+body:has(.deposit-page-wrapper) .profile-popup,
+html:has(.deposit-page-wrapper) .profile-popup {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Общий селектор для всех light theme стилей - оптимизировано */
+/* Оптимизировано: объединены повторяющиеся селекторы */
+body.profile-page-active .profile-popup__header,
+html.profile-page-active .profile-popup__header,
+body:has(.profile-page-wrapper) .profile-popup__header,
+html:has(.profile-page-wrapper) .profile-popup__header,
+body:has(.deposit-page-wrapper) .profile-popup__header,
+html:has(.deposit-page-wrapper) .profile-popup__header {
+    border-bottom-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__name,
+html.profile-page-active .profile-popup__name,
+body:has(.profile-page-wrapper) .profile-popup__name,
+html:has(.profile-page-wrapper) .profile-popup__name,
+body:has(.deposit-page-wrapper) .profile-popup__name,
+html:has(.deposit-page-wrapper) .profile-popup__name,
+body.profile-page-active .profile-popup__id,
+html.profile-page-active .profile-popup__id,
+body:has(.profile-page-wrapper) .profile-popup__id,
+html:has(.profile-page-wrapper) .profile-popup__id,
+body:has(.deposit-page-wrapper) .profile-popup__id,
+html:has(.deposit-page-wrapper) .profile-popup__id {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__id:hover,
+html.profile-page-active .profile-popup__id:hover,
+body:has(.profile-page-wrapper) .profile-popup__id:hover,
+html:has(.profile-page-wrapper) .profile-popup__id:hover,
+body:has(.deposit-page-wrapper) .profile-popup__id:hover,
+html:has(.deposit-page-wrapper) .profile-popup__id:hover {
+    opacity: 0.7;
+}
+
+body.profile-page-active .profile-popup__id-copy-icon,
+html.profile-page-active .profile-popup__id-copy-icon,
+body:has(.profile-page-wrapper) .profile-popup__id-copy-icon,
+html:has(.profile-page-wrapper) .profile-popup__id-copy-icon,
+body:has(.deposit-page-wrapper) .profile-popup__id-copy-icon,
+html:has(.deposit-page-wrapper) .profile-popup__id-copy-icon {
+    color: #7D7C8C;
+}
+
+body.profile-page-active .profile-popup__id--copied .profile-popup__id-copy-icon,
+html.profile-page-active .profile-popup__id--copied .profile-popup__id-copy-icon,
+body:has(.profile-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
+html:has(.profile-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
+body:has(.deposit-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon,
+html:has(.deposit-page-wrapper) .profile-popup__id--copied .profile-popup__id-copy-icon {
+    color: #22c55e;
+}
+
+body.profile-page-active .profile-popup__info-label,
+html.profile-page-active .profile-popup__info-label,
+body:has(.profile-page-wrapper) .profile-popup__info-label,
+html:has(.profile-page-wrapper) .profile-popup__info-label,
+body:has(.deposit-page-wrapper) .profile-popup__info-label,
+html:has(.deposit-page-wrapper) .profile-popup__info-label {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__info-value,
+html.profile-page-active .profile-popup__info-value,
+body:has(.profile-page-wrapper) .profile-popup__info-value,
+html:has(.profile-page-wrapper) .profile-popup__info-value,
+body:has(.deposit-page-wrapper) .profile-popup__info-value,
+html:has(.deposit-page-wrapper) .profile-popup__info-value {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__info-item--action:hover,
+html.profile-page-active .profile-popup__info-item--action:hover,
+body:has(.profile-page-wrapper) .profile-popup__info-item--action:hover,
+html:has(.profile-page-wrapper) .profile-popup__info-item--action:hover,
+body:has(.deposit-page-wrapper) .profile-popup__info-item--action:hover,
+html:has(.deposit-page-wrapper) .profile-popup__info-item--action:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+body.profile-page-active .profile-popup__currency-button,
+html.profile-page-active .profile-popup__currency-button,
+body:has(.profile-page-wrapper) .profile-popup__currency-button,
+html:has(.profile-page-wrapper) .profile-popup__currency-button,
+body:has(.deposit-page-wrapper) .profile-popup__currency-button,
+html:has(.deposit-page-wrapper) .profile-popup__currency-button {
+    background: #f5f5f5;
+    border-color: #e5e5e5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__currency-button:hover:not(:disabled),
+html.profile-page-active .profile-popup__currency-button:hover:not(:disabled),
+body:has(.profile-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
+html:has(.profile-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
+body:has(.deposit-page-wrapper) .profile-popup__currency-button:hover:not(:disabled),
+html:has(.deposit-page-wrapper) .profile-popup__currency-button:hover:not(:disabled) {
+    background: #e5e5e5;
+    border-color: #d5d5d5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__currency-button--open,
+html.profile-page-active .profile-popup__currency-button--open,
+body:has(.profile-page-wrapper) .profile-popup__currency-button--open,
+html:has(.profile-page-wrapper) .profile-popup__currency-button--open,
+body:has(.deposit-page-wrapper) .profile-popup__currency-button--open,
+html:has(.deposit-page-wrapper) .profile-popup__currency-button--open {
+    background: #e5e5e5;
+    border-color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__currency-arrow,
+html.profile-page-active .profile-popup__currency-arrow,
+body:has(.profile-page-wrapper) .profile-popup__currency-arrow,
+html:has(.profile-page-wrapper) .profile-popup__currency-arrow,
+body:has(.deposit-page-wrapper) .profile-popup__currency-arrow,
+html:has(.deposit-page-wrapper) .profile-popup__currency-arrow {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__currency-dropdown-list,
+html.profile-page-active .profile-popup__currency-dropdown-list,
+body:has(.profile-page-wrapper) .profile-popup__currency-dropdown-list,
+html:has(.profile-page-wrapper) .profile-popup__currency-dropdown-list,
+body:has(.deposit-page-wrapper) .profile-popup__currency-dropdown-list,
+html:has(.deposit-page-wrapper) .profile-popup__currency-dropdown-list {
+    background: #ffffff;
+    border-color: #e5e5e5;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+body.profile-page-active .profile-popup__currency-option,
+html.profile-page-active .profile-popup__currency-option,
+body:has(.profile-page-wrapper) .profile-popup__currency-option,
+html:has(.profile-page-wrapper) .profile-popup__currency-option,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__currency-option:hover:not(:disabled),
+html.profile-page-active .profile-popup__currency-option:hover:not(:disabled),
+body:has(.profile-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
+html:has(.profile-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
+body:has(.deposit-page-wrapper) .profile-popup__currency-option:hover:not(:disabled),
+html:has(.deposit-page-wrapper) .profile-popup__currency-option:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+body.profile-page-active .profile-popup__currency-option--active,
+html.profile-page-active .profile-popup__currency-option--active,
+body:has(.profile-page-wrapper) .profile-popup__currency-option--active,
+html:has(.profile-page-wrapper) .profile-popup__currency-option--active,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option--active,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option--active {
+    background: rgba(64, 146, 255, 0.1);
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__currency-option-code,
+html.profile-page-active .profile-popup__currency-option-code,
+body:has(.profile-page-wrapper) .profile-popup__currency-option-code,
+html:has(.profile-page-wrapper) .profile-popup__currency-option-code,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option-code,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option-code {
+    color: #999;
+}
+
+body.profile-page-active .profile-popup__currency-option--active .profile-popup__currency-option-code,
+html.profile-page-active .profile-popup__currency-option--active .profile-popup__currency-option-code,
+body:has(.profile-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
+html:has(.profile-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
+body:has(.deposit-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code,
+html:has(.deposit-page-wrapper) .profile-popup__currency-option--active .profile-popup__currency-option-code {
+    color: rgba(64, 146, 255, 0.7);
+}
+
+body.profile-page-active .profile-popup__language-button,
+html.profile-page-active .profile-popup__language-button,
+body:has(.profile-page-wrapper) .profile-popup__language-button,
+html:has(.profile-page-wrapper) .profile-popup__language-button,
+body:has(.deposit-page-wrapper) .profile-popup__language-button,
+html:has(.deposit-page-wrapper) .profile-popup__language-button {
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__language-button:hover,
+html.profile-page-active .profile-popup__language-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__language-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__language-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__language-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__language-button:hover {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__language-arrow,
+html.profile-page-active .profile-popup__language-arrow,
+body:has(.profile-page-wrapper) .profile-popup__language-arrow,
+html:has(.profile-page-wrapper) .profile-popup__language-arrow,
+body:has(.deposit-page-wrapper) .profile-popup__language-arrow,
+html:has(.deposit-page-wrapper) .profile-popup__language-arrow {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__language-button:hover .profile-popup__language-arrow,
+html.profile-page-active .profile-popup__language-button:hover .profile-popup__language-arrow,
+body:has(.profile-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
+html:has(.profile-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
+body:has(.deposit-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow,
+html:has(.deposit-page-wrapper) .profile-popup__language-button:hover .profile-popup__language-arrow {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__close,
+html.profile-page-active .profile-popup__close,
+body:has(.profile-page-wrapper) .profile-popup__close,
+html:has(.profile-page-wrapper) .profile-popup__close,
+body:has(.deposit-page-wrapper) .profile-popup__close,
+html:has(.deposit-page-wrapper) .profile-popup__close {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__close:hover,
+html.profile-page-active .profile-popup__close:hover,
+body:has(.profile-page-wrapper) .profile-popup__close:hover,
+html:has(.profile-page-wrapper) .profile-popup__close:hover,
+body:has(.deposit-page-wrapper) .profile-popup__close:hover,
+html:has(.deposit-page-wrapper) .profile-popup__close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__link-button,
+html.profile-page-active .profile-popup__link-button,
+body:has(.profile-page-wrapper) .profile-popup__link-button,
+html:has(.profile-page-wrapper) .profile-popup__link-button,
+body:has(.deposit-page-wrapper) .profile-popup__link-button,
+html:has(.deposit-page-wrapper) .profile-popup__link-button {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__link-button:hover,
+html.profile-page-active .profile-popup__link-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__link-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__link-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__link-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__link-button:hover {
+    color: #2d6cc0;
+}
+
+body.profile-page-active .profile-popup__action-button,
+html.profile-page-active .profile-popup__action-button,
+body:has(.profile-page-wrapper) .profile-popup__action-button,
+html:has(.profile-page-wrapper) .profile-popup__action-button,
+body:has(.deposit-page-wrapper) .profile-popup__action-button,
+html:has(.deposit-page-wrapper) .profile-popup__action-button {
+    color: #4092ff;
+}
+
+body.profile-page-active .profile-popup__action-button:hover,
+html.profile-page-active .profile-popup__action-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__action-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__action-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__action-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__action-button:hover {
+    color: #2d6cc0;
+}
+
+body.profile-page-active .profile-popup__verification-badge--verified,
+html.profile-page-active .profile-popup__verification-badge--verified,
+body:has(.profile-page-wrapper) .profile-popup__verification-badge--verified,
+html:has(.profile-page-wrapper) .profile-popup__verification-badge--verified,
+body:has(.deposit-page-wrapper) .profile-popup__verification-badge--verified,
+html:has(.deposit-page-wrapper) .profile-popup__verification-badge--verified {
+    background: transparent;
+    color: #22c55e;
+    border: none;
+}
+
+body.profile-page-active .profile-popup__verification-badge--not-verified,
+html.profile-page-active .profile-popup__verification-badge--not-verified,
+body:has(.profile-page-wrapper) .profile-popup__verification-badge--not-verified,
+html:has(.profile-page-wrapper) .profile-popup__verification-badge--not-verified,
+body:has(.deposit-page-wrapper) .profile-popup__verification-badge--not-verified,
+html:has(.deposit-page-wrapper) .profile-popup__verification-badge--not-verified {
+    background: transparent;
+    color: #666;
+    border: none;
+}
+
+body.profile-page-active .profile-popup__footer,
+html.profile-page-active .profile-popup__footer,
+body:has(.profile-page-wrapper) .profile-popup__footer,
+html:has(.profile-page-wrapper) .profile-popup__footer,
+body:has(.deposit-page-wrapper) .profile-popup__footer,
+html:has(.deposit-page-wrapper) .profile-popup__footer {
+    border-top-color: #e5e5e5;
+}
+
+body.profile-page-active .profile-popup__open-profile-button,
+html.profile-page-active .profile-popup__open-profile-button,
+body:has(.profile-page-wrapper) .profile-popup__open-profile-button,
+html:has(.profile-page-wrapper) .profile-popup__open-profile-button,
+body:has(.deposit-page-wrapper) .profile-popup__open-profile-button,
+html:has(.deposit-page-wrapper) .profile-popup__open-profile-button {
+    background: #f5f5f5;
+    border-color: #e5e5e5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__open-profile-button:hover,
+html.profile-page-active .profile-popup__open-profile-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__open-profile-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__open-profile-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__open-profile-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__open-profile-button:hover {
+    background: #e5e5e5;
+    border-color: #d5d5d5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__deposit-button,
+html.profile-page-active .profile-popup__deposit-button,
+body:has(.profile-page-wrapper) .profile-popup__deposit-button,
+html:has(.profile-page-wrapper) .profile-popup__deposit-button,
+body:has(.deposit-page-wrapper) .profile-popup__deposit-button,
+html:has(.deposit-page-wrapper) .profile-popup__deposit-button {
+    background: #f5f5f5;
+    border-color: #e5e5e5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__deposit-button:hover,
+html.profile-page-active .profile-popup__deposit-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__deposit-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__deposit-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__deposit-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__deposit-button:hover {
+    background: #e5e5e5;
+    border-color: #d5d5d5;
+    color: #333;
+}
+
+body.profile-page-active .profile-popup__logout-button,
+html.profile-page-active .profile-popup__logout-button,
+body:has(.profile-page-wrapper) .profile-popup__logout-button,
+html:has(.profile-page-wrapper) .profile-popup__logout-button,
+body:has(.deposit-page-wrapper) .profile-popup__logout-button,
+html:has(.deposit-page-wrapper) .profile-popup__logout-button {
+    color: #666;
+}
+
+body.profile-page-active .profile-popup__logout-button:hover,
+html.profile-page-active .profile-popup__logout-button:hover,
+body:has(.profile-page-wrapper) .profile-popup__logout-button:hover,
+html:has(.profile-page-wrapper) .profile-popup__logout-button:hover,
+body:has(.deposit-page-wrapper) .profile-popup__logout-button:hover,
+html:has(.deposit-page-wrapper) .profile-popup__logout-button:hover {
+    background: rgba(255, 94, 94, 0.1);
+    color: #ff5e5e;
+}
+
 /* Light theme for avatar upload modal */
 body.profile-page-active .profile-popup__avatar-upload-modal,
 html.profile-page-active .profile-popup__avatar-upload-modal,
@@ -1437,7 +1351,62 @@ html:has(.deposit-page-wrapper) .profile-popup__avatar-upload-hint {
     color: #666;
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-popup {
+        width: 0;
+        max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 80px);
+        top: 60px;
+        right: 10px;
+        left: auto;
+    }
+
+    .profile-popup.visible {
+        width: calc(100vw - 20px);
+    }
+
+    .profile-popup__header {
+        padding: 12px 14px;
+    }
+
+    .profile-popup__content {
+        padding: 10px 14px;
+    }
+
+    .profile-popup__footer {
+        padding: 10px 14px;
+    }
+}
+
 @media (max-width: 480px) {
+    .profile-popup__info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .profile-popup__info-value {
+        text-align: left;
+    }
+
+    .profile-popup__currency-dropdown {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .profile-popup__currency-button {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .profile-popup__currency-dropdown-list {
+        left: 10px !important;
+        right: 10px !important;
+        width: auto;
+        max-width: calc(100vw - 20px);
+    }
+
     .profile-popup__avatar-upload-modal {
         min-width: calc(100vw - 32px);
         max-width: calc(100vw - 32px);

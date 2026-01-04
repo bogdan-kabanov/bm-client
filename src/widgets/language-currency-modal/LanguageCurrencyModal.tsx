@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import { languages, LanguageInfo } from '@src/shared/lib/languages';
@@ -74,7 +74,8 @@ export function LanguageCurrencyModal({ isOpen, onClose, initialTab = 'language'
         );
     }, [searchQuery]);
 
-    const handleLanguageSelect = useCallback(async (langCode: string) => {
+    const handleLanguageSelect = useCallback(async (e: React.MouseEvent, langCode: string) => {
+        e.stopPropagation();
         if (langCode === language) {
             onClose();
             return;
@@ -83,7 +84,8 @@ export function LanguageCurrencyModal({ isOpen, onClose, initialTab = 'language'
         onClose();
     }, [language, setLanguage, onClose]);
 
-    const handleCurrencySelect = useCallback(async (currencyCode: string) => {
+    const handleCurrencySelect = useCallback(async (e: React.MouseEvent, currencyCode: string) => {
+        e.stopPropagation();
         if (currencyCode === userCurrency || isSaving) {
             onClose();
             return;
@@ -145,8 +147,15 @@ export function LanguageCurrencyModal({ isOpen, onClose, initialTab = 'language'
 
     if (!isOpen) return null;
 
+    const chartContainer = typeof document !== 'undefined' 
+        ? document.querySelector('.chart-section-wrapper') as HTMLElement | null
+        : null;
+    const container = chartContainer || (typeof document !== 'undefined' ? document.body : null);
+    const isInChart = container && chartContainer !== null;
+    const overlayClassName = `language-currency-modal-overlay ${isInChart ? 'language-currency-modal-overlay--in-chart' : ''}`;
+
     const modalContent = (
-        <div className="language-currency-modal-overlay" onClick={onClose}>
+        <div className={overlayClassName} onClick={onClose}>
             <div className="language-currency-modal" ref={modalRef} onClick={(e) => e.stopPropagation()}>
                 <div className="language-currency-modal__header">
                     <div className="language-currency-modal__tabs">
@@ -208,7 +217,7 @@ export function LanguageCurrencyModal({ isOpen, onClose, initialTab = 'language'
                                             <button
                                                 key={lang.code}
                                                 className={`language-currency-modal__item ${language === lang.code ? 'active' : ''}`}
-                                                onClick={() => handleLanguageSelect(lang.code)}
+                                                onClick={(e) => handleLanguageSelect(e, lang.code)}
                                             >
                                                 <span className="language-currency-modal__item-name">{lang.nativeName}</span>
                                                 <span className="language-currency-modal__item-code">({lang.code.toUpperCase()})</span>
@@ -232,7 +241,7 @@ export function LanguageCurrencyModal({ isOpen, onClose, initialTab = 'language'
                                         <button
                                             key={lang.code}
                                             className={`language-currency-modal__item ${language === lang.code ? 'active' : ''}`}
-                                            onClick={() => handleLanguageSelect(lang.code)}
+                                            onClick={(e) => handleLanguageSelect(e, lang.code)}
                                         >
                                             <span className="language-currency-modal__item-name">{lang.nativeName}</span>
                                             <span className="language-currency-modal__item-code">({lang.code.toUpperCase()})</span>
@@ -258,7 +267,7 @@ export function LanguageCurrencyModal({ isOpen, onClose, initialTab = 'language'
                                             <button
                                                 key={currency.code}
                                                 className={`language-currency-modal__item ${userCurrency === currency.code ? 'active' : ''}`}
-                                                onClick={() => handleCurrencySelect(currency.code)}
+                                                onClick={(e) => handleCurrencySelect(e, currency.code)}
                                                 disabled={isSaving}
                                             >
                                                 <span className="language-currency-modal__item-symbol">{currency.symbol}</span>
@@ -306,6 +315,6 @@ export function LanguageCurrencyModal({ isOpen, onClose, initialTab = 'language'
         </div>
     );
 
-    return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
+    return container && typeof document !== 'undefined' ? createPortal(modalContent, container) : null;
 }
 

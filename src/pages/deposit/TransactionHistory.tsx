@@ -57,6 +57,10 @@ export function TransactionHistory() {
     const [deposits, setDeposits] = useState<Deposit[]>([]);
     const [depositsLoading, setDepositsLoading] = useState(false);
     const [depositsError, setDepositsError] = useState<string | null>(null);
+    
+    // Фильтры
+    const [typeFilter, setTypeFilter] = useState<'all' | 'deposit' | 'withdrawal'>('all');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
 
     useEffect(() => {
         dispatch(fetchWithdrawalHistory());
@@ -146,6 +150,30 @@ export function TransactionHistory() {
         });
     }, [deposits, withdrawalHistory]);
 
+    // Применяем фильтры
+    const filteredTransactions = useMemo<Transaction[]>(() => {
+        let filtered = allTransactions;
+
+        // Фильтр по типу
+        if (typeFilter !== 'all') {
+            filtered = filtered.filter(t => t.type === typeFilter);
+        }
+
+        // Фильтр по статусу
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(t => t.status === statusFilter);
+        }
+
+        return filtered;
+    }, [allTransactions, typeFilter, statusFilter]);
+
+    // Получаем уникальные статусы для фильтра
+    const availableStatuses = useMemo(() => {
+        const statuses = new Set<string>();
+        allTransactions.forEach(t => statuses.add(t.status));
+        return Array.from(statuses).sort();
+    }, [allTransactions]);
+
     const loading = depositsLoading || withdrawalLoading;
 
     if (loading && allTransactions.length === 0) {
@@ -165,8 +193,8 @@ export function TransactionHistory() {
                         <path d="M7 18L17 8M17 8H7M17 8V18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                 </div>
-                <h3>{t('withdrawal.noHistory', { defaultValue: 'No transactions yet' })}</h3>
-                <p>{t('withdrawal.noHistorySubtext', { defaultValue: 'All your deposits and withdrawals will be here' })}</p>
+                <h3>{t('payments.noHistory', { defaultValue: 'No transactions yet' })}</h3>
+                <p>{t('payments.noHistorySubtext', { defaultValue: 'All your deposits and withdrawals will be here' })}</p>
             </div>
         );
     }
@@ -174,7 +202,7 @@ export function TransactionHistory() {
     return (
         <div className="user-deposits-section">
             <div className="deposits-header">
-                <h3 className="section-title">{t('withdrawal.withdrawalHistory', { defaultValue: 'Transaction history' })}</h3>
+                <h3 className="section-title">{t('payments.paymentsHistory', { defaultValue: 'Payments History' })}</h3>
             </div>
 
             {depositsError && (
@@ -183,17 +211,65 @@ export function TransactionHistory() {
                 </div>
             )}
 
-            <div className="deposits-history-table">
-                <div className="table-header">
-                    <div className="table-cell">ID</div>
-                    <div className="table-cell">{t('withdrawal.date', { defaultValue: 'Date' })}</div>
-                    <div className="table-cell">{t('withdrawal.amount', { defaultValue: 'Amount' })}</div>
-                    <div className="table-cell">{t('withdrawal.method', { defaultValue: 'Method' })}</div>
-                    <div className="table-cell">{t('withdrawal.type', { defaultValue: 'Type' })}</div>
-                    <div className="table-cell">{t('withdrawal.status', { defaultValue: 'Status' })}</div>
-                    <div className="table-cell">{t('withdrawal.bonusAmount', { defaultValue: 'Bonus amount' })}</div>
+            {/* Фильтры */}
+            <div className="history-filters">
+                <div className="history-filter-tabs">
+                    <button
+                        className={`history-filter-tab ${typeFilter === 'all' ? 'active' : ''}`}
+                        onClick={() => setTypeFilter('all')}
+                    >
+                        {t('payments.filterAll', { defaultValue: 'All' })}
+                    </button>
+                    <button
+                        className={`history-filter-tab ${typeFilter === 'deposit' ? 'active' : ''}`}
+                        onClick={() => setTypeFilter('deposit')}
+                    >
+                        {t('deposit.typeDeposit', { defaultValue: 'Deposits' })}
+                    </button>
+                    <button
+                        className={`history-filter-tab ${typeFilter === 'withdrawal' ? 'active' : ''}`}
+                        onClick={() => setTypeFilter('withdrawal')}
+                    >
+                        {t('withdrawal.typeWithdrawal', { defaultValue: 'Withdrawals' })}
+                    </button>
                 </div>
-                {allTransactions.map((transaction) => {
+                
+                <select
+                    className="date-input"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    style={{ minWidth: '150px' }}
+                >
+                    <option value="all">{t('payments.filterAllStatuses', { defaultValue: 'All Statuses' })}</option>
+                    {availableStatuses.map(status => {
+                        // Находим первую транзакцию с этим статусом для определения типа
+                        const sampleTransaction = allTransactions.find(t => t.status === status);
+                        const transactionType = sampleTransaction?.type || 'deposit';
+                        return (
+                            <option key={status} value={status}>
+                                {getStatusText(status, transactionType)}
+                            </option>
+                        );
+                    })}
+                </select>
+            </div>
+
+            {filteredTransactions.length === 0 ? (
+                <div className="deposit-empty-state" style={{ marginTop: '20px' }}>
+                    <p>{t('payments.noFilteredTransactions', { defaultValue: 'No transactions match the selected filters' })}</p>
+                </div>
+            ) : (
+                <div className="deposits-history-table">
+                    <div className="table-header">
+                        <div className="table-cell">ID</div>
+                        <div className="table-cell">{t('withdrawal.date', { defaultValue: 'Date' })}</div>
+                        <div className="table-cell">{t('withdrawal.amount', { defaultValue: 'Amount' })}</div>
+                        <div className="table-cell">{t('withdrawal.method', { defaultValue: 'Method' })}</div>
+                        <div className="table-cell">{t('withdrawal.type', { defaultValue: 'Type' })}</div>
+                        <div className="table-cell">{t('withdrawal.status', { defaultValue: 'Status' })}</div>
+                        <div className="table-cell">{t('withdrawal.bonusAmount', { defaultValue: 'Bonus amount' })}</div>
+                    </div>
+                    {filteredTransactions.map((transaction) => {
                     const currencyIcon = currencyIcons[transaction.wallet_type.toLowerCase()];
                     const typeText = transaction.type === 'deposit' 
                         ? t('deposit.typeDeposit', { defaultValue: 'Deposit' })
@@ -224,7 +300,8 @@ export function TransactionHistory() {
                         </div>
                     );
                 })}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

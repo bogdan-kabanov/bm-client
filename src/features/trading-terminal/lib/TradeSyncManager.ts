@@ -15,7 +15,8 @@ export interface TradeHistoryEntry {
   profitPercent: number;
   isWin: boolean;
   createdAt: number;
-  completedAt: number;
+  completedAt: number | null;
+  expirationTime?: number | null;
   symbol?: string | null;
   baseCurrency?: string | null;
   quoteCurrency?: string | null;
@@ -493,14 +494,18 @@ export class TradeSyncManager {
             ? trade.createdAt
             : trade.createdAt?.getTime?.() ?? getServerTime(),
         completedAt:
-          typeof trade.completedAt === 'number'
+          typeof trade.completedAt === 'number' && trade.completedAt > 0
             ? trade.completedAt
-            : trade.completedAt?.getTime?.() ?? getServerTime(),
+            : (trade.completedAt?.getTime?.() && trade.completedAt.getTime() > 0 ? trade.completedAt.getTime() : (trade.completed_at ? (typeof trade.completed_at === 'number' && trade.completed_at > 0 ? trade.completed_at : (trade.completed_at?.getTime?.() && trade.completed_at.getTime() > 0 ? trade.completed_at.getTime() : null)) : null)),
+        expirationTime:
+          typeof trade.expirationTime === 'number'
+            ? trade.expirationTime
+            : (trade.expirationTime?.getTime?.() ?? (trade.expiration_time ? (typeof trade.expiration_time === 'number' ? trade.expiration_time : (trade.expiration_time?.getTime?.() ?? null)) : null)),
         symbol: trade.symbol || symbolInfo.displaySymbol || symbolInfo.normalizedSymbol,
         baseCurrency: symbolInfo.baseCurrency,
         quoteCurrency: symbolInfo.quoteCurrency,
         isDemo: trade.isDemo === true || trade.is_demo === true,
-        is_demo: trade.is_demo,
+        is_demo: trade.is_demo ?? (trade.isDemo === true || trade.is_demo === true),
       };
     });
 

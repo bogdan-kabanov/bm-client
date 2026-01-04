@@ -97,7 +97,10 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 20px 18px 16px;
+    padding: 16px 10px 16px;
+    margin: 0 8px;
+    background: #191C32;
+    border-radius: 8px;
 }
 
 .trading-controls-panel .manual-trading-controls .mobile-controls-top {
@@ -108,8 +111,7 @@
     width: 100%;
 }
 
-.trading-controls-panel .manual-trading-controls .mobile-controls-top .manual-trade-amount,
-.trading-controls-panel .manual-trading-controls .mobile-controls-top .manual-trade-expiration {
+.trading-controls-panel .manual-trading-controls .mobile-controls-top .control-field {
     width: 100%;
 }
 
@@ -120,8 +122,7 @@
         align-items: center;
     }
     
-    .trading-controls-panel .manual-trading-controls .mobile-controls-top .manual-trade-amount,
-    .trading-controls-panel .manual-trading-controls .mobile-controls-top .manual-trade-expiration {
+    .trading-controls-panel .manual-trading-controls .mobile-controls-top .control-field {
         width: auto;
         flex: 1;
     }
@@ -137,23 +138,24 @@
         gap: 4px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount label,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration label {
+    .trading-controls-panel .manual-trading-controls .control-field label {
         font-size: 7px;
         padding: 0 4px;
         line-height: 1.2;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input-wrapper,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display-wrapper {
         min-height: 28px;
         padding: 2px 5px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-value-text {
         font-size: 10px;
-        padding: 1px 3px 1px 16px;
+        padding: 1px 3px 1px 20px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .currency-prefix,
@@ -162,13 +164,48 @@
         left: 5px;
     }
 
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon {
+        left: 5px;
+        width: 16px;
+        height: 16px;
+    }
+
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-view,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-img,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon__img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon__initials {
+        font-size: 8px;
+    }
+
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-view {
+        width: 16px;
+        height: 16px;
+    }
+
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon__initials {
+        font-size: 8px;
+    }
+
     .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix svg {
         width: 10px;
         height: 10px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration {
+    .trading-controls-panel .manual-trading-controls .control-field {
         gap: 3px;
     }
 
@@ -211,29 +248,6 @@
         padding-left: 8px;
     }
 
-    .trading-controls-panel .manual-trading-controls .profit-info-block {
-        padding: 10px;
-        margin-bottom: 6px;
-    }
-
-    .trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content {
-        gap: 8px;
-    }
-
-    .trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-currency-icon-view {
-        width: 28px;
-        height: 28px;
-    }
-
-    .trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text .currency-pair-name {
-        font-size: 16px;
-    }
-
-    .trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text .profit-row {
-        font-size: 16px;
-        gap: 4px;
-    }
-
     .trading-controls-panel .manual-trading-controls .manual-trade-buttons {
         gap: 6px;
     }
@@ -254,27 +268,29 @@
         gap: 3px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount label,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration label {
+    .trading-controls-panel .manual-trading-controls .control-field label {
         font-size: 7px;
         padding: 0 4px;
         line-height: 1.1;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input-wrapper,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display-wrapper {
         min-height: 26px;
         padding: 2px 4px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-value-text {
         font-size: 9px;
-        padding: 1px 2px 1px 14px;
+        padding: 1px 2px 1px 18px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .currency-prefix,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .currency-prefix {
         font-size: 9px;
         left: 4px;
     }
@@ -284,8 +300,7 @@
         height: 9px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration {
+    .trading-controls-panel .manual-trading-controls .control-field {
         gap: 2px;
     }
 
@@ -325,27 +340,29 @@
         gap: 2px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount label,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration label {
+    .trading-controls-panel .manual-trading-controls .control-field label {
         font-size: 7px;
         padding: 0 3px;
         line-height: 1.1;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input-wrapper,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display-wrapper {
         min-height: 24px;
         padding: 1px 4px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-value-text {
         font-size: 9px;
-        padding: 1px 2px 1px 12px;
+        padding: 1px 2px 1px 16px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .currency-prefix,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .currency-prefix {
         font-size: 9px;
         left: 4px;
     }
@@ -355,8 +372,7 @@
         height: 9px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration {
+    .trading-controls-panel .manual-trading-controls .control-field {
         gap: 2px;
     }
 }
@@ -371,26 +387,28 @@
         gap: 2px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount label,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration label {
+    .trading-controls-panel .manual-trading-controls .control-field label {
         font-size: 7px;
         padding: 0 4px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input-wrapper,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display-wrapper {
         min-height: 28px;
         padding: 2px 4px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-display,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-value-text {
         font-size: 9px;
         padding: 1px 2px 1px 12px;
     }
 
     .trading-controls-panel .manual-trading-controls .manual-trade-amount .currency-prefix,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix {
+    .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix,
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .currency-prefix {
         font-size: 9px;
         left: 4px;
     }
@@ -400,8 +418,7 @@
         height: 9px;
     }
 
-    .trading-controls-panel .manual-trading-controls .manual-trade-amount,
-    .trading-controls-panel .manual-trading-controls .manual-trade-expiration {
+    .trading-controls-panel .manual-trading-controls .control-field {
         gap: 2px;
     }
 
@@ -461,8 +478,38 @@
     height: 12px !important;
 }
 
-.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-amount label,
-.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-expiration label {
+.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-payout .payout-display-wrapper {
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 4px 8px !important;
+}
+
+.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-value-text {
+    font-size: 12px !important;
+    padding: 2px 4px 2px 24px !important;
+}
+
+.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon {
+    left: 8px !important;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-view {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-img {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.trading-controls-panel.chart-overlay-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon__initials {
+    font-size: 8px !important;
+}
+
+.trading-controls-panel.chart-overlay-panel .manual-trading-controls .control-field label {
     font-size: 8px !important;
     padding: 0 6px !important;
     line-height: 1.2 !important;
@@ -598,7 +645,7 @@
     margin-top: 2px;
 }
 
-.trading-controls-panel .manual-trading-controls .manual-trade-amount {
+.trading-controls-panel .manual-trading-controls .control-field {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -606,29 +653,21 @@
     padding-top: 0;
 }
 
-.trading-controls-panel .manual-trading-controls .manual-trade-amount label {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 0 14px;
-    font-size: 11px;
+.trading-controls-panel .manual-trading-controls .control-field label {
+    font-size: 14px;
     color: #ffffffb3;
-    text-transform: uppercase;
     letter-spacing: .5px;
-    font-weight: 600;
-    background: #232737;
     border-radius: 999px;
     white-space: nowrap;
     z-index: 2;
 }
 
+
 .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input-wrapper {
     display: flex;
     align-items: center;
-    border: 1px solid #3a3a3a;
+    border: 1px solid #292E41;
     border-radius: 6px;
-    background: #232737;
     overflow: hidden;
     min-height: 48px;
     padding: 8px 12px;
@@ -654,10 +693,9 @@
 
 .trading-controls-panel .manual-trading-controls .manual-trade-amount .currency-prefix {
     position: absolute;
-    left: 12px;
+    left: 6px;
     color: #fff;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 18px;
     z-index: 1;
     pointer-events: none;
 }
@@ -670,9 +708,8 @@
     border: none;
     border-radius: 0;
     color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
+    font-size: 18px;
+    text-align: end;
 }
 
 .trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input::-webkit-inner-spin-button,
@@ -686,35 +723,6 @@
     appearance: textfield;
 }
 
-.trading-controls-panel .manual-trading-controls .manual-trade-amount .trade-amount-input:focus {
-    outline: none;
-    background: #ffffff05;
-}
-
-.trading-controls-panel .manual-trading-controls .manual-trade-expiration {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-top: 0;
-}
-
-.trading-controls-panel .manual-trading-controls .manual-trade-expiration label {
-    position: absolute;
-    top: 18px;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 0 14px;
-    font-size: 11px;
-    color: #ffffffb3;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    font-weight: 600;
-    background: #232737;
-    border-radius: 999px;
-    white-space: nowrap;
-    z-index: 2;
-}
 
 @media(max-width: 1024px) {
     .trading-controls-panel .manual-trading-controls .manual-trade-expiration label {
@@ -728,7 +736,6 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 20px;
 }
 
 @media(max-width: 1024px) {
@@ -742,9 +749,8 @@
     align-items: center;
     justify-content: center;
     padding: 8px 12px;
-    border: 1px solid #3a3a3a;
+    border: 1px solid #292E41;
     border-radius: 6px;
-    background: #232737;
     min-height: 48px;
     width: 100%;
 }
@@ -762,7 +768,7 @@
 
 .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix {
     position: absolute;
-    left: 12px;
+    left: 0px;
     color: #fff;
     display: flex;
     align-items: center;
@@ -772,8 +778,8 @@
 }
 
 .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-prefix svg {
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     color: #fff;
 }
 
@@ -784,113 +790,108 @@
 
 .trading-controls-panel .manual-trading-controls .manual-trade-expiration .expiration-time-advanced .time-arrows .time-display {
     position: relative;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
     color: #fff;
     width: 100%;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    text-align: end;
     padding: 6px 8px 6px 28px;
     overflow: hidden;
 }
 
-.trading-controls-panel .manual-trading-controls .profit-info-block {
-    background: rgba(39, 43, 58, 1);
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #292E41;
     border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 8px;
-}
-
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-currency-icon-view {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #ffffff14;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
+    min-height: 48px;
+    padding: 8px 12px;
+    width: 100%;
 }
 
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-currency-icon-view .currency-icon {
+@media (max-width: 768px) {
+    .trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display-wrapper {
+        min-height: 36px;
+    }
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display {
+    flex: 1;
     width: 100%;
-    height: 100%;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-currency-icon-view .profit-currency-icon-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-currency-icon-view .currency-icon__initials {
-    font-size: .75em;
-    font-weight: 600;
-    color: #fffc;
-}
-
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text {
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon {
+    position: absolute;
+    left: 0px;
+    z-index: 1;
+    pointer-events: none;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-    flex: 1;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
 }
 
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text .currency-pair-name {
-    font-size: 18px;
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-view {
+    width: 20px;
+    height: 20px;
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-img {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon__img {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon__initials {
+    font-size: 10px;
     font-weight: 600;
     color: #fff;
-    line-height: 1.2;
-    white-space: nowrap;
 }
 
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text .profit-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.2;
-    white-space: nowrap;
-    flex-wrap: nowrap;
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-view {
+    width: 20px;
+    height: 20px;
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .payout-currency-icon-img {
+    width: 20px;
+    height: 20px;
+    object-fit: cover;
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-currency-icon .currency-icon__initials {
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.trading-controls-panel .manual-trading-controls .manual-trade-payout .payout-display .payout-value-text {
+    flex: 1;
+    width: 100%;
+    padding: 6px 8px 6px 28px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: #fff;
     font-size: 18px;
-}
-
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text .profit-percent {
-    font-size: inherit;
-    font-weight: 600;
-    color: #32ac41;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text .profit-separator {
-    font-size: inherit;
-    font-weight: 500;
-    color: #fff6;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.trading-controls-panel .manual-trading-controls .profit-info-block .profit-info-content .profit-info-text .profit-amount {
-    font-size: inherit;
-    font-weight: 600;
-    color: #32ac41;
-    white-space: nowrap;
-    flex-shrink: 0;
+    text-align: end;
 }
 
 .zero-balance-modal-overlay {
@@ -1032,14 +1033,14 @@
     border-radius: 6px;
     font-size: 16px;
     width: 100%;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: all .2s;
     text-transform: uppercase;
     letter-spacing: .5px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 8px;
 }
 
@@ -1054,7 +1055,7 @@
 }
 
 .trading-controls-panel .manual-trading-controls .manual-trade-buttons .manual-buy-button {
-    background: rgba(12, 174, 46, 1);
+    background: #22C55E;
     color: #fff;
     overflow: hidden;
     position: relative;
@@ -1065,7 +1066,7 @@
 }
 
 .trading-controls-panel .manual-trading-controls .manual-trade-buttons .manual-sell-button {
-    background: #C7423F;
+    background: #EF4444;
     color: #fff;
     overflow: hidden;
     position: relative;

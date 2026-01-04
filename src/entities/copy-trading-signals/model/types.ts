@@ -12,7 +12,9 @@ export interface CopySubscriptionItem {
 }
 
 export interface CopyTradingSignalsState {
-  isMenuOpen: boolean;
+  isMenuOpen: boolean; // Deprecated: use isTopPartnersMenuOpen and isSubscriptionsMenuOpen
+  isTopPartnersMenuOpen: boolean;
+  isSubscriptionsMenuOpen: boolean;
   subscriptions: CopySubscriptionItem[];
   isLoading: boolean;
   error: string | null;

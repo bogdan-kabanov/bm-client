@@ -348,9 +348,9 @@
       },
       "assetsTitle": "Actifs",
       "all": "Tous",
-      "asset": "ACTIF",
-      "averagePrice24h": "PRIX MOYEN (24h)",
-      "profit30s": "BÉNÉFICE 30s+"
+      "asset": "Actif",
+      "averagePrice24h": "Prix moyen (24h)",
+      "profit30s": "Bénéfice 30s+"
     },
     "realMode": "Real",
     "demoMode": "Demo",
@@ -385,7 +385,12 @@
       "creationDate": "Date de Création"
     },
     "zeroBalanceModalText": "Pour commencer à trader, vous devez recharger votre solde",
-    "goToDepositPage": "Aller au dépôt"
+    "goToDepositPage": "Aller au dépôt",
+    "deleteDrawing": "Supprimer",
+    "deleteDrawings": "Supprimer ({{count}})",
+    "priceLevel": "Niveau de prix",
+    "reached": "atteint",
+    "priceLevelLabel": "Niveau de prix"
   },
   "withdrawal": {
     "title": "Retirer des fonds",
@@ -727,7 +732,10 @@
     "departmentLabel": "Client Relations",
     "statusOpen": "Ouvert",
     "statusClosed": "Fermé",
-    "ticketLabel": "Ticket #"
+    "ticketLabel": "Ticket #",
+    "hasActiveTicket": "Vous avez un ticket actif",
+    "fileTooLarge": "La taille du fichier dépasse 5MB. Veuillez sélectionner des fichiers plus petits.",
+    "removeFile": "Supprimer le fichier"
   },
   "menu": {
     "trading": "Trading",
@@ -748,7 +756,7 @@
     "online": "En ligne",
     "logout": "Déconnexion",
     "copyTrading": "Copy Trading",
-    "copyTradingShort": "CopyTrade",
+    "copyTradingShort": "TOP",
     "copyTradingTitle": "Copy Trading",
     "chat": "Chat",
     "chatTitle": "Support Chat",
@@ -1266,8 +1274,16 @@
     "subscriptionsTitle": "My subscriptions",
     "tabSubscriptions": "Subscriptions",
     "tabLeaderboard": "Top partners",
+    "tabTraders": "Traders",
+    "tabMyCard": "My Trader ID",
+    "unavailableOnDemo": "Unavailable on demo account",
+    "switchToReal": "Switch to real",
+    "zeroBalance": "To use copy trading, you need to top up your balance",
+    "topUpBalance": "Top up balance",
+    "myCardDescription": "This is you. Others can subscribe to you and copy your trades. You will receive a 2% commission from each trade made by your subscribers",
+    "howItWorks": "How it works?",
     "emptySubscriptions": "No subscriptions found. Add a trader ID to start copying trades.",
-    "codeLabel": "ID",
+    "codeLabel": "Trader ID: ",
     "disable": "Disable",
     "enable": "Enable",
     "remove": "Remove",
@@ -1343,7 +1359,13 @@
   },
   "payments": {
     "depositTab": "Deposit",
-    "withdrawTab": "Withdrawal"
+    "withdrawTab": "Withdrawal",
+    "paymentsHistory": "Historique des paiements",
+    "noHistory": "Aucune transaction pour le moment",
+    "noHistorySubtext": "Tous vos dépôts et retraits apparaîtront ici",
+    "filterAll": "Tous",
+    "filterAllStatuses": "Tous les statuts",
+    "noFilteredTransactions": "Aucune transaction ne correspond aux filtres sélectionnés"
   },
   "syntheticQuotes": {
     "configNotFound": "Configuration not found",

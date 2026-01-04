@@ -12,11 +12,11 @@ import AuthModal, { AuthFormValues } from '../landing/components/AuthModal';
 import { PhoneInput } from '@/src/shared/ui/PhoneInput';
 import { getPartnerProgramUrl } from '@src/shared/lib/partnerServerUtils';
 import styles from './LandingPageV2.module.css';
-import fullLogo from '@src/assets/full-logo.png';
-import platformImage from '@src/assets/1.png';
-import smallImage from '@src/assets/small-image.jpg';
-import bigImage from '@src/assets/big-image.jpg';
-import demoTabImage from '@src/assets/DEMOTab3.png';
+import fullLogo from '@src/assets/logos/full-logo-light.png';
+import platformImage from '@src/assets/images/1.png';
+import smallImage from '@src/assets/images/landing/small-image.jpg';
+import bigImage from '@src/assets/images/landing/big-image.jpg';
+import demoTabImage from '@src/assets/images/demo/DEMOTab3.png';
 import methodVisa from '@src/assets/Methodland/method-visa.svg';
 import methodMaster from '@src/assets/Methodland/method-master.svg';
 import methodBitcoin from '@src/assets/Methodland/method-bitcoin.svg';
@@ -25,20 +25,20 @@ import methodLitecoin from '@src/assets/Methodland/method-litecoin.svg';
 import methodRipple from '@src/assets/Methodland/method-ripple.svg';
 import methodTether from '@src/assets/Methodland/method-tether.svg';
 import methodOpenBanking from '@src/assets/Methodland/method-OpenBanking.svg';
-import heroBackgroundImage from '@src/assets/FonT4.png';
-import desktopBackgroundImage from '@src/assets/FonT5.png';
-import telBackgroundImage from '@src/assets/TEL.png';
-import iphone from '@src/assets/iphone.svg';
-import iconUserFriendly from '@src/assets/User-friendly interface.png';
-import iconIntegratedSignals from '@src/assets/Integrated signals.png';
-import iconTradingIndicators from '@src/assets/Trading indicators.png';
-import iconSupport247 from '@src/assets/Support 247.png';
-import iconBonusPrograms from '@src/assets/Bonus programs.png';
-import iconDepositsWithdrawals from '@src/assets/Deposits & withdrawals.png';
-import avatarArjun from '@src/assets/Avatar/Arjun.png';
-import avatarMasroor from '@src/assets/Avatar/Masroor.jpg';
-import avatarMichael from '@src/assets/Avatar/Michael.png';
-import avatarSophie from '@src/assets/Avatar/Sophie.png';
+import heroBackgroundImage from '@src/assets/images/backgrounds/FonT4.png';
+import desktopBackgroundImage from '@src/assets/images/backgrounds/FonT5.png';
+import telBackgroundImage from '@src/assets/images/backgrounds/TEL.png';
+import iphone from '@src/assets/images/landing/iphone.svg';
+import iconUserFriendly from '@src/assets/images/features/User-friendly interface.png';
+import iconIntegratedSignals from '@src/assets/images/features/Integrated signals.png';
+import iconTradingIndicators from '@src/assets/images/features/Trading indicators.png';
+import iconSupport247 from '@src/assets/images/features/Support 247.png';
+import iconBonusPrograms from '@src/assets/images/bonus/Bonus programs.png';
+import iconDepositsWithdrawals from '@src/assets/images/features/Deposits & withdrawals.png';
+import avatarArjun from '@src/assets/images/avatars/Arjun.png';
+import avatarMasroor from '@src/assets/images/avatars/Masroor.jpg';
+import avatarMichael from '@src/assets/images/avatars/Michael.png';
+import avatarSophie from '@src/assets/images/avatars/Sophie.png';
 import { decodeReferralHash } from '@src/shared/lib/referralHashUtils';
 import { decodePartnerRef, trackPartnerClick } from '@src/shared/lib/partnerReferralUtils';
 
@@ -178,7 +178,7 @@ export const LandingPageV2: FC = () => {
           window.history.replaceState({}, '', window.location.pathname);
           // navigate('/trading', { replace: true }); // Отключено по запросу
         } catch (error: any) {
-          setAuthError(error?.message || 'Ошибка авторизации через Google');
+          setAuthError(error?.message || t('errors.authGoogleError'));
           window.history.replaceState({}, '', window.location.pathname);
         }
       };
@@ -235,8 +235,8 @@ export const LandingPageV2: FC = () => {
           
           // Сохраняем информацию о партнере для использования при регистрации
           const partnerReferralData = {
-            partnerId: partnerRef.partnerId,
-            referralSlug: partnerRef.referralSlug
+            partner_id: partnerRef.partnerId || partnerRef.partner_id,
+            referral_slug: partnerRef.referralSlug || partnerRef.referral_slug
           };
           console.log('[LandingPageV2] 💾 Сохранение partner_referral в localStorage:', partnerReferralData);
           localStorage.setItem('partner_referral', JSON.stringify(partnerReferralData));
@@ -261,12 +261,36 @@ export const LandingPageV2: FC = () => {
       if (refIdNum) {
         setRefId(refIdNum);
         localStorage.setItem('referral_id', String(refIdNum));
+        // Очищаем партнерскую ссылку, т.к. приоритет у обычной реферальной ссылки
+        localStorage.removeItem('partner_referral');
       }
     } else if (refParam) {
-      refIdNum = parseInt(refParam, 10);
-      if (!Number.isNaN(refIdNum)) {
-        setRefId(refIdNum);
-        localStorage.setItem('referral_id', refParam);
+      // Проверяем, не является ли это партнерской ссылкой
+      // Если это партнерская ссылка, она уже обработана выше через decodePartnerRef
+      // Сохраняем как referral_id только если это не партнерская ссылка
+      const isPartnerRef = /^\d{3,6}$/.test(refParam);
+      if (!isPartnerRef) {
+        // Это не короткий ID партнера, пробуем как обычную реферальную ссылку
+        refIdNum = parseInt(refParam, 10);
+        if (!Number.isNaN(refIdNum)) {
+          setRefId(refIdNum);
+          localStorage.setItem('referral_id', refParam);
+          // Очищаем партнерскую ссылку
+          localStorage.removeItem('partner_referral');
+        }
+      } else {
+        // Это может быть партнерская ссылка, но если decodePartnerRef не сработал,
+        // то это обычная реферальная ссылка
+        // Проверяем, есть ли уже partner_referral в localStorage
+        const savedPartnerRef = localStorage.getItem('partner_referral');
+        if (!savedPartnerRef) {
+          // Если partner_referral нет, значит decodePartnerRef не сработал, сохраняем как referral_id
+          refIdNum = parseInt(refParam, 10);
+          if (!Number.isNaN(refIdNum)) {
+            setRefId(refIdNum);
+            localStorage.setItem('referral_id', refParam);
+          }
+        }
       }
     } else {
       const savedRefId = localStorage.getItem('referral_id');
@@ -394,7 +418,7 @@ export const LandingPageV2: FC = () => {
           ? t('auth.errors.sessionExpired')
           : profileErrorMessage.includes('timeout') || profileErrorMessage.includes('Request timeout')
           ? t('auth.errors.networkError')
-          : t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.';
+          : t('auth.errors.unknownError');
         setAuthError(errorText);
         setSidebarFormError(errorText);
       }
@@ -405,7 +429,7 @@ export const LandingPageV2: FC = () => {
 
       let errorText = '';
       if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials') || errorMessage.includes('UNAUTHORIZED')) {
-        errorText = t('auth.errors.invalidCredentials') || 'Неверный email или пароль';
+        errorText = t('auth.errors.invalidCredentials');
       } else if (errorMessage.includes('Invalid password')) {
         errorText = t('auth.errors.invalidPassword');
       } else if (errorMessage.includes('User not found')) {
@@ -413,11 +437,11 @@ export const LandingPageV2: FC = () => {
       } else if (errorMessage.includes('Session expired')) {
         errorText = t('auth.errors.sessionExpired');
       } else if (errorMessage.includes('Network error') || errorMessage.includes('NETWORK_ERROR') || errorMessage.includes('timeout') || errorMessage.includes('Request timeout')) {
-        errorText = t('auth.errors.networkError') || 'Ошибка сети. Проверьте подключение к интернету и попробуйте снова.';
+        errorText = t('auth.errors.networkError');
       } else if (errorMessage.includes('Server error')) {
         errorText = t('auth.errors.serverError');
       } else {
-        errorText = t('auth.errors.invalidCredentials') || 'Неверный email или пароль';
+        errorText = t('auth.errors.invalidCredentials');
       }
       
       console.log('[LandingPageV2] Устанавливаем ошибку:', errorText);
@@ -460,7 +484,7 @@ export const LandingPageV2: FC = () => {
           ? t('auth.errors.sessionExpired')
           : profileErrorMessage.includes('timeout') || profileErrorMessage.includes('Request timeout')
           ? t('auth.errors.networkError')
-          : t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.';
+          : t('auth.errors.unknownError');
         setAuthError(errorText);
         setSidebarFormError(errorText);
       }
@@ -483,7 +507,7 @@ export const LandingPageV2: FC = () => {
       } else if (errorMessage.includes('Server error')) {
         errorText = t('auth.errors.serverError');
       } else {
-        errorText = t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.';
+        errorText = t('auth.errors.unknownError');
       }
       
       setAuthError(errorText);
@@ -1199,7 +1223,7 @@ export const LandingPageV2: FC = () => {
       } else if (errorMessage.includes('Network error') || errorMessage.includes('NETWORK_ERROR')) {
         setSidebarFormError(t('auth.errors.networkError'));
       } else {
-        setSidebarFormError(t('auth.errors.unknownError') || 'Произошла ошибка. Попробуйте снова.');
+        setSidebarFormError(t('auth.errors.unknownError'));
       }
     }
   };
@@ -1902,7 +1926,7 @@ export const LandingPageV2: FC = () => {
                 }
               } catch (error: any) {
 
-                setSidebarFormError(error?.message || 'Ошибка авторизации через Google');
+                setSidebarFormError(error?.message || t('errors.authGoogleError'));
               }
             }}
           >

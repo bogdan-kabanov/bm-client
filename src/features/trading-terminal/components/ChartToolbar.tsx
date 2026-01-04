@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { TIMEFRAME_OPTIONS } from '../constants/chart';
 import type { ChartTimeframe } from '@/src/features/charts/ui/types';
 import './ChartToolbar.css';
-import carandashIcon from '@src/assets/tools/Carandash2.png';
-import svechiIcon from '@src/assets/tools/Svechi.png';
-import cirkulIcon from '@src/assets/tools/Cirkul.png';
+import carandashIcon from '@src/assets/images/tools/Carandash2.png';
+import svechiIcon from '@src/assets/images/tools/Svechi.png';
+import cirkulIcon from '@src/assets/images/tools/Cirkul.png';
 
 type DrawingTool = 'line' | 'freehand' | 'eraser' | 'rectangle' | 'circle' | 'arrow' | 'horizontal' | 'vertical' | 'text' | 'parallel' | 'fibonacci' | 'channel' | 'trendline' | 'zone' | null;
 
@@ -41,34 +41,33 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
   const timeframeMenuRef = useRef<HTMLDivElement>(null);
   const drawingToolsWrapperRef = useRef<HTMLDivElement>(null);
   const drawingToolsRowRef = useRef<HTMLDivElement>(null);
+  const drawingToolsRowContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollLeft, setShowScrollLeft] = useState(false);
   const [showScrollRight, setShowScrollRight] = useState(false);
 
-  // Закрытие меню при клике вне его
+  // Закрытие меню при клике вне его (только для timeframe меню, инструменты рисования закрываются вручную)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (timeframeMenuRef.current && !timeframeMenuRef.current.contains(event.target as Node)) {
         setShowTimeframeMenu(false);
       }
-      if (drawingToolsWrapperRef.current && !drawingToolsWrapperRef.current.contains(event.target as Node)) {
-        setShowDrawingToolsMenu?.(false);
-      }
+      // Убрано автоматическое закрытие панели инструментов рисования - закрывается только вручную
     };
 
-    if (showTimeframeMenu || showDrawingToolsMenu) {
+    if (showTimeframeMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showTimeframeMenu, showDrawingToolsMenu, setShowDrawingToolsMenu]);
+  }, [showTimeframeMenu]);
 
   // Инструменты рисования
   const drawingTools: Array<{ id: DrawingTool; label: string; icon: React.ReactNode }> = [
     {
       id: 'line',
-      label: 'Линия',
+      label: t('chart.drawingTools.line'),
       icon: (
         <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#868893" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -77,7 +76,7 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
     },
     {
       id: 'freehand',
-      label: 'От руки',
+      label: t('chart.drawingTools.freehand'),
       icon: (
         <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#868893" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
@@ -88,7 +87,7 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
     },
     {
       id: 'rectangle',
-      label: 'Прямоугольник',
+      label: t('chart.drawingTools.rectangle'),
       icon: (
         <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#868893" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -97,7 +96,7 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
     },
     {
       id: 'circle',
-      label: 'Круг',
+      label: t('chart.drawingTools.circle'),
       icon: (
         <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#868893" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -196,20 +195,58 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
     }
   }, []);
 
+  // Ограничение ширины панели правым краем chart-toolbar
+  const updatePanelMaxWidth = React.useCallback(() => {
+    if (!drawingToolsWrapperRef.current || !drawingToolsRowContainerRef.current || !showDrawingToolsMenu) {
+      return;
+    }
+
+    const wrapper = drawingToolsWrapperRef.current;
+    const container = drawingToolsRowContainerRef.current;
+    const toolbar = wrapper.closest('.chart-toolbar');
+    
+    if (!toolbar) return;
+
+    const toolbarRect = toolbar.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    
+    // Вычисляем максимальную ширину: от левого края панели до правого края toolbar минус отступ
+    const maxWidth = toolbarRect.right - containerRect.left - 10; // 10px отступ от правого края
+    
+    if (maxWidth > 0) {
+      container.style.maxWidth = `${maxWidth}px`;
+    } else {
+      container.style.maxWidth = '0px';
+    }
+  }, [showDrawingToolsMenu]);
+
   // Отслеживание изменений размера и прокрутки
   useEffect(() => {
     if (showDrawingToolsMenu) {
       // Проверяем сразу и после небольшой задержки для корректного расчета размеров
       checkScrollButtons();
+      updatePanelMaxWidth();
       const container = drawingToolsRowRef.current;
       if (container) {
         container.addEventListener('scroll', checkScrollButtons);
-        window.addEventListener('resize', checkScrollButtons);
+        window.addEventListener('resize', () => {
+          checkScrollButtons();
+          updatePanelMaxWidth();
+        });
         
         // Проверяем несколько раз для корректного расчета после рендеринга
-        const timeoutId1 = setTimeout(checkScrollButtons, 50);
-        const timeoutId2 = setTimeout(checkScrollButtons, 150);
-        const timeoutId3 = setTimeout(checkScrollButtons, 300);
+        const timeoutId1 = setTimeout(() => {
+          checkScrollButtons();
+          updatePanelMaxWidth();
+        }, 50);
+        const timeoutId2 = setTimeout(() => {
+          checkScrollButtons();
+          updatePanelMaxWidth();
+        }, 150);
+        const timeoutId3 = setTimeout(() => {
+          checkScrollButtons();
+          updatePanelMaxWidth();
+        }, 300);
         
         return () => {
           clearTimeout(timeoutId1);
@@ -222,8 +259,11 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
     } else {
       setShowScrollLeft(false);
       setShowScrollRight(false);
+      if (drawingToolsRowContainerRef.current) {
+        drawingToolsRowContainerRef.current.style.maxWidth = '';
+      }
     }
-  }, [showDrawingToolsMenu, checkScrollButtons]);
+  }, [showDrawingToolsMenu, checkScrollButtons, updatePanelMaxWidth]);
 
   const handleDrawingToolClick = (tool: DrawingTool) => {
     if (selectedDrawingTool === tool) {
@@ -278,7 +318,7 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
               onChartViewChange?.();
               setShowTimeframeMenu(false);
             }}
-            title={t('trading.chartView') || 'Смена графика'}
+            title={t('trading.chartView')}
           >
             <img src={svechiIcon} alt={t('trading.chartView') || 'Смена графика'} width="27" height="27" style={{ filter: 'brightness(0) saturate(100%) invert(54%) sepia(4%) saturate(1000%) hue-rotate(202deg) brightness(95%) contrast(89%)' }} />
           </button>
@@ -308,7 +348,7 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
               onOpenIndicators?.();
               setShowTimeframeMenu(false);
             }}
-            title={t('trading.indicatorsTitle') || 'Индикаторы'}
+            title={t('trading.indicatorsTitle')}
           >
             <img src={cirkulIcon} alt={t('trading.indicatorsTitle') || 'Индикаторы'} width="27" height="27" style={{ filter: 'brightness(0) saturate(100%) invert(54%) sepia(4%) saturate(1000%) hue-rotate(202deg) brightness(95%) contrast(89%)' }} />
           </button>
@@ -323,11 +363,12 @@ export const ChartToolbar: React.FC<ChartToolbarProps> = ({
               setShowDrawingToolsMenu?.(!showDrawingToolsMenu);
               setShowTimeframeMenu(false);
             }}
-            title={t('trading.drawingTools') || 'Инструменты рисования'}
+            title={t('trading.drawingTools')}
           >
             <img src={carandashIcon} alt="Инструменты рисования" width="27" height="27" style={{ filter: 'brightness(0) saturate(100%) invert(54%) sepia(4%) saturate(1000%) hue-rotate(202deg) brightness(95%) contrast(89%)' }} />
           </button>
           <div 
+            ref={drawingToolsRowContainerRef}
             className={`drawing-tools-row-container ${showDrawingToolsMenu ? 'drawing-tools-row-open' : ''}`}
           >
             {showScrollLeft && (

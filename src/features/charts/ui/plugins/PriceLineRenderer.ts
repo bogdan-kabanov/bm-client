@@ -221,18 +221,8 @@ export class PriceLineRenderer {
     }
     const labelWidth = this.fixedLabelWidth;
     
-    // ВАЖНО: Фиксируем позицию X плашки справа от графика
-    // Используем правый край оси Y как референс, чтобы плашка была сразу после оси
-    const yScale = chart.scales.y;
-    const yAxisRight = yScale ? yScale.right : chartArea.right;
-    
-    // Позиционируем плашку сразу после правого края оси Y (без лишних отступов)
-    const fixedOffsetFromRight = 2; // Минимальный отступ от правого края оси Y
-    const preferredX = yAxisRight + fixedOffsetFromRight;
-    
-    // Но не позволяем ей выйти за пределы canvas
-    const maxX = canvasWidth - labelWidth - 2; // Минимальный отступ от правого края canvas
-    const labelX = Math.min(preferredX, maxX);
+    // ВАЖНО: Прижимаем маркер цены к правому краю canvas без отступа
+    const labelX = canvasWidth - labelWidth;
     
     // Позиция Y зависит только от цены (вертикальное движение)
     const labelY = priceY - labelHeight / 2;

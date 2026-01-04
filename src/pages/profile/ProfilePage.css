@@ -24,9 +24,20 @@
     box-sizing: border-box;
 }
 
+/* Profile page active state - объединены все селекторы */
 body.profile-page-active,
-body:has(.profile-page-wrapper) {
+body:has(.profile-page-wrapper),
+html.profile-page-active,
+html:has(.profile-page-wrapper),
+#root:has(.profile-page-wrapper),
+#root.profile-page-active {
     background: #ffffff !important;
+}
+
+body.profile-page-active,
+body:has(.profile-page-wrapper),
+#root:has(.profile-page-wrapper),
+#root.profile-page-active {
     overflow-y: hidden !important;
     height: 100vh;
     max-height: 100vh;
@@ -34,17 +45,8 @@ body:has(.profile-page-wrapper) {
 
 html.profile-page-active,
 html:has(.profile-page-wrapper) {
-    background: #ffffff !important;
     height: 100%;
     overflow: hidden;
-}
-
-#root:has(.profile-page-wrapper),
-#root.profile-page-active {
-    background: #ffffff !important;
-    overflow-y: hidden !important;
-    height: 100vh;
-    max-height: 100vh;
 }
 
 .profile-page-container {
@@ -124,7 +126,6 @@ html:has(.profile-page-wrapper) {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0;
-    overflow: visible;
 }
 
 .profile-tab-panels,
@@ -135,7 +136,6 @@ html:has(.profile-page-wrapper) {
     width: 100%;
     flex: 1 1 auto;
     min-height: 0;
-    overflow: visible;
 }
 
 .account-panel {
@@ -155,7 +155,6 @@ html:has(.profile-page-wrapper) {
     gap: 32px;
     width: 100%;
     max-width: 800px;
-    overflow: visible;
 }
 
 /* Profile Sections */
@@ -163,13 +162,9 @@ html:has(.profile-page-wrapper) {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    overflow: visible;
 }
 
-.profile-section--main {
-    min-width: 0;
-}
-
+.profile-section--main,
 .profile-section--secondary {
     min-width: 0;
 }
@@ -219,19 +214,19 @@ html:has(.profile-page-wrapper) {
 }
 
 .avatar-container--level-green .avatar-wrapper {
-    border-color: #10b981;
+    border-color: #484BD7;
 }
 
 .avatar-container--level-yellow .avatar-wrapper {
-    border-color: #f59e0b;
+    border-color: #484BD7;
 }
 
 .avatar-container--level-purple .avatar-wrapper {
-    border-color: #8b5cf6;
+    border-color: #484BD7;
 }
 
 .avatar-container--level-red .avatar-wrapper {
-    border-color: #ef4444;
+    border-color: #484BD7;
 }
 
 .avatar-image {
@@ -251,24 +246,40 @@ html:has(.profile-page-wrapper) {
     backdrop-filter: blur(2px);
 }
 
-.avatar-upload-button {
-    padding: 6px 14px;
+/* Common button styles */
+.avatar-upload-button,
+.email-verify-button,
+.password-submit-button,
+.verification-button,
+.retry-btn {
+    padding: 10px 20px;
     background: #37a1ff;
     color: #ffffff;
     border: none;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     transition: background 0.2s ease;
+}
+
+.avatar-upload-button {
+    padding: 6px 14px;
+    font-size: 12px;
     white-space: nowrap;
 }
 
-.avatar-upload-button:hover:not(:disabled) {
+.avatar-upload-button:hover:not(:disabled),
+.email-verify-button:hover:not(:disabled),
+.password-submit-button:hover:not(:disabled),
+.verification-button:hover,
+.retry-btn:hover {
     background: #2a8ae6;
 }
 
-.avatar-upload-button:disabled {
+.avatar-upload-button:disabled,
+.email-verify-button:disabled,
+.password-submit-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
@@ -292,13 +303,7 @@ html:has(.profile-page-wrapper) {
 
 /* Profile Info Card */
 .profile-info-card {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    border: none;
-    box-shadow: none;
     margin-bottom: 32px;
-    overflow: visible;
 }
 
 .profile-section-title {
@@ -314,7 +319,6 @@ html:has(.profile-page-wrapper) {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px 24px;
-    overflow: visible;
 }
 
 @media (max-width: 768px) {
@@ -328,11 +332,6 @@ html:has(.profile-page-wrapper) {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    overflow: visible;
-}
-
-.profile-field.editable {
-    overflow: visible;
 }
 
 .profile-field-label {
@@ -348,7 +347,6 @@ html:has(.profile-page-wrapper) {
     font-weight: 500;
     color: #333;
     word-break: break-word;
-    overflow: visible;
     position: relative;
 }
 
@@ -398,26 +396,6 @@ html:has(.profile-page-wrapper) {
     color: #666;
 }
 
-.email-verify-button {
-    padding: 8px 18px;
-    background: #37a1ff;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.email-verify-button:hover:not(:disabled) {
-    background: #2a8ae6;
-}
-
-.email-verify-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
 
 /* Verification Field */
 .profile-field--verification .profile-field-value {
@@ -461,29 +439,43 @@ html:has(.profile-page-wrapper) {
 }
 
 .verification-button {
-    padding: 10px 20px;
-    background: #37a1ff;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
     width: fit-content;
 }
 
-.verification-button:hover {
-    background: #2a8ae6;
+/* Verification Section */
+.profile-verification-section {
+    margin-bottom: 32px;
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.verification-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.verification-warning svg {
+    color: #f59e0b;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.verification-warning p {
+    color: #92400e;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
 }
 
 /* Password Section */
 .profile-password-section {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    border: none;
-    box-shadow: none;
     margin-bottom: 32px;
 }
 
@@ -542,35 +534,12 @@ html:has(.profile-page-wrapper) {
 }
 
 .password-submit-button {
-    padding: 10px 20px;
-    background: #37a1ff;
-    color: #ffffff;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s ease;
     width: fit-content;
     grid-column: 1 / -1;
 }
 
-.password-submit-button:hover:not(:disabled) {
-    background: #2a8ae6;
-}
-
-.password-submit-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
 /* Delete Account Section */
 .profile-delete-section {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    border: none;
-    box-shadow: none;
     margin-top: 32px;
     padding-top: 32px;
     border-top: 1px solid #e5e5e5;
@@ -657,11 +626,9 @@ html:has(.profile-page-wrapper) {
 /* Editable Fields */
 .profile-field.editable {
     position: relative;
-    overflow: visible;
 }
 
 .profile-field.editable.editing {
-    overflow: visible;
     z-index: 1;
 }
 
@@ -671,7 +638,6 @@ html:has(.profile-page-wrapper) {
 
 .profile-field.editable .profile-field-value {
     width: 100%;
-    overflow: visible;
     position: relative;
 }
 
@@ -725,7 +691,6 @@ html:has(.profile-page-wrapper) {
     border: 1px solid #37a1ff;
     box-sizing: border-box;
     min-width: 0;
-    overflow: visible;
     position: relative;
     z-index: 1;
 }
@@ -885,13 +850,6 @@ html:has(.profile-page-wrapper) {
 }
 
 /* Wallet Card */
-.wallet-card {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    border: none;
-    box-shadow: none;
-}
 
 .wallet-card h3 {
     font-size: 20px;
@@ -935,13 +893,6 @@ html:has(.profile-page-wrapper) {
 }
 
 /* KYC Card */
-.kyc-card {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    border: none;
-    box-shadow: none;
-}
 
 .kyc-card h3 {
     font-size: 20px;
@@ -952,8 +903,6 @@ html:has(.profile-page-wrapper) {
 
 /* Referral Program */
 .referral-program-card {
-    background: transparent;
-    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -990,7 +939,6 @@ html:has(.profile-page-wrapper) {
 }
 
 .referral-stat-card {
-    background: transparent;
     border: 1px solid #e5e5e5;
     border-radius: 12px;
     padding: 24px;
@@ -1026,10 +974,6 @@ html:has(.profile-page-wrapper) {
     letter-spacing: 0.5px;
 }
 
-.referral-benefits {
-    background: transparent;
-    padding: 0;
-}
 
 .referral-benefits .benefits-title {
     font-size: 20px;
@@ -1050,7 +994,6 @@ html:has(.profile-page-wrapper) {
     align-items: center;
     gap: 20px;
     padding: 20px;
-    background: transparent;
     border: 1px solid #e5e5e5;
     border-radius: 12px;
     transition: box-shadow 0.2s ease;
@@ -1090,10 +1033,6 @@ html:has(.profile-page-wrapper) {
     color: #666;
 }
 
-.referral-link-section {
-    background: transparent;
-    padding: 0;
-}
 
 .referral-link-section .link-section-title {
     font-size: 20px;
@@ -1118,18 +1057,6 @@ html:has(.profile-page-wrapper) {
     color: #333;
     font-size: 14px;
     font-family: monospace;
-}
-
-/* Remove borders and shadows from all cards */
-.profile-header-card,
-.profile-info-card,
-.profile-password-card,
-.profile-delete-card,
-.wallet-card,
-.kyc-card,
-.info-card {
-    border: none !important;
-    box-shadow: none !important;
 }
 
 /* Make form inputs have white background but cards transparent */
@@ -1284,27 +1211,10 @@ html:has(.profile-page-wrapper) {
 
 .retry-btn {
     padding: 12px 24px;
-    background: #37a1ff;
-    border: none;
     border-radius: 8px;
-    color: #ffffff;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s ease;
-}
-
-.retry-btn:hover {
-    background: #2a8ae6;
 }
 
 /* Info Card Component */
-.info-card {
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    border: none;
-    box-shadow: none;
-}
 
 .info-card__title {
     font-size: 20px;
@@ -1372,8 +1282,7 @@ html:has(.profile-page-wrapper) {
         height: 56px;
     }
 
-    .profile-info-title,
-    .profile-card-title {
+    .profile-info-title {
         font-size: 18px;
         margin-bottom: 20px;
     }
@@ -1414,8 +1323,7 @@ html:has(.profile-page-wrapper) {
         height: 56px;
     }
 
-    .profile-info-title,
-    .profile-card-title {
+    .profile-info-title {
         font-size: 16px;
     }
 

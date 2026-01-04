@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '@/src/app/providers/useLanguage';
 import { useNavigate } from 'react-router-dom';
-import bonusImage from '../../assets/Bonus.png';
+import bonusImage from '@src/assets/images/bonus/Bonus.png';
 import './BonusPopup.css';
 
 interface BonusPopupProps {
@@ -122,6 +122,12 @@ export const BonusPopup: React.FC<BonusPopupProps> = ({ isOpen, onClose }) => {
   );
 
   if (typeof document !== 'undefined') {
+    // Try to find chart container first
+    const chart_container = document.querySelector('.chart-section-wrapper');
+    if (chart_container) {
+      return createPortal(popupContent, chart_container);
+    }
+    // Fallback to body if chart container not found
     return createPortal(popupContent, document.body);
   }
 

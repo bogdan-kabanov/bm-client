@@ -3,9 +3,11 @@ import { useAppDispatch, useAppSelector } from '@src/shared/lib/hooks';
 import { useWebSocket } from '@src/entities/websoket/useWebSocket';
 import { websocketStore } from '@src/entities/websoket/websocket.store';
 import { getServerTime as getGlobalServerTime } from '@src/shared/lib/serverTime';
-import { setTradeHistory, addActiveTrade } from '@src/entities/trading/model/slice';
+import { setTradeHistory, addActiveTrade, addTradeHistory, removeActiveTrade } from '@src/entities/trading/model/slice';
 import { updateBalance, updateProfitBalance, updateDemoBalance } from '@src/entities/user/model/slice';
 import { selectTradingMode, selectSelectedBase, selectCurrentPrice } from '@src/entities/trading/model/selectors';
+import { store } from '@src/app/store';
+import { selectProfile } from '@src/entities/user/model/selectors';
 import TradeSyncManager, {
   PendingTradeData,
   TradeCacheRecord,
@@ -189,48 +191,29 @@ export const useTradeSync = ({
     // Register trade_placed handler BEFORE setting handlersRegisteredRef to true
     const unsubscribeTradePlaced = wsOnMessage('trade_placed', (message: any) => {
       try {
-        console.log('[TRADE_SYNC] 📥 ========== TRADE_PLACED HANDLER CALLED ==========');
-        console.log('[TRADE_SYNC] 📥 Received trade_placed message from server', {
-          message,
-          hasMessage: !!message,
-          hasSuccess: message?.success,
-          hasData: !!message?.data,
-          data: message?.data,
-          messageType: typeof message,
-          messageKeys: message ? Object.keys(message) : []
-        });
+        console.log('🔄🔄🔄 [USE_TRADE_SYNC] ========== trade_placed MESSAGE RECEIVED ==========');
+        console.log('🔄🔄🔄 [USE_TRADE_SYNC] Full message:', JSON.stringify(message, null, 2));
         
         // Проверяем наличие newBalance в сообщении и обновляем баланс СРАЗУ
         const tradeData = message?.data;
-        console.log('💰 [TRADE_SYNC] Проверка баланса в сообщении:', {
-          hasData: !!tradeData,
-          newBalance: tradeData?.newBalance,
-          demoBalance: tradeData?.demoBalance,
-          newDemoBalance: tradeData?.newDemoBalance,
-          hasNewBalance: tradeData?.newBalance !== undefined,
-          hasDemoBalance: tradeData?.demoBalance !== undefined || tradeData?.newDemoBalance !== undefined,
-          newProfitBalance: tradeData?.newProfitBalance,
-          isDemo: tradeData?.isDemo,
-          is_demo: tradeData?.is_demo,
-          allDataKeys: tradeData ? Object.keys(tradeData) : []
-        });
+        console.log('🔄🔄🔄 [USE_TRADE_SYNC] Trade data:', tradeData);
+        
+        // Получаем текущий баланс ДО обработки
+        const currentStateBefore = store.getState();
+        const currentProfileBefore = selectProfile(currentStateBefore);
+        const currentBalanceBefore = currentProfileBefore?.balance || 0;
+        console.log('🔄🔄🔄 [USE_TRADE_SYNC] Current balance BEFORE update:', currentBalanceBefore);
         
         // Обновляем баланс СРАЗУ, до обработки через tradePlacementService
         const tradingMode = localStorage.getItem('tradingMode');
         const isDemoTrade = tradeData?.isDemo === true || tradeData?.is_demo === true || tradingMode === 'demo';
+        console.log('🔄🔄🔄 [USE_TRADE_SYNC] Trading mode:', tradingMode);
+        console.log('🔄🔄🔄 [USE_TRADE_SYNC] Is demo trade:', isDemoTrade);
         
         if (isDemoTrade) {
           // Обновляем демо-баланс для демо-сделок
           const demoBalance = tradeData?.newDemoBalance ?? tradeData?.demoBalance;
           if (demoBalance !== undefined && demoBalance !== null && Number.isFinite(Number(demoBalance))) {
-            console.log('💰 [TRADE_SYNC] Обновление демо-баланса из trade_placed (СРАЗУ):', {
-              demoBalance: Number(demoBalance),
-              tradingMode,
-              isDemoTrade,
-              newDemoBalance: tradeData?.newDemoBalance,
-              demoBalanceField: tradeData?.demoBalance
-            });
-            
             dispatch(updateDemoBalance(Number(demoBalance)));
             
             // Также сохраняем в localStorage и отправляем broadcast
@@ -241,51 +224,73 @@ export const useTradeSync = ({
               transactionType: Number(demoBalance) >= currentBalance ? 'REPLENISHMENT' : 'WITHDRAWAL',
               amount: Math.abs(Number(demoBalance) - currentBalance),
             });
-            
-            console.log('💰 [TRADE_SYNC] ✅ Демо-баланс обновлен (СРАЗУ):', demoBalance);
-          } else {
-            console.log('💰 [TRADE_SYNC] Пропуск обновления демо-баланса - значение не найдено:', {
-              isDemoTrade,
-              newDemoBalance: tradeData?.newDemoBalance,
-              demoBalance: tradeData?.demoBalance,
-              tradingMode
-            });
           }
         } else if (tradeData?.newBalance !== undefined && tradeData?.newBalance !== null) {
           // Обновляем реальный баланс для реальных сделок
-          console.log('💰 [TRADE_SYNC] Обновление баланса из trade_placed (СРАЗУ):', {
-            newBalance: tradeData.newBalance,
-            tradingMode,
-            isDemoTrade,
-            hasNewBalance: tradeData.newBalance !== undefined,
-            hasNewProfitBalance: tradeData.newProfitBalance !== undefined
+          const newBalanceValue = Number(tradeData.newBalance);
+          console.log('🔄🔄🔄 [USE_TRADE_SYNC] ========== Processing REAL trade balance update ==========');
+          console.log('🔄🔄🔄 [USE_TRADE_SYNC] ✅ newBalance found in message:', newBalanceValue);
+          console.log('🔄🔄🔄 [USE_TRADE_SYNC] Balance update:', {
+            from: currentBalanceBefore,
+            to: newBalanceValue,
+            difference: newBalanceValue - currentBalanceBefore,
           });
+          dispatch(updateBalance(newBalanceValue));
+          console.log('🔄🔄🔄 [USE_TRADE_SYNC] ✅ updateBalance dispatched with value:', newBalanceValue);
           
-          dispatch(updateBalance(Number(tradeData.newBalance)));
+          // Проверяем баланс после dispatch
+          setTimeout(() => {
+            const stateAfter = store.getState();
+            const profileAfter = selectProfile(stateAfter);
+            const balanceAfter = profileAfter?.balance || 0;
+            console.log('🔄🔄🔄 [USE_TRADE_SYNC] Balance AFTER dispatch (after 100ms):', balanceAfter);
+          }, 100);
+          
           if (tradeData?.newProfitBalance !== undefined && tradeData?.newProfitBalance !== null) {
+            console.log('🔄🔄🔄 [USE_TRADE_SYNC] Dispatching updateProfitBalance:', tradeData.newProfitBalance);
             dispatch(updateProfitBalance(Number(tradeData.newProfitBalance)));
           }
-          
-          console.log('💰 [TRADE_SYNC] ✅ Баланс обновлен (СРАЗУ):', tradeData.newBalance);
         } else {
-          console.log('💰 [TRADE_SYNC] Пропуск обновления баланса:', {
-            isDemoTrade,
-            hasNewBalance: tradeData?.newBalance !== undefined,
-            newBalance: tradeData?.newBalance,
-            tradingMode
-          });
+          // Fallback: вычитаем сумму ставки из текущего баланса
+          const tradeAmount = tradeData?.amount;
+          console.log('🔄🔄🔄 [USE_TRADE_SYNC] ⚠️ newBalance NOT found in message');
+          console.log('🔄🔄🔄 [USE_TRADE_SYNC] Trade amount for fallback:', tradeAmount);
+          
+          if (tradeAmount !== undefined && tradeAmount !== null && tradeAmount > 0) {
+            console.warn('🔄🔄🔄 [USE_TRADE_SYNC] Using FALLBACK - subtracting trade amount from current balance');
+            const currentState = store.getState();
+            const currentProfile = selectProfile(currentState);
+            const currentBalance = currentProfile?.balance || 0;
+            const newBalance = Math.max(0, currentBalance - Number(tradeAmount));
+            console.log('🔄🔄🔄 [USE_TRADE_SYNC] Fallback balance calculation:', {
+              currentBalance,
+              tradeAmount: Number(tradeAmount),
+              newBalance,
+              calculation: `${currentBalance} - ${tradeAmount} = ${newBalance}`,
+            });
+            dispatch(updateBalance(newBalance));
+            console.log('🔄🔄🔄 [USE_TRADE_SYNC] ✅ updateBalance dispatched (fallback) with value:', newBalance);
+            
+            // Проверяем баланс после dispatch
+            setTimeout(() => {
+              const stateAfter = store.getState();
+              const profileAfter = selectProfile(stateAfter);
+              const balanceAfter = profileAfter?.balance || 0;
+              console.log('🔄🔄🔄 [USE_TRADE_SYNC] Balance AFTER fallback dispatch (after 100ms):', balanceAfter);
+            }, 100);
+          } else {
+            console.error('🔄🔄🔄 [USE_TRADE_SYNC] ❌ ERROR: newBalance not found AND tradeAmount not available!');
+            console.error('🔄🔄🔄 [USE_TRADE_SYNC] Trade data:', tradeData);
+          }
         }
+        
+        console.log('🔄🔄🔄 [USE_TRADE_SYNC] ========== END trade_placed HANDLING ==========');
         
         // Передаем сообщение в сервис для обработки
         // Сервис создаст маркер и трейд только после успешной обработки
         tradePlacementService.handleTradePlaced(
           message,
           (result) => {
-            console.log('[TRADE_SYNC] ✅ Обработка trade_placed завершена', {
-              resultSuccess: result?.success,
-              hasTrade: !!result?.trade,
-              tradeId: result?.tradeId
-            });
             
             try {
               if (result.success && result.trade) {
@@ -372,6 +377,167 @@ export const useTradeSync = ({
       }
     });
 
+    // Обработка завершенных сделок - добавляем напрямую в Redux
+    const unsubscribeTradeExpired = wsOnMessage('manual_trade_expired', (message: any) => {
+      console.log('[TRADE_SYNC] 📨 Получено событие manual_trade_expired:', {
+        hasSuccess: message?.success,
+        hasData: !!message?.data,
+        message,
+        timestamp: Date.now(),
+      });
+      
+      try {
+        if (message?.success && message?.data) {
+          const completedTrade = message.data;
+          const tradeId = completedTrade.tradeId || completedTrade.id;
+          
+          console.log('[TRADE_SYNC] 🔍 Обработка завершенной сделки:', {
+            tradeId,
+            completedTrade,
+            timestamp: Date.now(),
+          });
+          
+          if (!tradeId) {
+            console.warn('[TRADE_SYNC] ⚠️ Не удалось извлечь tradeId из завершенной сделки', { completedTrade });
+            return;
+          }
+
+          const isDemoTrade = completedTrade.is_demo === true || completedTrade.isDemo === true;
+          const currentTradingMode = tradingMode;
+          
+          console.log('[TRADE_SYNC] 🔍 Проверка режима:', {
+            isDemoTrade,
+            currentTradingMode,
+            willSkip: (currentTradingMode === 'demo' && !isDemoTrade) || (currentTradingMode === 'manual' && isDemoTrade),
+          });
+          
+          // Проверяем, что режим совпадает
+          if ((currentTradingMode === 'demo' && !isDemoTrade) || (currentTradingMode === 'manual' && isDemoTrade)) {
+            console.log('[TRADE_SYNC] ⏭️ Пропуск сделки - режим не совпадает');
+            return;
+          }
+
+          // Вычисляем completedAt - для завершенной сделки он должен быть всегда установлен
+          let completedAt: number | null = null;
+          
+          // Пробуем получить completedAt из разных источников
+          if (typeof completedTrade.completedAt === 'number' && completedTrade.completedAt > 0) {
+            completedAt = completedTrade.completedAt;
+          } else if (completedTrade.completed_at) {
+            if (typeof completedTrade.completed_at === 'number' && completedTrade.completed_at > 0) {
+              completedAt = completedTrade.completed_at;
+            } else {
+              const parsed = new Date(completedTrade.completed_at).getTime();
+              if (!isNaN(parsed) && parsed > 0) {
+                completedAt = parsed;
+              }
+            }
+          }
+          
+          // Если completedAt все еще не установлен, используем expiration_time
+          if (!completedAt || completedAt <= 0) {
+            if (typeof completedTrade.expirationTime === 'number' && completedTrade.expirationTime > 0) {
+              completedAt = completedTrade.expirationTime;
+            } else if (completedTrade.expiration_time) {
+              if (typeof completedTrade.expiration_time === 'number' && completedTrade.expiration_time > 0) {
+                completedAt = completedTrade.expiration_time;
+              } else {
+                const parsed = new Date(completedTrade.expiration_time).getTime();
+                if (!isNaN(parsed) && parsed > 0) {
+                  completedAt = parsed;
+                }
+              }
+            }
+          }
+          
+          // Если все еще не установлен, используем текущее время
+          if (!completedAt || completedAt <= 0) {
+            completedAt = Date.now();
+          }
+
+          // Создаем запись истории
+          const historyEntry: TradeHistoryEntry = {
+            id: String(tradeId),
+            price: completedTrade.entryPrice ?? completedTrade.price ?? 0,
+            direction: completedTrade.direction,
+            amount: completedTrade.amount ?? 0,
+            entryPrice: completedTrade.entryPrice ?? completedTrade.price ?? 0,
+            exitPrice: completedTrade.exitPrice ?? completedTrade.price ?? 0,
+            profit: completedTrade.profit ?? 0,
+            profitPercent: completedTrade.profitPercent ?? completedTrade.profit_percent ?? 0,
+            isWin: completedTrade.isWin ?? completedTrade.is_win ?? false,
+            createdAt: typeof completedTrade.createdAt === 'number' 
+              ? completedTrade.createdAt 
+              : (completedTrade.created_at ? (typeof completedTrade.created_at === 'number' ? completedTrade.created_at : new Date(completedTrade.created_at).getTime()) : Date.now()),
+            completedAt: completedAt,
+            expirationTime: typeof completedTrade.expirationTime === 'number'
+              ? completedTrade.expirationTime
+              : (completedTrade.expiration_time ? (typeof completedTrade.expiration_time === 'number' ? completedTrade.expiration_time : new Date(completedTrade.expiration_time).getTime()) : null),
+            symbol: completedTrade.symbol ?? completedTrade.pair ?? null,
+            baseCurrency: completedTrade.baseCurrency ?? completedTrade.base_currency ?? null,
+            quoteCurrency: completedTrade.quoteCurrency ?? completedTrade.quote_currency ?? null,
+            isDemo: isDemoTrade,
+            is_demo: isDemoTrade,
+          };
+
+          console.log('[TRADE_SYNC] ✅ Добавление завершенной сделки в историю', {
+            tradeId,
+            isDemoTrade,
+            completedAt: historyEntry.completedAt,
+            completedTrade: {
+              completedAt: completedTrade.completedAt,
+              completed_at: completedTrade.completed_at,
+              expirationTime: completedTrade.expirationTime,
+              expiration_time: completedTrade.expiration_time,
+            },
+            historyEntry,
+          });
+
+          // Удаляем из активных сделок
+          dispatch(removeActiveTrade(tradeId));
+          
+          // Если tradeId в формате "trade_42_1762014684555", также пробуем удалить по числовому id "42"
+          const match = String(tradeId).match(/^trade_(\d+)_/);
+          if (match && match[1]) {
+            const numericId = match[1];
+            dispatch(removeActiveTrade(numericId));
+          }
+          
+          // Также пробуем удалить по completedTrade.id, если он отличается от tradeId
+          if (completedTrade.id && String(completedTrade.id) !== String(tradeId)) {
+            dispatch(removeActiveTrade(String(completedTrade.id)));
+          }
+
+          // Убеждаемся, что completedAt установлен для корректного увеличения счетчика
+          if (!historyEntry.completedAt || historyEntry.completedAt <= 0) {
+            console.log('[TRADE_SYNC] ⚠️ completedAt не установлен, устанавливаем текущее время');
+            historyEntry.completedAt = Date.now();
+          }
+          
+          console.log('[TRADE_SYNC] 🔢 Готовимся добавить завершенную сделку в историю, счетчик увеличится на 1', {
+            tradeId,
+            completedAt: historyEntry.completedAt,
+            historyEntry,
+            timestamp: Date.now(),
+          });
+          
+          // Добавляем напрямую в Redux - это автоматически увеличит счетчик новых сделок
+          console.log('[TRADE_SYNC] 📤 Вызываем dispatch(addTradeHistory)...');
+          dispatch(addTradeHistory(historyEntry));
+          
+          console.log('[TRADE_SYNC] ✅ dispatch(addTradeHistory) вызван, проверяем Redux через 100ms...');
+          
+          // Проверяем состояние Redux через небольшую задержку
+          setTimeout(() => {
+            // Получаем текущее состояние из store (если доступно)
+            console.log('[TRADE_SYNC] 🔍 Проверка состояния Redux после dispatch (через 100ms)');
+          }, 100);
+        }
+      } catch (error) {
+        console.error('[TRADE_SYNC] ❌ Ошибка обработки manual_trade_expired', error);
+      }
+    });
+
     return () => {
       manager.detachHandlers();
       handlersRegisteredRef.current = false;
@@ -384,8 +550,11 @@ export const useTradeSync = ({
       if (unsubscribeError) {
         unsubscribeError();
       }
+      if (unsubscribeTradeExpired) {
+        unsubscribeTradeExpired();
+      }
     };
-  }, [wsOnMessage, handleTradesWithRigging]);
+  }, [wsOnMessage, handleTradesWithRigging, dispatch, tradingMode]);
   
   // Отдельный useEffect для перерегистрации обработчиков при подключении WebSocket
   useEffect(() => {
@@ -445,8 +614,27 @@ export const useTradeSync = ({
 
     if (modeChanged) {
       prevTradingModeRef.current = tradingMode;
+      // При переключении режима запрашиваем данные заново
+      if (isConnected && wsSendMessage) {
+        // Запрашиваем активные сделки для нового режима
+        setTimeout(() => {
+          if (wsSendMessage) {
+            wsSendMessage({
+              type: 'get-active-manual-trades',
+              mode: tradingMode,
+            } as any);
+          }
+        }, 100);
+        
+        // Запрашиваем историю для нового режима
+        if (requestTradeHistory) {
+          setTimeout(() => {
+            requestTradeHistory(tradingMode);
+          }, 200);
+        }
+      }
     }
-  }, [tradingMode, dispatch, tradesCacheRef]);
+  }, [tradingMode, dispatch, tradesCacheRef, isConnected, wsSendMessage, requestTradeHistory]);
 
   const requestActiveTrades = useCallback(() => {
     if (!userProfile?.id || !wsSendMessage) {

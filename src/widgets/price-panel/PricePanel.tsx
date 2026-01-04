@@ -2,11 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import { TradingTransactions } from '@/src/widgets/trading-transactions/TradingTransactions';
 import { TradesPanel } from '@/src/widgets/trades-panel/TradesPanel';
-import { CopyTradingSignalsList } from '@/src/widgets/copy-trading-signals/CopyTradingSignalsList';
 import type { Currency } from '@src/shared/api';
 import { useAppSelector, useAppDispatch } from '@src/shared/lib/hooks';
 import { selectQuoteCurrency, selectTradingPrices } from '@src/entities/trading/model/selectors';
-import { setMenuOpen } from '@src/entities/copy-trading-signals/model/slice';
+import { setMenuOpen, setSubscriptionsMenuOpen } from '@src/entities/copy-trading-signals/model/slice';
 import './PricePanel.css';
 
 interface PricePanelProps {
@@ -97,6 +96,11 @@ export const PricePanel = (props: PricePanelProps) => {
             getCurrencyInfo={props.getCurrencyInfo}
             resolveCurrencyIconUrls={props.resolveCurrencyIconUrls}
             onRequestActiveTrades={props.onRequestActiveTrades}
+            onOpenTradeSidebar={(trade: any) => {
+              if ((window as any).__tradingTerminalOpenTradeSidebar) {
+                (window as any).__tradingTerminalOpenTradeSidebar(trade);
+              }
+            }}
             onRequestTradeHistory={props.onRequestTradeHistory}
           />
         )}
@@ -106,7 +110,7 @@ export const PricePanel = (props: PricePanelProps) => {
           <button
             className="copy-trading-signals-btn active"
             onClick={() => {
-              dispatch(setMenuOpen(true));
+              dispatch(setSubscriptionsMenuOpen(true));
             }}
             title={t('trading.copyTradingSignals')}
           >
@@ -125,12 +129,6 @@ export const PricePanel = (props: PricePanelProps) => {
             <span className="copy-trading-count">+</span>
           </button>
         </div> */}
-
-        <CopyTradingSignalsList 
-          investmentAmount={props.manualTradeAmount ? parseFloat(props.manualTradeAmount.replace(',', '.')) || 0 : 0}
-          onOpenAddSignalModal={props.onOpenAddSignalModal}
-          selectedBase={props.selectedBase}
-        />
 
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Footer.module.css';
 import { useLanguage } from '@/src/app/providers/useLanguage';
-import fullLogo from '@src/assets/full-logo.png';
+import fullLogo from '@src/assets/logos/full-logo-light.png';
 
 const Footer: React.FC = () => {
   const { t } = useLanguage();

@@ -2,7 +2,7 @@ import "./Header.css";
 import { Link, useLocation } from "react-router-dom";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { useAppSelector, useAppDispatch } from "@src/shared/lib/hooks";
-import { setMenuOpen } from "@src/entities/copy-trading-signals/model/slice";
+import { setMenuOpen, setSubscriptionsMenuOpen, setTopPartnersMenuOpen } from "@src/entities/copy-trading-signals/model/slice";
 import { useEffect, useState, useMemo } from "react";
 import { useMediaQuery } from '@src/shared/lib/hooks/useMediaQuery';
 import { useLanguage } from "@src/app/providers/useLanguage";
@@ -137,7 +137,7 @@ export function Header() {
                             title={item.title}
                             onClick={(e) => {
                                 e.preventDefault();
-                                dispatch(setMenuOpen(true));
+                                dispatch(setTopPartnersMenuOpen(true));
                             }}
                         >
                             <img src={item.icon} alt="" className="header-icon" aria-hidden="true" />

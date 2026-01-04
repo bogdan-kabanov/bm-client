@@ -18,7 +18,11 @@ const initialState: TradingState = {
     tradeHistory: [],
     tradeMarkers: [],
     activeTrades: [],
-    selectedBase: typeof window !== 'undefined' ? localStorage.getItem('selectedBaseCurrency') || 'BTC' : 'BTC',
+    selectedBase: typeof window !== 'undefined' ? localStorage.getItem('selectedBaseCurrency') || 'BTC' : 'BTC', // Только для отображения
+    selectedCurrencyId: typeof window !== 'undefined' ? (() => {
+        const stored = localStorage.getItem('selectedCurrencyId');
+        return stored ? parseInt(stored, 10) : null;
+    })() : null, // Основной идентификатор
     quoteCurrency: 'USDT',
     tradingMode: 'manual',
     ui: {
@@ -32,6 +36,7 @@ const initialState: TradingState = {
         expirationSeconds: '30',
         spreadPercent: 0.11,
     },
+    newTradesCount: 0,
 };
 
 
@@ -71,10 +76,54 @@ export const tradingSlice = createSlice({
         setTradeHistory: (state, action: PayloadAction<TradeHistoryEntry[]>) => {
             state.tradeHistory = action.payload;
         },
+        setNewTradesCount: (state, action: PayloadAction<number>) => {
+            const oldCount = state.newTradesCount;
+            state.newTradesCount = action.payload;
+            console.log('[TRADE_SLICE] 🔄 setNewTradesCount вызван:', {
+                oldCount,
+                newCount: action.payload,
+                timestamp: Date.now(),
+                stackTrace: new Error().stack,
+            });
+        },
         addTradeHistory: (state, action: PayloadAction<TradeHistoryEntry>) => {
             const MAX_TRADE_HISTORY = 500;
+            const oldCount = state.newTradesCount || 0;
+            const oldHistoryLength = state.tradeHistory.length;
+            
+            console.log('[TRADE_SLICE] 📥 addTradeHistory вызван:', {
+                tradeId: action.payload.id,
+                completedAt: action.payload.completedAt,
+                oldCount,
+                oldHistoryLength,
+                timestamp: Date.now(),
+            });
+            
             const newHistory = [action.payload, ...state.tradeHistory];
             state.tradeHistory = newHistory.slice(0, MAX_TRADE_HISTORY);
+            
+            // Увеличиваем счетчик новых сделок при добавлении завершенной сделки
+            // Если completedAt установлен и является валидным числом, увеличиваем счетчик
+            // Если completedAt не установлен, все равно увеличиваем счетчик (на случай, если это завершенная сделка)
+            const hasValidCompletedAt = action.payload.completedAt !== null && 
+                action.payload.completedAt !== undefined && 
+                typeof action.payload.completedAt === 'number' && 
+                action.payload.completedAt > 0;
+            
+            // Увеличиваем счетчик всегда при добавлении сделки в историю
+            // Это гарантирует, что счетчик обновится сразу после завершения сделки
+            const previousCount = state.newTradesCount || 0;
+            state.newTradesCount = previousCount + 1;
+            
+            console.log('[TRADE_SLICE] ✅ Счетчик новых сделок увеличен:', {
+                previousCount,
+                newCount: state.newTradesCount,
+                tradeId: action.payload.id,
+                completedAt: action.payload.completedAt,
+                hasValidCompletedAt,
+                newHistoryLength: state.tradeHistory.length,
+                timestamp: Date.now(),
+            });
         },
         // Маркеры
         setTradeMarkers: (state, action: PayloadAction<TradeMarker[]>) => {
@@ -198,6 +247,16 @@ export const tradingSlice = createSlice({
                 localStorage.setItem('selectedBaseCurrency', action.payload);
             }
         },
+        setSelectedCurrencyId: (state, action: PayloadAction<number | null>) => {
+            state.selectedCurrencyId = action.payload;
+            if (typeof window !== 'undefined') {
+                if (action.payload !== null) {
+                    localStorage.setItem('selectedCurrencyId', String(action.payload));
+                } else {
+                    localStorage.removeItem('selectedCurrencyId');
+                }
+            }
+        },
         setQuoteCurrency: (state, action: PayloadAction<string>) => {
             state.quoteCurrency = action.payload;
         },
@@ -247,6 +306,7 @@ export const {
     setCurrentMarketPrice,
     setPrices,
     setTradeHistory,
+    setNewTradesCount,
     addTradeHistory,
     setTradeMarkers,
     addTradeMarker,
@@ -257,6 +317,7 @@ export const {
     updateActiveTrade,
     removeActiveTrade,
     setSelectedBase,
+    setSelectedCurrencyId,
     setQuoteCurrency,
     setTradingMode,
     setUI,

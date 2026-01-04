@@ -10,12 +10,31 @@ import { detectUserCountry } from "@src/shared/lib/geolocation.util";
 import { CountrySelect } from "@src/shared/ui/CountrySelect";
 import { promocodeApi, type ReferralPromocode, type PromocodeValidation } from "@src/shared/api/promocode/promocodeApi";
 import { useSearchParams } from "react-router-dom";
-import bonusImage from "@src/assets/Bonus125.png";
+import bonusImage from "@src/assets/images/bonus/Bonus125.png";
 import { convertFromUSDSync, convertToUSDSync, hasRealExchangeRates, initializeExchangeRates, type SupportedCurrency } from "@src/shared/lib/currency/exchangeRates";
 import { formatCurrency, getCurrencySymbol, getCurrencyInfo, CURRENCY_INFO } from "@src/shared/lib/currency/currencyUtils";
 import { getMinAmountForMethod, getCurrencyForMethod } from "@src/shared/lib/payment-methods/min-amounts";
 import { checkAndRegisterUser } from "@src/features/auth/authCheck";
+import { Container, Row, Col } from "@src/shared/ui/grid";
 import "./NewDepositContent.css";
+
+interface SavedPromocode {
+  code: string;
+  validatedAt: string;
+  discountType?: 'percentage' | 'fixed';
+  discountValue?: number;
+  minAmount?: number | null;
+  maxDiscount?: number | null;
+  description?: string | null;
+  name?: string | null;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  isActive?: boolean;
+  isValid: boolean;
+  error?: string;
+}
+
+const STORAGE_KEY = 'user_promocodes';
 
 export function NewDepositContent() {
     const { t } = useLanguage();
@@ -97,6 +116,8 @@ export function NewDepositContent() {
     const [referralPromocodeLoading, setReferralPromocodeLoading] = useState<boolean>(false);
     const [promocodeValidation, setPromocodeValidation] = useState<PromocodeValidation | null>(null);
     const [validatingPromocode, setValidatingPromocode] = useState<boolean>(false);
+    const [savedPromocodes, setSavedPromocodes] = useState<SavedPromocode[]>([]);
+    const [showPromocodeDropdown, setShowPromocodeDropdown] = useState<boolean>(false);
     const [firstName, setFirstName] = useState<string>('');
     const [lastName, setLastName] = useState<string>('');
     const [wallet, setWallet] = useState<string>(''); // Номер телефона/кошелька для H2H_DEPOSIT методов
@@ -258,7 +279,7 @@ export function NewDepositContent() {
         }
         
         if (!amount || amount <= 0) {
-            setPromocodeValidation({ valid: false, error: 'Введите сумму депозита для проверки промокода' });
+            setPromocodeValidation({ valid: false, error: t('deposit.promocodeEnterAmountError') });
             return;
         }
         
@@ -294,11 +315,23 @@ export function NewDepositContent() {
             setPromocodeValidation(validation);
         } catch (error: any) {
             console.error('[NewDepositContent] Ошибка валидации промокода:', error);
-            setPromocodeValidation({ valid: false, error: 'Ошибка при проверке промокода' });
+            setPromocodeValidation({ valid: false, error: t('deposit.promocodeValidationError') });
         } finally {
             setValidatingPromocode(false);
         }
     }, [selectedCurrency]);
+
+    // Функция для выбора промокода из списка
+    const handleSelectPromocode = useCallback(async (selectedPromocode: SavedPromocode) => {
+        setPromoCode(selectedPromocode.code);
+        setWithoutPromo(false);
+        setShowPromocodeDropdown(false);
+        
+        // Валидируем промокод, если есть сумма депозита
+        if (depositAmount !== null && depositAmount > 0) {
+            await validatePromocode(selectedPromocode.code, depositAmount);
+        }
+    }, [depositAmount, validatePromocode]);
 
     // Валидируем промокод при изменении суммы или промокода
     useEffect(() => {
@@ -359,6 +392,21 @@ export function NewDepositContent() {
             
             try {
                 setReferralPromocodeLoading(true);
+                
+                // Сначала проверяем localStorage на наличие промокода из URL при регистрации
+                const savedPromocode = localStorage.getItem('referral_promocode');
+                if (savedPromocode) {
+                    console.log('[NewDepositContent] Промокод найден в localStorage:', savedPromocode);
+                    setPromoCode(savedPromocode.toUpperCase());
+                    setWithoutPromo(false);
+                    // Удаляем промокод из localStorage после использования
+                    localStorage.removeItem('referral_promocode');
+                    console.log('[NewDepositContent] ✅ Промокод из localStorage установлен и удален:', savedPromocode);
+                    hasLoadedReferralPromocode.current = true;
+                    return;
+                }
+                
+                // Если промокода в localStorage нет, загружаем из API
                 const referralPromo = await promocodeApi.getReferralPromocode();
                 
                 console.log('[NewDepositContent] Реферальный промокод получен:', referralPromo);
@@ -414,6 +462,38 @@ export function NewDepositContent() {
 
         loadReferralPromocode();
     }, [userData?.id, searchParams]);
+
+    // Загрузка сохраненных промокодов из localStorage
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                setSavedPromocodes(Array.isArray(parsed) ? parsed : []);
+            }
+        } catch (error) {
+            console.error('[NewDepositContent] Error loading saved promocodes:', error);
+        }
+    }, []);
+
+    // Закрытие выпадающего списка при клике вне его
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (showPromocodeDropdown && 
+                !target.closest('.deposit-promocode-dropdown') && 
+                !target.closest('.deposit-promocode-select-btn')) {
+                setShowPromocodeDropdown(false);
+            }
+        };
+
+        if (showPromocodeDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }
+    }, [showPromocodeDropdown]);
 
     // Автоматическая установка страны после загрузки списка стран
     useEffect(() => {
@@ -485,71 +565,136 @@ export function NewDepositContent() {
         // Map для группировки методов по method + sub_method (игнорируя валюту и страну)
         const methodGroups = new Map<string, any>();
 
+        console.log('[groupedMethods] Processing paymentMethods:', {
+            categoriesCount: paymentMethods.length,
+            categories: paymentMethods.map(cat => ({
+                name: cat.name,
+                methodsCount: cat.methods?.length || 0,
+                methods: cat.methods?.map((m: any) => ({
+                    id: m.id,
+                    type: m.type,
+                    name: m.name,
+                    cryptocurrenciesCount: m.cryptocurrencies?.length || 0,
+                    cardsCount: m.cards?.length || 0
+                })) || []
+            }))
+        });
+
         paymentMethods.forEach(category => {
             category.methods.forEach(method => {
-                // Обрабатываем методы типа 'card' (включая P2P_CIS/CARD, P2P_CIS/QR и т.д.)
-                if (method.type === 'card' && method.cards.length > 0) {
-                    method.cards.forEach(card => {
-                        // Создаем ключ для группировки: method + sub_method (без валюты и страны)
-                        // Используем any для доступа к полям, которые могут быть в данных
-                        const cardAny = card as any;
-                        const methodKey = `${(cardAny.method || '').toUpperCase()}_${(cardAny.sub_method || '').toUpperCase()}`;
-                        
-                        // Логируем для отладки
-                        if (cardAny.method === 'P2P_CIS' || cardAny.method === 'WINDOW_P2P') {
-                            console.log('[groupedMethods] Processing card:', {
-                                method: cardAny.method,
-                                sub_method: cardAny.sub_method,
-                                currency: cardAny.currency,
-                                methodKey,
-                                id: card.id
-                            });
-                        }
-                        
-                        if (!methodGroups.has(methodKey)) {
-                            // Создаем объединенную карточку метода
-                            const cardData = {
-                                ...card,
-                                methodName: method.name,
-                                methodIcon: method.icon,
-                                type: 'card',
-                                // Сохраняем все варианты валют и стран для этого метода
-                                variants: [card],
-                                // Используем первый вариант как основной для отображения
-                                method: cardAny.method,
-                                sub_method: cardAny.sub_method,
-                                // Убираем валюту и страну из отображаемого названия
-                                name: cardAny.method && cardAny.sub_method 
-                                    ? `${cardAny.method}/${cardAny.sub_method}` 
-                                    : (card.name || 'Visa / Mastercard')
-                            };
-                            methodGroups.set(methodKey, cardData);
-                            bankCards.push(cardData);
+                // Обрабатываем методы типа 'card'
+                if (method.type === 'card') {
+                    // Если есть карты, обрабатываем их
+                    if (method.cards.length > 0) {
+                        method.cards.forEach(card => {
+                            // Создаем ключ для группировки: method + sub_method (без валюты и страны)
+                            // Используем any для доступа к полям, которые могут быть в данных
+                            const cardAny = card as any;
+                            const methodKey = `${(cardAny.method || '').toUpperCase()}_${(cardAny.sub_method || '').toUpperCase()}`;
                             
-                            console.log('[groupedMethods] Added new method card:', {
-                                methodKey,
-                                name: cardData.name,
-                                method: cardData.method,
-                                sub_method: cardData.sub_method
-                            });
-                            
-                            // Visa/Mastercard в Popular
-                            if (card.name && (card.name.toLowerCase().includes('visa') || card.name.toLowerCase().includes('mastercard'))) {
-                                popular.push(cardData);
+                            if (!methodGroups.has(methodKey)) {
+                                // Создаем объединенную карточку метода
+                                const cardData = {
+                                    ...card,
+                                    methodName: method.name,
+                                    methodIcon: method.icon,
+                                    type: 'card',
+                                    // Сохраняем все варианты валют и стран для этого метода
+                                    variants: [card],
+                                    // Используем первый вариант как основной для отображения
+                                    method: cardAny.method,
+                                    sub_method: cardAny.sub_method,
+                                    // Убираем валюту и страну из отображаемого названия
+                                    name: cardAny.method && cardAny.sub_method 
+                                        ? `${cardAny.method}/${cardAny.sub_method}` 
+                                        : (card.name || 'Visa / Mastercard')
+                                };
+                                methodGroups.set(methodKey, cardData);
+                                bankCards.push(cardData);
+                                
+                                // Visa/Mastercard в Popular
+                                if (card.name && (card.name.toLowerCase().includes('visa') || card.name.toLowerCase().includes('mastercard'))) {
+                                    popular.push(cardData);
+                                }
+                            } else {
+                                // Добавляем вариант к существующей группе
+                                const existingCard = methodGroups.get(methodKey);
+                                if (existingCard && !existingCard.variants.find((v: any) => v.id === card.id)) {
+                                    existingCard.variants.push(card);
+                                }
                             }
-                        } else {
-                            // Добавляем вариант к существующей группе
-                            const existingCard = methodGroups.get(methodKey);
-                            if (existingCard && !existingCard.variants.find((v: any) => v.id === card.id)) {
-                                existingCard.variants.push(card);
-                                console.log('[groupedMethods] Added variant to existing method:', {
-                                    methodKey,
-                                    variantId: card.id,
-                                    currency: cardAny.currency
-                                });
-                            }
-                        }
+                        });
+                    } else {
+                        // Метод типа 'card' без карт - добавляем сам метод как карточку
+                        const methodData = {
+                            id: method.id,
+                            name: method.name || method.name_key || 'Card Payment',
+                            methodName: method.name,
+                            methodIcon: method.icon,
+                            type: 'card',
+                            variants: [],
+                            method: (method as any).method_code,
+                            sub_method: (method as any).sub_method_code,
+                            min_amount: method.min_amount,
+                            max_amount: method.max_amount
+                        };
+                        bankCards.push(methodData);
+                    }
+                } else if (method.type === 'crypto') {
+                    // Handle crypto methods from AmPay API
+                    // AmPay returns crypto methods with type='crypto' and cryptocurrencies array
+                    console.log('[groupedMethods] Processing crypto method:', {
+                        id: method.id,
+                        name: method.name,
+                        symbol: method.symbol,
+                        cryptocurrenciesCount: method.cryptocurrencies?.length || 0,
+                        cryptocurrencies: method.cryptocurrencies
                     });
+                    
+                    if (method.cryptocurrencies && method.cryptocurrencies.length > 0) {
+                        method.cryptocurrencies.forEach(c => {
+                            const cryptoData = {
+                                ...c,
+                                // Ensure name, symbol, and network have fallback values
+                                name: c.name || c.name_key || c.symbol || method.name || `Crypto ${c.id || ''}`,
+                                symbol: c.symbol || method.symbol || c.name_key || 'CRYPTO',
+                                network: c.network || method.network || '',
+                                methodName: method.name,
+                                methodIcon: method.icon || c.icon,
+                                type: 'crypto'
+                            };
+                            console.log('[groupedMethods] Added crypto from cryptocurrencies array:', cryptoData);
+                            crypto.push(cryptoData);
+                            // USDT в Popular
+                            if (c.name_key && (c.name_key.toLowerCase() === 'usdt' || c.symbol?.toUpperCase() === 'USDT' || method.symbol?.toUpperCase() === 'USDT')) {
+                                popular.push(cryptoData);
+                            }
+                        });
+                    } else {
+                        // If no cryptocurrencies array, treat the method itself as crypto
+                        const cryptoData = {
+                            id: method.id,
+                            name: method.name || method.symbol || `Crypto ${method.id || ''}`,
+                            symbol: method.symbol || 'CRYPTO',
+                            name_key: method.name_key || `crypto_${(method.symbol || 'unknown').toLowerCase()}`,
+                            network: method.network || '',
+                            icon: method.icon,
+                            wallet: (method as any).wallet,
+                            qr_code_image: (method as any).qr_code_image,
+                            min_amount: method.min_amount,
+                            max_amount: method.max_amount,
+                            order: method.order || 0,
+                            methodName: method.name,
+                            methodIcon: method.icon,
+                            type: 'crypto'
+                        };
+                        console.log('[groupedMethods] Added crypto from method itself:', cryptoData);
+                        crypto.push(cryptoData);
+                        // USDT в Popular
+                        if (method.symbol?.toUpperCase() === 'USDT' || method.name_key?.toLowerCase() === 'usdt') {
+                            popular.push(cryptoData);
+                        }
+                    }
                 } else if (method.type === 'ewallet' && method.cryptocurrencies && method.cryptocurrencies.length > 0) {
                     method.cryptocurrencies.forEach(c => {
                         const cryptoData = {
@@ -582,13 +727,49 @@ export function NewDepositContent() {
                         });
                     });
                 } else if (method.type === 'ewallet' || method.type === 'bank_transfer' || method.type === 'other') {
-                    // Методы AmPay без криптовалют (например, SETTLEMENT, WINDOW_INDIA, P2P_ARG_LEMON и т.д.)
-                    // Эти методы должны приходить из AmPay API с структурированными полями
-                    // Если метод не имеет структурированных данных, пропускаем его
-                    // (данные должны загружаться из ampayApi.getStructuredMethods, а не из paymentMethodsApi)
-                    // Пока пропускаем эти методы, так как они должны приходить из AmPay API
+                    // Сервер уже отфильтровал методы, просто добавляем их как есть
+                    // Обрабатываем e-wallet методы с криптовалютами, если они есть
+                    if (method.cryptocurrencies && method.cryptocurrencies.length > 0) {
+                        method.cryptocurrencies.forEach(c => {
+                            const cryptoData = {
+                                ...c,
+                                name: c.name || c.name_key || c.symbol || method.name || `Crypto ${c.id || ''}`,
+                                symbol: c.symbol || c.name_key || 'CRYPTO',
+                                network: c.network || '',
+                                methodName: method.name,
+                                methodIcon: method.icon,
+                                type: 'crypto'
+                            };
+                            crypto.push(cryptoData);
+                        });
+                    } else {
+                        // E-wallet/bank_transfer/other методы без криптовалют - добавляем как методы для банковских карт
+                        const methodData = {
+                            id: method.id,
+                            name: method.name || method.name_key || 'Payment Method',
+                            methodName: method.name,
+                            methodIcon: method.icon,
+                            type: method.type,
+                            min_amount: method.min_amount,
+                            max_amount: method.max_amount
+                        };
+                        // Добавляем в соответствующий массив в зависимости от типа
+                        if (method.type === 'ewallet') {
+                            // E-wallets можно добавлять в bankCards или отдельный массив
+                            bankCards.push(methodData);
+                        } else {
+                            bankCards.push(methodData);
+                        }
+                    }
                 }
             });
+        });
+
+        console.log('[groupedMethods] Final grouped methods:', {
+            popularCount: popular.length,
+            bankCardsCount: bankCards.length,
+            cryptoCount: crypto.length,
+            crypto: crypto.map(c => ({ id: c.id, name: c.name, symbol: c.symbol }))
         });
 
         return { popular, bankCards, crypto };
@@ -625,7 +806,39 @@ export function NewDepositContent() {
         if (!methodData && paymentMethods.length > 0) {
             for (const category of paymentMethods) {
                 for (const method of category.methods) {
-                    if (method.type === 'card' && method.cards.length > 0) {
+                    if (method.type === 'crypto') {
+                        // Handle crypto methods from AmPay API
+                        if (method.cryptocurrencies && method.cryptocurrencies.length > 0) {
+                            const crypto = method.cryptocurrencies.find(c => c.id?.toString() === methodId);
+                            if (crypto) {
+                                methodData = {
+                                    ...crypto,
+                                    methodName: method.name,
+                                    methodIcon: method.icon,
+                                    type: 'crypto'
+                                };
+                                break;
+                            }
+                        } else if (method.id?.toString() === methodId) {
+                            // If method itself is crypto and matches ID
+                            methodData = {
+                                id: method.id,
+                                name: method.name || method.symbol || `Crypto ${method.id || ''}`,
+                                symbol: method.symbol || 'CRYPTO',
+                                name_key: method.name_key || `crypto_${(method.symbol || 'unknown').toLowerCase()}`,
+                                network: method.network || '',
+                                icon: method.icon,
+                                wallet: (method as any).wallet,
+                                qr_code_image: (method as any).qr_code_image,
+                                min_amount: method.min_amount,
+                                max_amount: method.max_amount,
+                                methodName: method.name,
+                                methodIcon: method.icon,
+                                type: 'crypto'
+                            };
+                            break;
+                        }
+                    } else if (method.type === 'card' && method.cards.length > 0) {
                         const card = method.cards.find(c => c.id?.toString() === methodId);
                         if (card) {
                             methodData = {
@@ -2076,23 +2289,24 @@ export function NewDepositContent() {
 
         return (
             <div className="new-deposit-content new-deposit-content--form">
-                <div className="deposit-form-header">
-                    <button 
-                        className="deposit-form-back-button"
-                        onClick={handleBackToMethodSelection}
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                    </button>
+                <Container>
+                    <div className="deposit-form-header">
+                        <button 
+                            className="deposit-form-back-button"
+                            onClick={handleBackToMethodSelection}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
 
-                    <h1 className="new-deposit-title">
-                        {t('deposit.chooseAmount', { defaultValue: 'Choose amount' })}
-                    </h1>
-                </div>
+                        <h1 className="new-deposit-title">
+                            {t('deposit.chooseAmount', { defaultValue: 'Choose amount' })}
+                        </h1>
+                    </div>
 
-                <div className="deposit-form-container">
-                    <div className="deposit-form-left">
+                    <Row>
+                        <Col md={8} lg={8}>
                         {/* Предустановленные суммы */}
                         <div className="deposit-amounts-grid">
                             {amountCardsData.map((cardData, index) => (
@@ -2198,21 +2412,73 @@ export function NewDepositContent() {
                                 </label>
                             </div>
                             <div className="deposit-promocode-field">
-                                <input
-                                    type="text"
-                                    className="deposit-promocode-input"
-                                    placeholder={t('deposit.enterPromoCode', { defaultValue: 'Enter promo code' })}
-                                    value={promoCode}
-                                    onChange={(e) => {
-                                        const value = e.target.value.toUpperCase();
-                                        setPromoCode(value);
-                                        if (value.trim()) {
-                                            setWithoutPromo(false);
-                                        } else {
-                                            setWithoutPromo(true);
-                                        }
-                                    }}
-                                />
+                                <div className="deposit-promocode-input-wrapper">
+                                    <input
+                                        type="text"
+                                        className="deposit-promocode-input"
+                                        placeholder={t('deposit.enterPromoCode', { defaultValue: 'Enter promo code' })}
+                                        value={promoCode}
+                                        onChange={(e) => {
+                                            const value = e.target.value.toUpperCase();
+                                            setPromoCode(value);
+                                            if (value.trim()) {
+                                                setWithoutPromo(false);
+                                            } else {
+                                                setWithoutPromo(true);
+                                            }
+                                        }}
+                                    />
+                                    {savedPromocodes.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="deposit-promocode-select-btn"
+                                            onClick={() => setShowPromocodeDropdown(!showPromocodeDropdown)}
+                                            title={t('deposit.selectFromSaved', { defaultValue: 'Select from saved promocodes' })}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M6 9l6 6 6-6"/>
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                                {showPromocodeDropdown && savedPromocodes.length > 0 && (
+                                    <div className="deposit-promocode-dropdown">
+                                        <div className="deposit-promocode-dropdown-header">
+                                            <span>{t('deposit.savedPromocodes', { defaultValue: 'Saved promocodes' })}</span>
+                                            <button
+                                                type="button"
+                                                className="deposit-promocode-dropdown-close"
+                                                onClick={() => setShowPromocodeDropdown(false)}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                        <div className="deposit-promocode-dropdown-list">
+                                            {savedPromocodes.map((savedPromo) => (
+                                                <button
+                                                    key={savedPromo.code}
+                                                    type="button"
+                                                    className={`deposit-promocode-dropdown-item ${promoCode === savedPromo.code ? 'active' : ''}`}
+                                                    onClick={() => handleSelectPromocode(savedPromo)}
+                                                >
+                                                    <div className="deposit-promocode-dropdown-item-code">{savedPromo.code}</div>
+                                                    {savedPromo.isValid && (
+                                                        <div className="deposit-promocode-dropdown-item-status valid">
+                                                            {t('promocodes.statusValid', { defaultValue: 'Valid' })}
+                                                        </div>
+                                                    )}
+                                                    {savedPromo.discountValue !== undefined && (
+                                                        <div className="deposit-promocode-dropdown-item-discount">
+                                                            {savedPromo.discountType === 'percentage' 
+                                                                ? `${savedPromo.discountValue}%`
+                                                                : `$${savedPromo.discountValue.toFixed(2)}`}
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 {validatingPromocode && (
                                     <div className="deposit-promocode-validating">
                                         {t('deposit.validating', { defaultValue: 'Validating...' })}
@@ -2249,7 +2515,7 @@ export function NewDepositContent() {
                                 {promoCodeInfoOpen && (
                                     <div className="deposit-promocode-info__content">
                                         <p>{t('deposit.promoCodeDescription', { 
-                                            defaultValue: 'Enter a promo code to get a bonus on your deposit. Promo codes can provide discounts or additional bonuses.' 
+                                            defaultValue: 'Enter a promo code to get a bonus on your deposit. Promo codes provide bonuses to your deposit amount.' 
                                         })}</p>
                                         {referralPromocode && (
                                             <div className="deposit-promocode-info__referral">
@@ -2276,6 +2542,8 @@ export function NewDepositContent() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                            
                             <div className="deposit-total">
                                 <div className="deposit-total__left">
                                     <span>{t('deposit.willBeCredited', { defaultValue: 'Will be credited' })}</span>
@@ -2287,18 +2555,11 @@ export function NewDepositContent() {
                                 </div>
                                 <span className="deposit-total__amount">{formatCurrency(totalAmount, selectedCurrency, { convertFromUSD: false })}</span>
                             </div>
-                            <div className="deposit-account-status">
-                                <span>{t('deposit.accountStatus', { defaultValue: 'Account status' })}</span>
-                                <select className="deposit-account-status__select">
-                                    <option>{t('deposit.standard', { defaultValue: 'Standard' })}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="deposit-form-right">
-                        <div className="deposit-details">
-                            <h3 className="deposit-details__title">
+                        </Col>
+                        
+                        <Col md={4} lg={4}>
+                            <div className="deposit-details">
+                                <h3 className="deposit-details__title">
                                 {t('deposit.yourDepositDetails', { defaultValue: 'Your deposit details' })}
                             </h3>
                             {/* Поля Имя и Фамилия - только для не криптовалютных методов */}
@@ -2573,34 +2834,35 @@ export function NewDepositContent() {
                                     </button>
                                 </>
                             )}
-                        </div>
-
-                        {/* Информация о безопасности */}
-                        <div className="security-info">
-                            <div className="security-info__item">
-                                <div className="security-info__icon">3D</div>
-                                <div className="security-info__text">
-                                    <strong>3D SECURE</strong>
-                                    <span>{t('deposit.security3d', { defaultValue: 'Additional level of security for payments' })}</span>
+                            </div>
+                            
+                            {/* Информация о безопасности */}
+                            <div className="security-info">
+                                    <div className="security-info__item">
+                                    <div className="security-info__icon">3D</div>
+                                    <div className="security-info__text">
+                                        <strong>3D SECURE</strong>
+                                        <span>{t('deposit.security3d', { defaultValue: 'Additional level of security for payments' })}</span>
+                                    </div>
+                                </div>
+                                <div className="security-info__item">
+                                    <div className="security-info__icon">$</div>
+                                    <div className="security-info__text">
+                                        <strong>{t('deposit.europeanBanks', { defaultValue: 'European banks' })}</strong>
+                                        <span>{t('deposit.securityBanks', { defaultValue: 'The security of your funds is provided by European banks' })}</span>
+                                    </div>
+                                </div>
+                                <div className="security-info__item">
+                                    <div className="security-info__icon">🔒</div>
+                                    <div className="security-info__text">
+                                        <strong>SSL</strong>
+                                        <span>{t('deposit.sslProtection', { defaultValue: '2048 bit robust SSL protection' })}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="security-info__item">
-                                <div className="security-info__icon">$</div>
-                                <div className="security-info__text">
-                                    <strong>{t('deposit.europeanBanks', { defaultValue: 'European banks' })}</strong>
-                                    <span>{t('deposit.securityBanks', { defaultValue: 'The security of your funds is provided by European banks' })}</span>
-                                </div>
-                            </div>
-                            <div className="security-info__item">
-                                <div className="security-info__icon">🔒</div>
-                                <div className="security-info__text">
-                                    <strong>SSL</strong>
-                                    <span>{t('deposit.sslProtection', { defaultValue: '2048 bit robust SSL protection' })}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        </Col>
+                    </Row>
+                </Container>
 
                 {/* Модальное окно для ошибок */}
                 {errorModal.open && (
@@ -2649,68 +2911,73 @@ export function NewDepositContent() {
     }
 
     return (
-        <div className="new-deposit-content">
-            <h1 className="new-deposit-title">
-                {t('deposit.chooseMethod', { defaultValue: 'Choose deposit method' })}
-            </h1>
+        <Container>
+            <div className="new-deposit-content">
+                <h1 className="new-deposit-title">
+                    {t('deposit.chooseMethod', { defaultValue: 'Choose deposit method' })}
+                </h1>
 
-            {/* Баннер Secret key */}
-            <div 
-                className="secret-key-banner"
-                style={{
-                    backgroundImage: `url("${bonusImage}")`,
-                    backgroundSize: '100% 100%',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    minHeight: '220px',
-                    padding: '0px 60px'
-                }}
-            >
-                <div className="secret-key-banner__snow">
-                    {Array.from({ length: 50 }).map((_, i) => (
-                        <div
-                            key={i}
-                            className="secret-key-banner__snowflake"
-                            style={{
-                                left: `${Math.random() * 100}%`,
-                                animationDelay: `${Math.random() * 5}s`,
-                                animationDuration: `${3 + Math.random() * 4}s`,
-                                opacity: 0.7 + Math.random() * 0.3
-                            }}
-                        />
-                    ))}
-                </div>
-                <div className="secret-key-banner__content">
-                    <div className="secret-key-banner__text">
-                        <h3 className="secret-key-banner__title">Secret key</h3>
-                        <p className="secret-key-banner__description">
-                            {t('deposit.secretKeyDescription', { defaultValue: 'Deposit and take your chance in prize draw' })}
-                        </p>
-                    </div>
-                   
-                    <button className="secret-key-banner__button">
-                        {t('deposit.joinForFree', { defaultValue: 'Join for free' })}
-                    </button>
-                </div>
-            </div>
-
-            {/* Выбор страны */}
-            <div className="country-selector">
-                <label className="country-selector__label">
-                    {t('deposit.country', { defaultValue: 'Country' })}
-                </label>
-                <CountrySelect
-                    value={selectedCountry}
-                    onChange={(value) => {
-                        setSelectedCountry(value);
-                        hasAutoSelectedCountry.current = false; // Пользователь выбрал страну вручную
+                {/* Баннер Secret key */}
+                <div 
+                    className="secret-key-banner"
+                    style={{
+                        backgroundImage: `url("${bonusImage}")`,
+                        backgroundSize: '100% 100%',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat',
+                        minHeight: '220px',
+                        padding: '0px 60px'
                     }}
-                    options={countries}
-                    placeholder={t('deposit.selectCountry', { defaultValue: 'Select country' })}
-                    disabled={loadingPaymentMethods || loadingCountries}
-                    loading={loadingCountries}
-                />
-            </div>
+                >
+                    <div className="secret-key-banner__snow">
+                        {Array.from({ length: 50 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="secret-key-banner__snowflake"
+                                style={{
+                                    left: `${Math.random() * 100}%`,
+                                    animationDelay: `${Math.random() * 5}s`,
+                                    animationDuration: `${3 + Math.random() * 4}s`,
+                                    opacity: 0.7 + Math.random() * 0.3
+                                }}
+                            />
+                        ))}
+                    </div>
+                    <div className="secret-key-banner__content">
+                        <div className="secret-key-banner__text">
+                            <h3 className="secret-key-banner__title">Secret key</h3>
+                            <p className="secret-key-banner__description">
+                                {t('deposit.secretKeyDescription', { defaultValue: 'Deposit and take your chance in prize draw' })}
+                            </p>
+                        </div>
+                       
+                        <button className="secret-key-banner__button">
+                            {t('deposit.joinForFree', { defaultValue: 'Join for free' })}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Выбор страны */}
+                <Row>
+                    <Col xs={12} sm={8} md={6} lg={4}>
+                        <div className="country-selector">
+                            <label className="country-selector__label">
+                                {t('deposit.country', { defaultValue: 'Country' })}
+                            </label>
+                            <CountrySelect
+                                value={selectedCountry}
+                                onChange={(value) => {
+                                    setSelectedCountry(value);
+                                    hasAutoSelectedCountry.current = false; // Пользователь выбрал страну вручную
+                                }}
+                                options={countries}
+                                placeholder={t('deposit.selectCountry', { defaultValue: 'Select country' })}
+                                disabled={loadingPaymentMethods || loadingCountries}
+                                loading={loadingCountries}
+                            />
+                        </div>
+                    </Col>
+                </Row>
 
             {/* Секция Popular */}
             {groupedMethods.popular.length > 0 && (
@@ -2723,28 +2990,29 @@ export function NewDepositContent() {
                             {t('deposit.popular', { defaultValue: 'Popular' })}
                         </h2>
                     </div>
-                    <div className="deposit-methods-grid">
+                    <Row gutter="md">
                         {groupedMethods.popular.map((method, index) => (
-                            <button
-                                key={index}
-                                className={`deposit-method-card ${selectedMethod === method.id?.toString() ? 'is-active' : ''}`}
-                                onClick={() => handleMethodSelect(method.id?.toString() || '')}
-                            >
-                                <div className="deposit-method-card__icon">
-                                    {method.icon ? (
-                                        <img src={method.icon} alt={method.name} />
-                                    ) : method.type === 'card' ? (
-                                        <div className="deposit-method-card__placeholder">VISA</div>
-                                    ) : (
-                                        <div className="deposit-method-card__placeholder">{method.symbol || 'T'}</div>
-                                    )}
-                                </div>
-                                <div className="deposit-method-card__name">
-                                    {method.name || (method.type === 'card' ? 'Visa / Mastercard' : 'Tether (USDT TRC-20)')}
-                                </div>
-                            </button>
+                            <Col key={index} xs={12} sm={6} md={4} lg={3}>
+                                <button
+                                    className={`deposit-method-card ${selectedMethod === method.id?.toString() ? 'is-active' : ''}`}
+                                    onClick={() => handleMethodSelect(method.id?.toString() || '')}
+                                >
+                                    <div className="deposit-method-card__icon">
+                                        {method.icon ? (
+                                            <img src={method.icon} alt={method.name} />
+                                        ) : method.type === 'card' ? (
+                                            <div className="deposit-method-card__placeholder">VISA</div>
+                                        ) : (
+                                            <div className="deposit-method-card__placeholder">{method.symbol || 'T'}</div>
+                                        )}
+                                    </div>
+                                    <div className="deposit-method-card__name">
+                                        {method.name || (method.type === 'card' ? 'Visa / Mastercard' : 'Tether (USDT TRC-20)')}
+                                    </div>
+                                </button>
+                            </Col>
                         ))}
-                    </div>
+                    </Row>
                 </div>
             )}
 
@@ -2760,65 +3028,66 @@ export function NewDepositContent() {
                             {t('deposit.bankCards', { defaultValue: 'Bank cards' })}
                         </h2>
                     </div>
-                    <div className="deposit-methods-grid">
+                    <Row gutter="md">
                         {groupedMethods.bankCards.map((card, index) => (
-                            <button
-                                key={index}
-                                className={`deposit-method-card ${selectedMethod === card.id?.toString() ? 'is-active' : ''}`}
-                                onClick={() => handleMethodSelect(card.id?.toString() || '')}
-                            >
-                                <div className="deposit-method-card__icon">
-                                    {card.icon ? (
-                                        <img src={card.icon} alt={card.name} />
-                                    ) : (
-                                        <div className="deposit-method-card__placeholder">VISA</div>
-                                    )}
-                                </div>
-                                <div className="deposit-method-card__name">
-                                    {(() => {
-                                        const cardAny = card as any;
-                                        // Показываем оригинальное название
-                                        const displayName = card.name || 'Visa / Mastercard';
-                                        
-                                        // В режиме разработки добавляем method и sub_method под названием
-                                        if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
-                                            // Логируем для отладки
-                                            console.log('[deposit-method-card] Card data:', {
-                                                id: card.id,
-                                                name: card.name,
-                                                method: cardAny.method,
-                                                sub_method: cardAny.sub_method,
-                                                subMethod: cardAny.subMethod,
-                                                currency: cardAny.currency,
-                                                allKeys: Object.keys(cardAny)
-                                            });
+                            <Col key={index} xs={12} sm={6} md={4} lg={3}>
+                                <button
+                                    className={`deposit-method-card ${selectedMethod === card.id?.toString() ? 'is-active' : ''}`}
+                                    onClick={() => handleMethodSelect(card.id?.toString() || '')}
+                                >
+                                    <div className="deposit-method-card__icon">
+                                        {card.icon ? (
+                                            <img src={card.icon} alt={card.name} />
+                                        ) : (
+                                            <div className="deposit-method-card__placeholder">VISA</div>
+                                        )}
+                                    </div>
+                                    <div className="deposit-method-card__name">
+                                        {(() => {
+                                            const cardAny = card as any;
+                                            // Показываем оригинальное название
+                                            const displayName = card.name || 'Visa / Mastercard';
                                             
-                                            return (
-                                                <>
-                                                    <div>{displayName}</div>
-                                                    <div style={{ 
-                                                        fontSize: '10px', 
-                                                        color: '#999', 
-                                                        marginTop: '4px',
-                                                        fontWeight: 'normal',
-                                                        fontFamily: 'monospace'
-                                                    }}>
-                                                        {cardAny.method && <div>Method: {cardAny.method}</div>}
-                                                        {(cardAny.sub_method || cardAny.subMethod) && (
-                                                            <div>Sub: {cardAny.sub_method || cardAny.subMethod}</div>
-                                                        )}
-                                                        {cardAny.currency && <div>Currency: {cardAny.currency}</div>}
-                                                    </div>
-                                                </>
-                                            );
-                                        }
-                                        
-                                        return displayName;
-                                    })()}
-                                </div>
-                            </button>
+                                            // В режиме разработки добавляем method и sub_method под названием
+                                            if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
+                                                // Логируем для отладки
+                                                console.log('[deposit-method-card] Card data:', {
+                                                    id: card.id,
+                                                    name: card.name,
+                                                    method: cardAny.method,
+                                                    sub_method: cardAny.sub_method,
+                                                    subMethod: cardAny.subMethod,
+                                                    currency: cardAny.currency,
+                                                    allKeys: Object.keys(cardAny)
+                                                });
+                                                
+                                                return (
+                                                    <>
+                                                        <div>{displayName}</div>
+                                                        <div style={{ 
+                                                            fontSize: '10px', 
+                                                            color: '#999', 
+                                                            marginTop: '4px',
+                                                            fontWeight: 'normal',
+                                                            fontFamily: 'monospace'
+                                                        }}>
+                                                            {cardAny.method && <div>Method: {cardAny.method}</div>}
+                                                            {(cardAny.sub_method || cardAny.subMethod) && (
+                                                                <div>Sub: {cardAny.sub_method || cardAny.subMethod}</div>
+                                                            )}
+                                                            {cardAny.currency && <div>Currency: {cardAny.currency}</div>}
+                                                        </div>
+                                                    </>
+                                                );
+                                            }
+                                            
+                                            return displayName;
+                                        })()}
+                                    </div>
+                                </button>
+                            </Col>
                         ))}
-                    </div>
+                    </Row>
                 </div>
             )}
 
@@ -2834,27 +3103,28 @@ export function NewDepositContent() {
                             {t('deposit.crypto', { defaultValue: 'Crypto' })}
                         </h2>
                     </div>
-                    <div className="deposit-methods-grid">
+                    <Row gutter="md">
                         {groupedMethods.crypto.map((crypto, index) => (
-                            <button
-                                key={index}
-                                className={`deposit-method-card ${selectedMethod === crypto.id?.toString() ? 'is-active' : ''}`}
-                                onClick={() => handleMethodSelect(crypto.id?.toString() || '')}
-                            >
-                                <div className="deposit-method-card__icon">
-                                    {crypto.icon ? (
-                                        <img src={crypto.icon} alt={crypto.name} />
-                                    ) : (
-                                        <div className="deposit-method-card__placeholder">{crypto.symbol || 'C'}</div>
-                                    )}
-                                </div>
-                                <div className="deposit-method-card__name">
-                                    {crypto.name || crypto.name_key || crypto.symbol || `Crypto ${crypto.id || ''}`}
-                                    {crypto.network && crypto.network !== crypto.symbol && ` (${crypto.network})`}
-                                </div>
-                            </button>
+                            <Col key={index} xs={12} sm={6} md={4} lg={3}>
+                                <button
+                                    className={`deposit-method-card ${selectedMethod === crypto.id?.toString() ? 'is-active' : ''}`}
+                                    onClick={() => handleMethodSelect(crypto.id?.toString() || '')}
+                                >
+                                    <div className="deposit-method-card__icon">
+                                        {crypto.icon ? (
+                                            <img src={crypto.icon} alt={crypto.name} />
+                                        ) : (
+                                            <div className="deposit-method-card__placeholder">{crypto.symbol || 'C'}</div>
+                                        )}
+                                    </div>
+                                    <div className="deposit-method-card__name">
+                                        {crypto.name || crypto.name_key || crypto.symbol || `Crypto ${crypto.id || ''}`}
+                                        {crypto.network && crypto.network !== crypto.symbol && ` (${crypto.network})`}
+                                    </div>
+                                </button>
+                            </Col>
                         ))}
-                    </div>
+                    </Row>
                 </div>
             )}
 
@@ -2901,31 +3171,38 @@ export function NewDepositContent() {
                 </div>
             )}
 
-            {/* Информация о безопасности */}
-            <div className="security-info">
-                <div className="security-info__item">
-                    <div className="security-info__icon">3D</div>
-                    <div className="security-info__text">
-                        <strong>3D SECURE</strong>
-                        <span>{t('deposit.security3d', { defaultValue: 'Additional level of security for payments' })}</span>
-                    </div>
-                </div>
-                <div className="security-info__item">
-                    <div className="security-info__icon">$</div>
-                    <div className="security-info__text">
-                        <strong>{t('deposit.europeanBanks', { defaultValue: 'European banks' })}</strong>
-                        <span>{t('deposit.securityBanks', { defaultValue: 'The security of your funds is provided by European banks' })}</span>
-                    </div>
-                </div>
-                <div className="security-info__item">
-                    <div className="security-info__icon">🔒</div>
-                    <div className="security-info__text">
-                        <strong>SSL</strong>
-                        <span>{t('deposit.sslProtection', { defaultValue: '2048 bit robust SSL protection' })}</span>
-                    </div>
-                </div>
+                {/* Информация о безопасности */}
+                <Row gutter="md" className="security-info-row">
+                    <Col xs={12} md={4}>
+                        <div className="security-info__item">
+                            <div className="security-info__icon">3D</div>
+                            <div className="security-info__text">
+                                <strong>3D SECURE</strong>
+                                <span>{t('deposit.security3d', { defaultValue: 'Additional level of security for payments' })}</span>
+                            </div>
+                        </div>
+                    </Col>
+                    <Col xs={12} md={4}>
+                        <div className="security-info__item">
+                            <div className="security-info__icon">$</div>
+                            <div className="security-info__text">
+                                <strong>{t('deposit.europeanBanks', { defaultValue: 'European banks' })}</strong>
+                                <span>{t('deposit.securityBanks', { defaultValue: 'The security of your funds is provided by European banks' })}</span>
+                            </div>
+                        </div>
+                    </Col>
+                    <Col xs={12} md={4}>
+                        <div className="security-info__item">
+                            <div className="security-info__icon">🔒</div>
+                            <div className="security-info__text">
+                                <strong>SSL</strong>
+                                <span>{t('deposit.sslProtection', { defaultValue: '2048 bit robust SSL protection' })}</span>
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
             </div>
-        </div>
+        </Container>
     );
 }
 

@@ -1,4 +1,13 @@
 import React, { useRef, useEffect, useCallback, useState, useImperativeHandle, forwardRef } from 'react';
+import { MarkerCompletionNotificationComponent } from './MarkerCompletionNotification';
+import './MarkerCompletionNotification.css';
+import { PriceReachedNotification } from './PriceReachedNotification';
+import './PriceReachedNotification.css';
+import type { Currency } from '@src/shared/api';
+import { useAppSelector, useAppDispatch } from '@src/shared/lib/hooks';
+import { selectProfile } from '@src/entities/user/model/selectors';
+import { addTradeHistory } from '@src/entities/trading/model/slice';
+import type { TradeHistoryEntry } from '@src/entities/trading/model/types';
 import { 
   drawCandles as drawCandlesChart, 
   drawLineChart,
@@ -14,16 +23,19 @@ import {
   drawHoveredButtonGradient,
   drawHoveredButtonArrow,
   drawIndicators,
+  drawFixedPriceLines,
 } from '../../chart/rendering';
 import type { Candle as ChartCandle, ViewportState, Timeframe } from '../../chart/types';
 import type { ChartTimeframe } from '../types';
+import { getTimeframeDurationMs } from '../utils';
 import { getServerTime } from '@src/shared/lib/serverTime';
 import { panViewport, zoomViewport, clampViewport, type PanZoomConfig } from '../../chart/panZoom';
 import { formatPrice, formatTimeForTicks } from '../../chart/timeframes';
 import { storage } from '@src/shared/lib/storage';
-import { useAppSelector } from '@src/shared/lib/hooks';
 import { selectTradingMode, selectActiveTradesByMode } from '@src/entities/trading/model/selectors';
 import { useLanguage } from '@src/app/providers/useLanguage';
+import { syntheticQuotesApi } from '@src/shared/api/synthetic-quotes/syntheticQuotesApi';
+import { selectCurrencyCategories } from '@src/entities/currency/model/selectors';
 
 interface Candle {
   x: number;
@@ -44,7 +56,25 @@ interface CandlesCanvasProps {
   currencyPair?: string; // Валютная пара для сохранения рисунков
   activeIndicators?: string[]; // Активные индикаторы для отображения
   eraserRadius?: number; // Радиус ластика
+  drawingColor?: string; // Цвет линии для рисования
+  drawingLineWidth?: number; // Толщина линии для рисования
   chartView?: 'candles' | 'line' | 'area'; // Тип отображения графика
+}
+
+export interface TradeData {
+  id: string;
+  price: number;
+  direction: 'buy' | 'sell';
+  amount: number;
+  expiration_time: number;
+  entry_price: number;
+  current_price: number | null;
+  created_at: number;
+  symbol?: string | null;
+  base_currency?: string | null;
+  quote_currency?: string | null;
+  profit_percentage?: number;
+  completed_at?: number; // Для завершенных сделок - фактическое время завершения
 }
 
 export interface CandlesCanvasHandle {
@@ -52,6 +82,7 @@ export interface CandlesCanvasHandle {
   addBetMarker: (time: number, price: number, direction: 'buy' | 'sell', expirationTime?: number, tradeId?: string, amount?: number) => void;
   removeBetMarkerByTradeId: (tradeId: string) => void;
   openMarkerByTradeId: (tradeId: string) => void;
+  openTradeSidebar: (trade: TradeData) => void;
 }
 
 interface AnimationState {
@@ -69,10 +100,43 @@ interface AnimationState {
   duration: number; // Длительность анимации в миллисекундах
 }
 
-const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ candles, timeframe, onCandleUpdate, onLoadMore, hoveredButton = null, drawingMode = null, selectionMode = false, currencyPair = 'default', activeIndicators = [], eraserRadius = 10, chartView = 'candles' }, ref) => {
-  // Получаем режим торговли из Redux
+const CandlesCanvasComponent = (
+  props: CandlesCanvasProps,
+  ref: React.ForwardedRef<CandlesCanvasHandle>
+) => {
+    const {
+      candles,
+      timeframe,
+      onCandleUpdate,
+      onLoadMore,
+      hoveredButton = null,
+      drawingMode = null,
+      selectionMode = false,
+      currencyPair = 'default',
+      activeIndicators = [],
+      eraserRadius = 10,
+      drawingColor = '#ffa500',
+      drawingLineWidth = 2,
+      chartView = 'candles'
+    } = props;
+    
+    // Получаем режим торговли из Redux
   const tradingMode = useAppSelector(selectTradingMode);
+  const currencyCategories = useAppSelector(selectCurrencyCategories);
+  const dispatch = useAppDispatch();
   const { t } = useLanguage();
+  
+  // Функция для получения информации о валюте
+  const getCurrencyInfo = useCallback((baseCurrency: string): Currency | undefined => {
+    for (const category of currencyCategories) {
+      const list = category.currencies ?? [];
+      const currency = list.find(c => c.base_currency === baseCurrency);
+      if (currency) {
+        return currency;
+      }
+    }
+    return undefined;
+  }, [currencyCategories]);
   // Вспомогательная функция для проверки, активен ли режим рисования
   const checkDrawingModeActive = useCallback(() => {
     // Проверяем несколько вариантов:
@@ -156,6 +220,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
   const [hoverCandle, setHoverCandle] = useState<ChartCandle | null>(null);
   const [hoverX, setHoverX] = useState<number | null>(null);
   const [hoverY, setHoverY] = useState<number | null>(null);
+  const [isHoveringCloseButton, setIsHoveringCloseButton] = useState<boolean>(false);
   
   // Viewport state for pan and zoom
   const viewportRef = useRef<ViewportState | null>(null);
@@ -168,6 +233,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
   const mouseDownPositionRef = useRef<{ x: number; y: number } | null>(null);
   const clickedMarkerRef = useRef<BetMarker | null>(null);
   const isEraserMouseDownRef = useRef<boolean>(false); // Отслеживаем нажатие ЛКМ для ластика
+  const eraserPositionRef = useRef<{ x: number; y: number } | null>(null); // Позиция ластика для отрисовки
   const previousHoveredMarkerIdRef = useRef<string | null>(null); // Отслеживаем предыдущий наведенный маркер
   const isLoadingMoreRef = useRef<boolean>(false); // Отслеживаем загрузку дополнительных свечей
   const lastLoadMoreCheckRef = useRef<number>(0); // Время последней проверки загрузки
@@ -192,6 +258,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     endPoint: { time: number; price: number };
     path: Array<{ time: number; price: number }>;
     color: string;
+    line_width?: number; // Толщина линии (опционально для обратной совместимости)
   }
   
   const [savedDrawings, setSavedDrawings] = useState<SavedDrawing[]>([]);
@@ -214,15 +281,65 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     createdAt: number;
     expirationTime?: number; // Время окончания ставки в миллисекундах
     tradeId?: string; // ID сделки для связи с активной сделкой
+    amount?: number; // Сумма ставки для отображения
     isDemo?: boolean; // Режим торговли: true для демо, false для реального
+    completionState?: 'active' | 'completing' | 'completed'; // Состояние завершения
+    completionStartTime?: number; // Время начала анимации завершения
+    result?: {
+      isWin: boolean;
+      profit: number;
+      profitPercent: number;
+      exitPrice: number;
+    }; // Результат завершения
   }
   
   const [betMarkers, setBetMarkers] = useState<BetMarker[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<BetMarker | null>(null);
   const [isMarkerSidebarOpen, setIsMarkerSidebarOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<TradeData | null>(null); // Данные сделки для сайдбара
+  const [tradeCandles, setTradeCandles] = useState<Array<{ start: number; open: number; high: number; low: number; close: number }>>([]);
+  const [loadingCandles, setLoadingCandles] = useState(false);
+  const tradeChartCanvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Состояние для зафиксированных цен (fixed price lines)
+  const [fixed_prices, setFixedPrices] = useState<Set<number>>(new Set());
+  const bell_button_rect_ref = useRef<{ x: number; y: number; width: number; height: number; price: number } | null>(null);
+  const fixed_price_button_rects_ref = useRef<Map<number, { x: number; y: number; width: number; height: number }>>(new Map());
+  const fixed_price_reached_ref = useRef<Set<number>>(new Set()); // Отслеживаем достигнутые цены, чтобы не показывать уведомление дважды
+  const previous_price_ref = useRef<number | null>(null); // Отслеживаем предыдущую цену для проверки пересечения линии
+  
+  // Состояние для уведомлений о завершении маркеров
+  const [completionNotifications, setCompletionNotifications] = useState<Array<{
+    id: string;
+    tradeId?: string;
+    direction: 'buy' | 'sell';
+    amount: number;
+    isWin: boolean;
+    profit: number;
+    profitPercent: number;
+    exitPrice: number;
+  }>>([]);
+  
+  // Состояние для уведомлений о достижении цены
+  const [priceReachedNotifications, setPriceReachedNotifications] = useState<Array<{
+    id: string;
+    price: number;
+    currencyPair: string;
+  }>>([]);
+  
+  // Ref для отслеживания маркеров, которые были добавлены через addBetMarker
+  // Используется для временного сохранения маркеров до их появления в Redux
+  const pending_markers_ref = useRef<Map<string, BetMarker>>(new Map());
+  
+  // Ref для анимированных позиций маркеров (для плавной физики)
+  const animated_marker_positions_ref = useRef<Map<string, number>>(new Map());
+  const marker_animation_frame_ref = useRef<number | null>(null);
   
   // Получаем активные сделки из Redux для отображения информации о сделке в меню
   const activeTrades = useAppSelector(selectActiveTradesByMode);
+  
+  // Получаем профиль пользователя для валюты
+  const userProfile = useAppSelector(selectProfile);
   
   const topPadding = 50; // Константа для верхнего отступа
   const ochlBottomPadding = 90; // Константа для нижнего отступа (для OCHL панели)
@@ -279,45 +396,112 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
   }, [savedDrawings, getDrawingsStorageKey]);
   
   // Преобразуем активные сделки в маркеры ставок на основе текущей валютной пары
+  // Используем умную синхронизацию, чтобы не терять маркеры, добавленные через addBetMarker
   useEffect(() => {
     if (!currencyPair) {
       setBetMarkers([]);
+      pending_markers_ref.current.clear(); // Очищаем pending маркеры при очистке валютной пары
       return;
     }
     
-    // Фильтруем активные сделки по текущей валютной паре
-    const relevantTrades = activeTrades.filter(trade => {
+    // Получаем текущее серверное время для фильтрации завершенных сделок
+    const current_time = getServerTime();
+    
+    // Фильтруем активные сделки по текущей валютной паре и исключаем завершенные
+    const relevant_trades = activeTrades.filter(trade => {
       // Проверяем по baseCurrency (например, "BTC")
-      const matchesBase = trade.baseCurrency?.toUpperCase() === currencyPair.toUpperCase();
+      const matches_base = trade.baseCurrency?.toUpperCase() === currencyPair.toUpperCase();
       // Проверяем по symbol (например, "BTC_USDT")
-      const matchesSymbol = trade.symbol?.toUpperCase().startsWith(currencyPair.toUpperCase() + '_');
+      const matches_symbol = trade.symbol?.toUpperCase().startsWith(currencyPair.toUpperCase() + '_');
       
-      return matchesBase || matchesSymbol;
+      // Исключаем завершенные сделки (expirationTime <= currentTime)
+      const is_not_expired = !trade.expirationTime || trade.expirationTime > current_time;
+      
+      return (matches_base || matches_symbol) && is_not_expired;
     });
     
-    // Преобразуем сделки в маркеры
-    const markers: BetMarker[] = relevantTrades.map(trade => ({
-      id: `bet-marker-${trade.id}`,
-      time: trade.createdAt,
-      price: trade.entryPrice || trade.price, // Используем entryPrice для позиционирования
-      direction: trade.direction,
-      createdAt: trade.createdAt,
-      expirationTime: trade.expirationTime,
-      tradeId: trade.id,
-      amount: trade.amount,
-      isDemo: trade.isDemo || trade.is_demo || false,
-    }));
-    
-    setBetMarkers(markers);
-    
-    // Вызываем перерисовку после обновления маркеров
-    if (renderCandlesRef.current) {
-      requestAnimationFrame(() => {
-        if (renderCandlesRef.current) {
-          renderCandlesRef.current();
+    // Используем функциональное обновление для умной синхронизации
+    setBetMarkers(prev_markers => {
+      // Создаем Map для быстрого доступа к маркерам из Redux по tradeId
+      // Исключаем завершенные сделки (expirationTime <= currentTime)
+      const redyx_markers_by_trade_id = new Map<string, BetMarker>();
+      relevant_trades.forEach(trade => {
+        if (trade.id) {
+          // Дополнительная проверка: исключаем завершенные сделки
+          const is_expired = trade.expirationTime && trade.expirationTime <= current_time;
+          if (is_expired) {
+            // Пропускаем завершенные сделки - они не должны создавать маркеры
+            return;
+          }
+          
+          redyx_markers_by_trade_id.set(trade.id, {
+            id: `bet-marker-${trade.id}`,
+            time: trade.createdAt,
+            price: trade.entryPrice || trade.price, // Используем entryPrice для позиционирования
+            direction: trade.direction,
+            createdAt: trade.createdAt,
+            expirationTime: trade.expirationTime,
+            tradeId: trade.id,
+            amount: trade.amount,
+            isDemo: trade.isDemo || trade.is_demo || false,
+          });
         }
       });
-    }
+      
+      // Создаем Map для быстрого доступа к существующим маркерам по tradeId
+      const existing_markers_by_trade_id = new Map<string, BetMarker>();
+      prev_markers.forEach(marker => {
+        if (marker.tradeId) {
+          existing_markers_by_trade_id.set(marker.tradeId, marker);
+        }
+      });
+      
+      // Объединяем маркеры: приоритет у маркеров из Redux (они более актуальные)
+      // Для маркеров с tradeId используем данные из Redux (источник истины)
+      // Маркеры без tradeId сохраняем (они могли быть добавлены вручную)
+      // Также временно сохраняем маркеры из pending_markers_ref, которых еще нет в Redux
+      const result: BetMarker[] = [];
+      
+      // Создаем Set для быстрого поиска tradeId из Redux
+      const redyx_trade_ids = new Set(redyx_markers_by_trade_id.keys());
+      
+      // Добавляем все маркеры из Redux (они имеют приоритет и являются источником истины)
+      redyx_markers_by_trade_id.forEach(marker => {
+        result.push(marker);
+        // Удаляем из pending, так как маркер теперь в Redux
+        if (marker.tradeId) {
+          pending_markers_ref.current.delete(marker.tradeId);
+        }
+      });
+      
+      // Добавляем маркеры из pending_markers_ref, которых еще нет в Redux
+      // (они были добавлены через addBetMarker, но еще не попали в Redux)
+      pending_markers_ref.current.forEach((marker, trade_id) => {
+        if (!redyx_trade_ids.has(trade_id)) {
+          result.push(marker);
+        }
+      });
+      
+      // Добавляем только маркеры без tradeId из предыдущего состояния
+      // (маркеры с tradeId уже обработаны выше из Redux или pending)
+      prev_markers.forEach(marker => {
+        if (!marker.tradeId) {
+          // Маркеры без tradeId сохраняем (они могли быть добавлены вручную)
+          result.push(marker);
+        }
+      });
+      
+      // Вызываем перерисовку после обновления маркеров
+      if (renderCandlesRef.current) {
+        requestAnimationFrame(() => {
+          if (renderCandlesRef.current) {
+            renderCandlesRef.current();
+          }
+        });
+      }
+      
+      return result;
+    });
   }, [activeTrades, currencyPair, tradingMode]);
   
   // Функция сглаживания пути с использованием алгоритма Chaikin для создания плавных дуг
@@ -628,6 +812,18 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     
     ctx.restore();
     
+    // Draw fixed price lines (перед crosshair, чтобы crosshair был поверх)
+    drawFixedPriceLines(
+      ctx,
+      fixed_prices,
+      viewportWithPrices,
+      rect.width,
+      rect.height, // fullHeight
+      topPadding,
+      chartAreaHeightForCandles,
+      fixed_price_button_rects_ref
+    );
+    
     // Draw active candle price line и crosshair на полную высоту canvas (после restore, чтобы не учитывать translate)
     drawActiveCandlePriceLine(
       ctx,
@@ -654,7 +850,10 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       rect.height, // fullHeight
       topPadding,
       chartAreaHeightForCandles,
-      timeframe as Timeframe
+      timeframe as Timeframe,
+      fixed_prices,
+      bell_button_rect_ref,
+      isHoveringCloseButton
     );
     
     // Draw drawing (если активно рисование)
@@ -666,8 +865,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       ctx.save();
       ctx.translate(0, topPadding);
       
-      ctx.strokeStyle = '#ffa500';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = drawingColor;
+      ctx.lineWidth = drawingLineWidth;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       
@@ -720,14 +919,36 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         // Рисуем прямоугольник
         const width = current.x - start.x;
         const height = current.y - start.y;
-        ctx.strokeRect(start.x, start.y, width, height);
+        const rectX = Math.min(start.x, current.x);
+        const rectY = Math.min(start.y, current.y);
+        const rectWidth = Math.abs(width);
+        const rectHeight = Math.abs(height);
+        
+        // Заливка
+        ctx.fillStyle = drawingColor;
+        ctx.globalAlpha = 0.2;
+        ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+        ctx.globalAlpha = 1;
+        
+        // Обводка
+        ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
       } else if (currentDrawingMode === 'circle') {
         // Рисуем круг
+        const centerX = (start.x + current.x) / 2;
+        const centerY = (start.y + current.y) / 2;
         const radius = Math.sqrt(
           Math.pow(current.x - start.x, 2) + Math.pow(current.y - start.y, 2)
-        );
+        ) / 2;
         ctx.beginPath();
-        ctx.arc(start.x, start.y, radius, 0, 2 * Math.PI);
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        
+        // Заливка
+        ctx.fillStyle = drawingColor;
+        ctx.globalAlpha = 0.2;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        
+        // Обводка
         ctx.stroke();
       } else if (currentDrawingMode === 'horizontal') {
         // Рисуем горизонтальную линию
@@ -784,7 +1005,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         
         // Увеличиваем толщину и меняем цвет для выделенного рисунка
         ctx.strokeStyle = isSelected ? '#ffa500' : drawing.color;
-        ctx.lineWidth = isSelected ? 3 : 2;
+        ctx.lineWidth = isSelected ? 3 : (drawing.line_width || 2);
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
@@ -837,17 +1058,37 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
           }
         } else if (drawing.type === 'rectangle') {
           // Рисуем прямоугольник
-          const width = endPixel.x - startPixel.x;
-          const height = endPixel.y - startPixel.y;
-          ctx.strokeRect(startPixel.x, startPixel.y, width, height);
+          const rectX = Math.min(startPixel.x, endPixel.x);
+          const rectY = Math.min(startPixel.y, endPixel.y);
+          const width = Math.abs(endPixel.x - startPixel.x);
+          const height = Math.abs(endPixel.y - startPixel.y);
+          
+          // Заливка
+          ctx.fillStyle = drawing.color;
+          ctx.globalAlpha = 0.2;
+          ctx.fillRect(rectX, rectY, width, height);
+          ctx.globalAlpha = 1;
+          
+          // Обводка
+          ctx.strokeRect(rectX, rectY, width, height);
         } else if (drawing.type === 'circle') {
           // Рисуем круг
+          const centerX = (startPixel.x + endPixel.x) / 2;
+          const centerY = (startPixel.y + endPixel.y) / 2;
           const radius = Math.sqrt(
             Math.pow(endPixel.x - startPixel.x, 2) +
             Math.pow(endPixel.y - startPixel.y, 2)
-          );
+          ) / 2;
           ctx.beginPath();
-          ctx.arc(startPixel.x, startPixel.y, radius, 0, 2 * Math.PI);
+          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+          
+          // Заливка
+          ctx.fillStyle = drawing.color;
+          ctx.globalAlpha = 0.2;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          
+          // Обводка
           ctx.stroke();
         } else if (drawing.type === 'horizontal') {
           // Рисуем горизонтальную линию
@@ -982,310 +1223,464 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       // Вычисляем высоту области графика для проверки видимости
       const chartAreaHeight = rect.height - topPadding;
       
+      // Сначала собираем все данные о маркерах для расчета физики
+      interface MarkerRenderData {
+        marker: BetMarker;
+        marker_x: number;
+        marker_y: number;
+        label_x: number;
+        label_y: number;
+        label_width: number;
+        label_height: number;
+        label_text: string;
+        marker_color: string;
+        marker_color_light: string;
+        line_end_x: number;
+        line_start_x: number;
+        axis_time_str: string;
+        is_visible: boolean;
+      }
+      
+      const marker_render_data: MarkerRenderData[] = [];
+      
+      // Первый проход: вычисляем базовые позиции всех маркеров
+      betMarkers.forEach((marker, index) => {
+        const marker_pixel = timePriceToPixel(marker.time, marker.price, viewportWithPrices, chartCandles, rect);
+        if (!marker_pixel) {
+          return;
+        }
+        
+        const offset_from_candle = 8;
+        const marker_x = marker_pixel.x - offset_from_candle;
+        const marker_y = marker_pixel.y;
+        
+        // Проверяем видимость
+        if (marker_x < -50 || marker_x > rect.width + 50 || marker_y < -50 || marker_y > chartAreaHeight + 50) {
+          return;
+        }
+        
+        // Вычисляем lineEndX - позиция кружка завершения сделки
+        let line_end_x = rect.width;
+        if (marker.expirationTime) {
+          let expiration_exact_index: number;
+          if (marker.expirationTime <= chartCandles[0].openTime) {
+            expiration_exact_index = 0;
+          } else if (marker.expirationTime >= chartCandles[chartCandles.length - 1].openTime) {
+            const last_candle = chartCandles[chartCandles.length - 1];
+            let time_interval = 60_000;
+            if (chartCandles.length > 1) {
+              const prev_candle = chartCandles[chartCandles.length - 2];
+              time_interval = last_candle.openTime - prev_candle.openTime;
+            }
+            if (time_interval > 0) {
+              const time_since_last_candle = marker.expirationTime - last_candle.openTime;
+              expiration_exact_index = chartCandles.length - 1 + (time_since_last_candle / time_interval);
+            } else {
+              expiration_exact_index = chartCandles.length - 1;
+            }
+          } else {
+            let found_index = -1;
+            for (let i = 0; i < chartCandles.length - 1; i++) {
+              if (marker.expirationTime >= chartCandles[i].openTime && marker.expirationTime <= chartCandles[i + 1].openTime) {
+                found_index = i;
+                break;
+              }
+            }
+            if (found_index >= 0) {
+              const curr_candle = chartCandles[found_index];
+              const next_candle = chartCandles[found_index + 1];
+              const time_interval = next_candle.openTime - curr_candle.openTime;
+              if (time_interval > 0) {
+                const fraction = (marker.expirationTime - curr_candle.openTime) / time_interval;
+                expiration_exact_index = found_index + fraction;
+              } else {
+                expiration_exact_index = found_index;
+              }
+            } else {
+              found_index = chartCandles.reduce((closest, c, i) => {
+                const current_diff = Math.abs(c.openTime - marker.expirationTime);
+                const closest_diff = Math.abs(chartCandles[closest].openTime - marker.expirationTime);
+                return current_diff < closest_diff ? i : closest;
+              }, 0);
+              expiration_exact_index = found_index;
+            }
+          }
+          
+          const expiration_relative = (expiration_exact_index - viewportWithPrices.fromIndex) / viewportWithPrices.candlesPerScreen;
+          line_end_x = expiration_relative * rect.width;
+          line_end_x = Math.max(marker_x, Math.min(rect.width, line_end_x));
+        }
+        
+        // Плашка размещается справа от маркера
+        const current_time = getServerTime();
+        let time_str = '';
+        if (marker.expirationTime && marker.expirationTime > current_time) {
+          time_str = formatRemainingTime(marker.expirationTime, current_time);
+        } else if (marker.expirationTime && marker.expirationTime <= current_time) {
+          time_str = '00:00';
+        } else {
+          time_str = formatTimeForTicks(marker.time, timeframe as Timeframe);
+        }
+        
+        const has_amount = marker.amount !== undefined && marker.amount !== null && marker.amount > 0;
+        const amount_str = has_amount
+          ? `$${marker.amount.toFixed(2)}` 
+          : formatPrice(marker.price);
+        
+        ctx.font = '10px system-ui, -apple-system, sans-serif';
+        const label_text = `${amount_str} ${time_str}`;
+        const label_metrics = ctx.measureText(label_text);
+        
+        const label_padding_x = 10;
+        const label_height = 24;
+        const label_width = label_metrics.width + label_padding_x * 2;
+        const offset_from_marker = 8; // Отступ от маркера до плашки
+        
+        // Плашка справа от маркера (используем line_end_x как базовую позицию или marker_x + offset)
+        const label_x = line_end_x > marker_x ? line_end_x + offset_from_marker : marker_x + offset_from_marker;
+        const label_y = marker_y;
+        
+        const line_start_x = marker_x;
+        
+        const marker_color = marker.direction === 'buy' ? '#32AC41' : '#F7525F';
+        const marker_color_light = marker.direction === 'buy' ? 'rgba(50, 172, 65, 0.95)' : 'rgba(247, 82, 95, 0.95)';
+        
+        marker_render_data.push({
+          marker,
+          marker_x,
+          marker_y,
+          label_x,
+          label_y,
+          label_width,
+          label_height,
+          label_text,
+          marker_color,
+          marker_color_light,
+          line_end_x,
+          line_start_x,
+          axis_time_str: time_str,
+          is_visible: true,
+        });
+      });
+      
+      // Простая логика размещения маркеров: если они близко по Y, располагаем их справа друг от друга
+      const min_spacing = 8; // Минимальный отступ между маркерами
+      const y_tolerance = 30; // Расстояние по Y, при котором считаем маркеры близкими
+      
+      // Сортируем маркеры по исходной позиции label_x, затем по marker_y
+      const sorted_markers = [...marker_render_data].sort((a, b) => {
+        if (Math.abs(a.label_x - b.label_x) > 50) {
+          return a.label_x - b.label_x; // Сначала по X
+        }
+        return a.marker_y - b.marker_y; // Затем по Y
+      });
+      
+      // Располагаем маркеры справа друг от друга, если они близко по Y
+      sorted_markers.forEach((data, index) => {
+        data.label_y = data.marker_y; // Y всегда равен marker_y для горизонтальных линий
+        
+        if (index === 0) {
+          // Первый маркер остается на своем месте
+          return;
+        }
+        
+        // Проверяем предыдущие маркеры, находятся ли они близко по Y
+        let max_right_x = data.label_x; // Начальная позиция
+        
+        for (let i = 0; i < index; i++) {
+          const prev_data = sorted_markers[i];
+          const y_distance = Math.abs(data.marker_y - prev_data.marker_y);
+          
+          // Если маркеры близки по Y, располагаем текущий маркер справа от предыдущего
+          if (y_distance < y_tolerance) {
+            const prev_right = prev_data.label_x + prev_data.label_width;
+            if (prev_right + min_spacing > max_right_x) {
+              max_right_x = prev_right + min_spacing;
+            }
+          }
+        }
+        
+        // Не двигаем маркер левее его исходной позиции
+        data.label_x = Math.max(data.label_x, max_right_x);
+      });
+      
+      
       let renderedMarkersCount = 0;
       let skippedMarkersCount = 0;
       
-      betMarkers.forEach((marker, index) => {
-        // Используем timePriceToPixel для точного вычисления координат маркера
-        const markerPixel = timePriceToPixel(marker.time, marker.price, viewportWithPrices, chartCandles, rect);
-        if (!markerPixel) {
+      // Второй проход: рендерим маркеры с примененными физикой позициями
+      marker_render_data.forEach((data) => {
+        if (!data.is_visible) {
           skippedMarkersCount++;
           return;
         }
         
-        // Вычисляем ширину свечи для определения отступа
-        const distanceBetweenCenters = rect.width / viewportWithPrices.candlesPerScreen;
-        const candleWidthPx = Math.max(1.2, distanceBetweenCenters - 5);
-        
-        // Позиционируем маркер слева от точной позиции времени с небольшим отступом
-        const offsetFromCandle = 8; // Отступ от позиции времени
-        const markerX = markerPixel.x - offsetFromCandle;
-        
-        // Y координата уже вычислена правильно в timePriceToPixel
-        const markerY = markerPixel.y;
-        
-        // Форматируем сумму ставки и оставшееся время для подписи
-        // ВАЖНО: Отображаем сумму ставки (amount), а не цену входа (price)
-        const hasAmount = marker.amount !== undefined && marker.amount !== null && marker.amount > 0;
-        const amountStr = hasAmount
-          ? `$${marker.amount.toFixed(2)}` 
-          : formatPrice(marker.price); // Fallback на цену, если amount не указан или равен 0
-        
-        const currentTime = getServerTime();
-        let timeStr = '';
-        if (marker.expirationTime && marker.expirationTime > currentTime) {
-          // Показываем оставшееся время до окончания ставки
-          timeStr = formatRemainingTime(marker.expirationTime, currentTime);
-        } else if (marker.expirationTime && marker.expirationTime <= currentTime) {
-          // Время истекло
-          timeStr = '00:00';
-        } else {
-          // Если нет expirationTime, показываем время ставки
-          timeStr = formatTimeForTicks(marker.time, timeframe as Timeframe);
-        }
-        
-        // Настройки шрифта
-        ctx.font = '10px system-ui, -apple-system, sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        
-        // Формируем текст метки: "сумма_ставки оставшееся_время" (например "$1.00 05:30")
-        const labelText = `${amountStr} ${timeStr}`;
-        const labelMetrics = ctx.measureText(labelText);
-        
-        // Размеры метки
-        const labelPaddingX = 10;
-        const labelPaddingY = 6;
-        const labelHeight = 24;
-        const labelWidth = labelMetrics.width + labelPaddingX * 2;
-        const borderRadius = 12;
-        const handleSize = 6; // Уменьшаем размер кружка в 2 раза
-        const offsetFromLabel = 8; // Отступ от метки до начала линии
-        
-        // Позиция метки: слева от маркера, отцентрирована по Y
-        const labelX = markerX - labelWidth - offsetFromLabel;
-        const labelY = markerY;
-        
-        // Проверяем, что маркер и метка находятся в видимой области (с запасом для метки слева)
-        if (labelX + labelWidth < -100 || markerX > rect.width + 50 || markerY < -50 || markerY > chartAreaHeight + 50) {
-          skippedMarkersCount++;
-          return; // Пропускаем если координаты вне видимой области
-        }
-        
         renderedMarkersCount++;
         
-        // Цвета в зависимости от направления
-        const markerColor = marker.direction === 'buy' ? '#32AC41' : '#F7525F';
-        const markerColorLight = marker.direction === 'buy' ? 'rgba(50, 172, 65, 0.95)' : 'rgba(247, 82, 95, 0.95)';
+        // Используем предвычисленные данные
+        const {
+          marker,
+          marker_x,
+          marker_y,
+          label_x,
+          label_y,
+          label_width,
+          label_height,
+          label_text,
+          marker_color,
+          marker_color_light,
+          line_end_x,
+          line_start_x,
+          axis_time_str,
+        } = data;
         
-        // Рисуем округлую прямоугольную метку
-        const labelRectY = labelY - labelHeight / 2;
-        ctx.fillStyle = markerColorLight;
+        const label_padding_x = 10;
+        const border_radius = 12;
+        const handle_size = 6;
+        
+        // Вычисляем прозрачность и состояние завершения для анимации
+        let opacity = 1.0;
+        let isCompleting = false;
+        let completionProgress = 0;
+        if (marker.completionState === 'completing' && marker.completionStartTime) {
+          const currentTime = getServerTime();
+          const elapsed = currentTime - marker.completionStartTime;
+          const COMPLETION_ANIMATION_DURATION = 2000;
+          completionProgress = Math.min(1, elapsed / COMPLETION_ANIMATION_DURATION);
+          // Первая половина анимации - показываем результат, вторая - исчезновение
+          if (completionProgress < 0.5) {
+            opacity = 1.0; // Полная видимость для показа результата
+            isCompleting = true;
+          } else {
+            // Вторая половина - плавное исчезновение
+            const fadeProgress = (completionProgress - 0.5) * 2; // 0-1 для второй половины
+            opacity = 1 - fadeProgress;
+            isCompleting = true;
+          }
+        }
+        
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        
+        // Определяем цвет для завершающегося маркера
+        const isWin = marker.result?.isWin ?? false;
+        const finalMarkerColor = isCompleting 
+          ? (isWin ? '#10b981' : '#ef4444') 
+          : marker_color;
+        const finalMarkerColorLight = isCompleting 
+          ? (isWin ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)') 
+          : marker_color_light;
+        
+        // Рисуем округлую прямоугольную метку справа от кружка
+        const label_rect_y = label_y - label_height / 2;
+        ctx.fillStyle = finalMarkerColorLight;
         if (typeof ctx.roundRect === 'function') {
           ctx.beginPath();
-          ctx.roundRect(labelX, labelRectY, labelWidth, labelHeight, borderRadius);
+          ctx.roundRect(label_x, label_rect_y, label_width, label_height, border_radius);
           ctx.fill();
-          // Обводка метки
-          ctx.strokeStyle = markerColor;
+          ctx.strokeStyle = finalMarkerColor;
           ctx.lineWidth = 1.5;
           ctx.stroke();
         } else {
-          // Fallback для браузеров без поддержки roundRect
           ctx.beginPath();
-          ctx.moveTo(labelX + borderRadius, labelRectY);
-          ctx.lineTo(labelX + labelWidth - borderRadius, labelRectY);
-          ctx.quadraticCurveTo(labelX + labelWidth, labelRectY, labelX + labelWidth, labelRectY + borderRadius);
-          ctx.lineTo(labelX + labelWidth, labelRectY + labelHeight - borderRadius);
-          ctx.quadraticCurveTo(labelX + labelWidth, labelRectY + labelHeight, labelX + labelWidth - borderRadius, labelRectY + labelHeight);
-          ctx.lineTo(labelX + borderRadius, labelRectY + labelHeight);
-          ctx.quadraticCurveTo(labelX, labelRectY + labelHeight, labelX, labelRectY + labelHeight - borderRadius);
-          ctx.lineTo(labelX, labelRectY + borderRadius);
-          ctx.quadraticCurveTo(labelX, labelRectY, labelX + borderRadius, labelRectY);
+          ctx.moveTo(label_x + border_radius, label_rect_y);
+          ctx.lineTo(label_x + label_width - border_radius, label_rect_y);
+          ctx.quadraticCurveTo(label_x + label_width, label_rect_y, label_x + label_width, label_rect_y + border_radius);
+          ctx.lineTo(label_x + label_width, label_rect_y + label_height - border_radius);
+          ctx.quadraticCurveTo(label_x + label_width, label_rect_y + label_height, label_x + label_width - border_radius, label_rect_y + label_height);
+          ctx.lineTo(label_x + border_radius, label_rect_y + label_height);
+          ctx.quadraticCurveTo(label_x, label_rect_y + label_height, label_x, label_rect_y + label_height - border_radius);
+          ctx.lineTo(label_x, label_rect_y + border_radius);
+          ctx.quadraticCurveTo(label_x, label_rect_y, label_x + border_radius, label_rect_y);
           ctx.closePath();
           ctx.fill();
-          // Обводка метки
-          ctx.strokeStyle = markerColor;
+          ctx.strokeStyle = finalMarkerColor;
           ctx.lineWidth = 1.5;
           ctx.stroke();
         }
         
         // Рисуем текст в метке
-        ctx.fillStyle = '#fff';
-        ctx.fillText(labelText, labelX + labelPaddingX, labelY);
+        if (isCompleting && marker.result) {
+          const resultText = isWin ? 'WIN' : 'LOSS';
+          const scale = 0.5 + (completionProgress < 0.5 ? completionProgress * 2 : 1 - (completionProgress - 0.5) * 2);
+          
+          ctx.font = `bold ${Math.floor(14 * scale)}px system-ui, -apple-system, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#fff';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 1;
+          ctx.fillText(resultText, label_x + label_width / 2, label_y);
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        } else {
+          ctx.font = '10px system-ui, -apple-system, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#fff';
+          ctx.fillText(label_text, label_x + label_padding_x, label_y);
+        }
         
-        // Вычисляем X координату времени окончания ставки (где будет кружок)
-        let lineEndX = rect.width; // По умолчанию до конца графика
-        if (marker.expirationTime) {
-          // Находим индекс свечи для времени окончания
-          let expirationExactIndex: number;
-          if (marker.expirationTime <= chartCandles[0].openTime) {
-            expirationExactIndex = 0;
-          } else if (marker.expirationTime >= chartCandles[chartCandles.length - 1].openTime) {
-            const lastCandle = chartCandles[chartCandles.length - 1];
-            let timeInterval = 60_000;
-            if (chartCandles.length > 1) {
-              const prevCandle = chartCandles[chartCandles.length - 2];
-              timeInterval = lastCandle.openTime - prevCandle.openTime;
-            }
-            if (timeInterval > 0) {
-              const timeSinceLastCandle = marker.expirationTime - lastCandle.openTime;
-              expirationExactIndex = chartCandles.length - 1 + (timeSinceLastCandle / timeInterval);
-            } else {
-              expirationExactIndex = chartCandles.length - 1;
-            }
-          } else {
-            let foundIndex = -1;
-            for (let i = 0; i < chartCandles.length - 1; i++) {
-              if (marker.expirationTime >= chartCandles[i].openTime && marker.expirationTime <= chartCandles[i + 1].openTime) {
-                foundIndex = i;
-                break;
+        // Рисуем линию: от точки маркера прямо до плашки (горизонтальная линия)
+        // Проверяем, не пересекает ли линия другие маркеры и их плашки, и обрезаем её при необходимости
+        const marker_radius = 3;
+        const marker_tolerance = 5; // Допуск для проверки пересечения по Y
+        const label_tolerance = label_height / 2 + 2; // Допуск для проверки пересечения с плашками по Y
+        let label_line_end_x = label_x;
+        
+        // Проверяем все другие маркеры на пересечение с линией
+        for (const other_data of marker_render_data) {
+          if (other_data.marker.id === marker.id || !other_data.is_visible) {
+            continue;
+          }
+          
+          const other_marker_x = other_data.marker_x;
+          const other_label_x = other_data.label_x;
+          const other_label_width = other_data.label_width;
+          const other_label_y = other_data.label_y;
+          const other_label_height = other_data.label_height;
+          
+          // Проверяем пересечение с точкой маркера
+          const marker_y_distance = Math.abs(marker_y - other_data.marker_y);
+          if (marker_y_distance <= marker_tolerance) {
+            // Если другой маркер находится между началом линии и плашкой
+            if (other_marker_x > line_start_x && other_marker_x < label_x) {
+              // Обрезаем линию перед маркером (оставляем небольшой отступ)
+              const stop_x = other_marker_x - marker_radius - 2;
+              if (stop_x < label_line_end_x) {
+                label_line_end_x = stop_x;
               }
-            }
-            if (foundIndex >= 0) {
-              const currCandle = chartCandles[foundIndex];
-              const nextCandle = chartCandles[foundIndex + 1];
-              const timeInterval = nextCandle.openTime - currCandle.openTime;
-              if (timeInterval > 0) {
-                const fraction = (marker.expirationTime - currCandle.openTime) / timeInterval;
-                expirationExactIndex = foundIndex + fraction;
-              } else {
-                expirationExactIndex = foundIndex;
-              }
-            } else {
-              foundIndex = chartCandles.reduce((closest, c, i) => {
-                const currentDiff = Math.abs(c.openTime - marker.expirationTime);
-                const closestDiff = Math.abs(chartCandles[closest].openTime - marker.expirationTime);
-                return currentDiff < closestDiff ? i : closest;
-              }, 0);
-              expirationExactIndex = foundIndex;
             }
           }
           
-          // Преобразуем индекс в X координату
-          const expirationRelative = (expirationExactIndex - viewportWithPrices.fromIndex) / viewportWithPrices.candlesPerScreen;
-          lineEndX = expirationRelative * rect.width;
-          // Ограничиваем линию границами графика
-          lineEndX = Math.max(labelX + labelWidth + offsetFromLabel, Math.min(rect.width, lineEndX));
+          // Проверяем пересечение с плашкой другого маркера
+          const label_y_distance = Math.abs(marker_y - other_label_y);
+          if (label_y_distance <= label_tolerance) {
+            // Вычисляем границы плашки другого маркера
+            const other_label_left = other_label_x;
+            const other_label_right = other_label_x + other_label_width;
+            
+            // Если плашка другого маркера пересекается с линией
+            if (other_label_left < label_x && other_label_right > line_start_x) {
+              // Обрезаем линию перед плашкой (оставляем небольшой отступ)
+              const stop_x = Math.min(other_label_left - 2, label_x);
+              if (stop_x < label_line_end_x && stop_x > line_start_x) {
+                label_line_end_x = stop_x;
+              }
+            }
+          }
         }
         
-        // Позиция начала линии (справа от метки)
-        const lineStartX = labelX + labelWidth + offsetFromLabel;
-        
-        // Рисуем горизонтальную линию от метки до времени окончания ставки
-        ctx.strokeStyle = markerColorLight;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.moveTo(lineStartX, labelY);
-        ctx.lineTo(lineEndX, labelY);
-        ctx.stroke();
-        
-        // Вычисляем прогресс для крутилки (оставшееся время до окончания ставки)
-        let progress = 1; // По умолчанию 100%
-        if (marker.expirationTime && marker.expirationTime > currentTime) {
-          const totalTime = marker.expirationTime - marker.time;
-          const elapsedTime = currentTime - marker.time;
-          progress = Math.max(0, Math.min(1, 1 - (elapsedTime / totalTime)));
-        } else if (marker.expirationTime && marker.expirationTime <= currentTime) {
-          progress = 0; // Время истекло
+        // Рисуем линию только если она не полностью обрезана
+        if (label_line_end_x > line_start_x) {
+          // Добавляем тень для контраста со свечами
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 3;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 1;
+          
+          ctx.strokeStyle = finalMarkerColorLight;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          
+          // Линия от точки маркера до обрезанной позиции (или до плашки) - всегда горизонтальная
+          ctx.moveTo(line_start_x, marker_y);
+          ctx.lineTo(label_line_end_x, marker_y);
+          
+          ctx.stroke();
+          
+          // Сбрасываем тень после отрисовки линии
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
         }
         
-        // Позиция круглого handle в конце линии (в месте времени окончания)
-        const handleX = lineEndX;
-        const handleY = labelY;
-        
-        // Рисуем круглый handle в конце линии
-        ctx.fillStyle = markerColorLight;
+        // Рисуем маленькую точку на графике (маркер)
+        ctx.fillStyle = finalMarkerColor;
         ctx.beginPath();
-        ctx.arc(handleX, handleY, handleSize, 0, Math.PI * 2);
+        ctx.arc(marker_x, marker_y, 3, 0, Math.PI * 2);
         ctx.fill();
         
-        // Рисуем прогресс-бар (крутилку) по краю кружка
-        if (marker.expirationTime) {
-          const progressBarWidth = 2; // Толщина прогресс-бара (уменьшена для маленького кружка)
-          const progressAngle = progress * Math.PI * 2; // Угол прогресса
-          
-          // Рисуем фоновую дугу (серая, показывает полный круг)
-          ctx.strokeStyle = 'rgba(128, 128, 128, 0.3)'; // Светло-серый цвет для фона
-          ctx.lineWidth = progressBarWidth;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.arc(handleX, handleY, handleSize - progressBarWidth / 2, 0, Math.PI * 2);
-          ctx.stroke();
-          
-          // Рисуем прогресс-бар (белый, показывает оставшееся время)
-          ctx.strokeStyle = '#ffffff'; // Белый цвет для прогресс-бара
-          ctx.lineWidth = progressBarWidth;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          // Рисуем дугу от 0 до progressAngle (начинаем сверху, идем по часовой стрелке)
-          ctx.arc(handleX, handleY, handleSize - progressBarWidth / 2, -Math.PI / 2, -Math.PI / 2 + progressAngle);
-          ctx.stroke();
-        }
-        
-        // Обводка handle
-        ctx.strokeStyle = markerColor;
-        ctx.lineWidth = 1.5;
-        ctx.lineCap = 'butt';
-        ctx.beginPath();
-        ctx.arc(handleX, handleY, handleSize, 0, Math.PI * 2);
-        ctx.stroke();
-        
         // Рисуем подпись времени на оси (внизу) - показываем оставшееся время или время ставки
-        const axisY = chartAreaHeight + 5;
-        const axisTimeStr = timeStr; // Используем то же время, что и в метке
+        const axis_y = chartAreaHeight + 5;
         ctx.fillStyle = marker.direction === 'buy' ? 'rgba(50, 172, 65, 0.8)' : 'rgba(247, 82, 95, 0.8)';
         ctx.font = '8px monospace';
         ctx.textBaseline = 'top';
-        const axisTimeMetrics = ctx.measureText(axisTimeStr);
-        const axisBgX = markerX - axisTimeMetrics.width / 2 - 4;
-        const axisBgY = axisY;
-        const axisBgWidth = axisTimeMetrics.width + 8;
-        const axisBgHeight = 14;
+        const axis_time_metrics = ctx.measureText(axis_time_str);
+        const axis_bg_x = marker_x - axis_time_metrics.width / 2 - 4;
+        const axis_bg_y = axis_y;
+        const axis_bg_width = axis_time_metrics.width + 8;
+        const axis_bg_height = 14;
         
-        ctx.fillRect(axisBgX, axisBgY, axisBgWidth, axisBgHeight);
+        ctx.fillRect(axis_bg_x, axis_bg_y, axis_bg_width, axis_bg_height);
         ctx.fillStyle = '#fff';
-        ctx.fillText(axisTimeStr, markerX, axisY + 2);
+        ctx.fillText(axis_time_str, marker_x, axis_y + 2);
         
-        // Визуализация области наведения (для отладки)
-        const labelClickPadding = 5;
-        const handleClickRadius = handleSize + 10;
-        
-        // Рисуем область наведения для метки (Label)
-        ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)'; // Желтый полупрозрачный
-        ctx.lineWidth = 1;
-        ctx.setLineDash([5, 5]);
-        ctx.strokeRect(
-          labelX - labelClickPadding,
-          labelRectY - labelClickPadding,
-          labelWidth + labelClickPadding * 2,
-          labelHeight + labelClickPadding * 2
-        );
-        
-        // Рисуем область наведения для handle (кружка)
-        ctx.beginPath();
-        ctx.arc(handleX, handleY, handleClickRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Логируем область наведения для маркера
-        console.log(`[CandlesCanvas] 🎯 Marker ${marker.id} hover area:`, {
-          markerId: marker.id,
-          '📍 Marker position': { x: markerX, y: markerY },
-          '📦 Label hover area': {
-            x: labelX - labelClickPadding,
-            y: labelRectY - labelClickPadding,
-            width: labelWidth + labelClickPadding * 2,
-            height: labelHeight + labelClickPadding * 2,
-            bounds: {
-              minX: labelX - labelClickPadding,
-              maxX: labelX + labelWidth + labelClickPadding,
-              minY: labelRectY - labelClickPadding,
-              maxY: labelRectY + labelHeight + labelClickPadding
-            }
-          },
-          '🎯 Handle hover area': {
-            x: handleX,
-            y: handleY,
-            radius: handleClickRadius,
-            bounds: {
-              minX: handleX - handleClickRadius,
-              maxX: handleX + handleClickRadius,
-              minY: handleY - handleClickRadius,
-              maxY: handleY + handleClickRadius
-            }
-          },
-          '📏 Line hover area': {
-            startX: lineStartX,
-            endX: lineEndX,
-            y: labelY,
-            tolerance: 8
-          }
-        });
+        // Восстанавливаем прозрачность после отрисовки маркера
+        ctx.restore();
       });
       
       ctx.restore();
     }
-  }, [timeframe, convertCandles, hoverIndex, hoverCandle, hoverX, hoverY, hoveredButton, savedDrawings, selectedDrawingIds, checkDrawingModeActive, drawingMode, betMarkers, formatRemainingTime, markerUpdateTrigger, selectionBox, activeIndicators, chartView]);
+    
+    // Draw eraser indicator (индикатор ластика)
+    if (drawingMode === 'eraser' && eraserPositionRef.current) {
+      ctx.save();
+      
+      const eraserPos = eraserPositionRef.current;
+      const eraserX = eraserPos.x;
+      const eraserY = eraserPos.y;
+      
+      // Рисуем несколько слоев с разной прозрачностью для создания эффекта размытия
+      // Внешний слой - самый прозрачный и большой (эффект блюра)
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(eraserX, eraserY, eraserRadius * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Средний слой
+      ctx.globalAlpha = 0.25;
+      ctx.beginPath();
+      ctx.arc(eraserX, eraserY, eraserRadius * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Основной слой - более видимый
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.arc(eraserX, eraserY, eraserRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Внутренний слой для лучшей видимости
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      ctx.arc(eraserX, eraserY, eraserRadius * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Видимая обводка для четкого обозначения границ
+      ctx.globalAlpha = 0.7;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(eraserX, eraserY, eraserRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Центральная точка для лучшей видимости
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(eraserX, eraserY, 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+    }
+  }, [timeframe, convertCandles, hoverIndex, hoverCandle, hoverX, hoverY, hoveredButton, savedDrawings, selectedDrawingIds, checkDrawingModeActive, drawingMode, betMarkers, formatRemainingTime, markerUpdateTrigger, selectionBox, activeIndicators, chartView, eraserRadius, fixed_prices]);
   
   const scheduleRender = useCallback(() => {
     if (renderFrameRef.current === null && renderCandlesRef.current) {
@@ -1333,6 +1728,335 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     }
   }, [activeIndicators]);
 
+  // Отслеживание достижения зафиксированных цен
+  useEffect(() => {
+    if (fixed_prices.size === 0) {
+      fixed_price_reached_ref.current.clear();
+      previous_price_ref.current = null;
+      return;
+    }
+
+    const checkPriceReached = () => {
+      const currentPrice = animatedPriceRef.current;
+      if (currentPrice === null) {
+        previous_price_ref.current = null;
+        return;
+      }
+
+      const epsilon = 0.000001;
+      const pricesToRemove: number[] = [];
+      const previousPrice = previous_price_ref.current;
+
+      fixed_prices.forEach(fixedPrice => {
+        // Проверяем, не показывали ли уже уведомление для этой цены
+        if (fixed_price_reached_ref.current.has(fixedPrice)) {
+          return;
+        }
+
+        // Проверяем, достигнута ли цена (точное совпадение или пересечение)
+        let priceReached = false;
+        
+        if (Math.abs(currentPrice - fixedPrice) < epsilon) {
+          // Точное совпадение
+          priceReached = true;
+        } else if (previousPrice !== null) {
+          // Проверяем пересечение линии (цена была выше/ниже, а теперь ниже/выше)
+          const wasAbove = previousPrice > fixedPrice;
+          const isAbove = currentPrice > fixedPrice;
+          const crossed = wasAbove !== isAbove;
+          
+          if (crossed) {
+            priceReached = true;
+          }
+        }
+
+        if (priceReached) {
+          fixed_price_reached_ref.current.add(fixedPrice);
+          
+          // Показываем уведомление о достижении цены
+          const notificationId = `fixed-price-${fixedPrice}-${Date.now()}`;
+          setPriceReachedNotifications(prev => [...prev, {
+            id: notificationId,
+            price: fixedPrice,
+            currencyPair: currencyPair || 'N/A',
+          }]);
+
+          // Удаляем цену из зафиксированных
+          pricesToRemove.push(fixedPrice);
+        }
+      });
+
+      // Обновляем предыдущую цену
+      previous_price_ref.current = currentPrice;
+
+      // Удаляем достигнутые цены
+      if (pricesToRemove.length > 0) {
+        setFixedPrices(prev => {
+          const newSet = new Set(prev);
+          pricesToRemove.forEach(price => newSet.delete(price));
+          return newSet;
+        });
+      }
+    };
+
+    // Проверяем каждые 100мс
+    const intervalId = setInterval(checkPriceReached, 100);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [fixed_prices]);
+
+  // Загрузка свечей для завершенных сделок в сайдбаре
+  useEffect(() => {
+    if (!selectedTrade || !selectedTrade.completed_at) {
+      setTradeCandles([]);
+      setLoadingCandles(false);
+      return;
+    }
+
+    const loadCandles = async () => {
+      setLoadingCandles(true);
+      setTradeCandles([]);
+      try {
+        // Определяем базовую валюту
+        let baseCurrency = selectedTrade.base_currency;
+        if (!baseCurrency && selectedTrade.symbol) {
+          const parts = selectedTrade.symbol.split(/[_\-\/]/);
+          baseCurrency = parts[0] || 'BTC';
+        }
+        if (!baseCurrency) {
+          baseCurrency = 'BTC';
+        }
+
+        const currencyInfo = getCurrencyInfo(baseCurrency);
+        if (!currencyInfo || !currencyInfo.id) {
+          console.error('[CandlesCanvas] Currency info not found for:', baseCurrency);
+          setLoadingCandles(false);
+          return;
+        }
+
+        // Нормализуем временные метки в миллисекунды
+        let createdAt = selectedTrade.created_at;
+        let completedAt = selectedTrade.completed_at!;
+        
+        if (createdAt < 1e12) {
+          createdAt = createdAt * 1000;
+        }
+        if (completedAt < 1e12) {
+          completedAt = completedAt * 1000;
+        }
+
+        const now = getServerTime();
+        const endTime = Math.min(completedAt, now);
+
+        const durationMs = endTime - createdAt;
+        if (durationMs <= 0) {
+          setLoadingCandles(false);
+          return;
+        }
+
+        const timeframeMs = 15000; // 15s
+        const estimatedCandles = Math.ceil(durationMs / timeframeMs);
+        const limit = Math.min(estimatedCandles + 20, 1000);
+
+        const response = await syntheticQuotesApi.getCandlesHistory(
+          currencyInfo.id,
+          '15s',
+          limit,
+          endTime,
+          createdAt,
+          selectedTrade.id?.toString() || `trade_${selectedTrade.id}`
+        );
+
+        let candlesData: any[] = [];
+        if (Array.isArray(response)) {
+          candlesData = response;
+        } else if (response && typeof response === 'object' && 'data' in response) {
+          if (response.success === false) {
+            throw new Error('Failed to fetch candles: server returned error');
+          }
+          if (Array.isArray(response.data)) {
+            candlesData = response.data;
+          }
+        }
+
+        // Фильтруем свечи, которые попадают в период сделки
+        const mappedCandles = candlesData.map(candle => {
+          const candleTime = candle.time || candle.start;
+          const candleStart = typeof candleTime === 'number' ? candleTime : new Date(candleTime).getTime();
+          return {
+            start: candleStart,
+            open: typeof candle.open === 'number' ? candle.open : parseFloat(String(candle.open)),
+            high: typeof candle.high === 'number' ? candle.high : parseFloat(String(candle.high)),
+            low: typeof candle.low === 'number' ? candle.low : parseFloat(String(candle.low)),
+            close: typeof candle.close === 'number' ? candle.close : parseFloat(String(candle.close)),
+          };
+        });
+
+        const filteredCandles = mappedCandles
+          .filter(candle => candle.start >= createdAt && candle.start <= endTime)
+          .sort((a, b) => a.start - b.start);
+
+        setTradeCandles(filteredCandles);
+      } catch (error) {
+        console.error('[CandlesCanvas] Error loading candles for trade:', error);
+      } finally {
+        setLoadingCandles(false);
+      }
+    };
+
+    loadCandles();
+  }, [selectedTrade, getCurrencyInfo]);
+
+  // Отрисовка графика для завершенных сделок
+  useEffect(() => {
+    if (!selectedTrade || !selectedTrade.completed_at || tradeCandles.length === 0 || !tradeChartCanvasRef.current) {
+      return;
+    }
+
+    const canvas = tradeChartCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Устанавливаем размеры canvas
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+
+    // Очищаем canvas
+    ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    const padding = { top: 20, right: 40, bottom: 30, left: 50 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    // Находим min и max цены
+    let minPrice = Math.min(...tradeCandles.map(c => c.low));
+    let maxPrice = Math.max(...tradeCandles.map(c => c.high));
+    const entryPrice = selectedTrade.entry_price;
+
+    // Добавляем небольшой отступ для визуализации
+    const priceRange = maxPrice - minPrice;
+    minPrice = minPrice - priceRange * 0.1;
+    maxPrice = maxPrice + priceRange * 0.1;
+
+    // Используем время сделки для масштабирования
+    let tradeStartTime = selectedTrade.created_at;
+    let tradeEndTime = selectedTrade.completed_at!;
+    if (tradeStartTime < 1e12) tradeStartTime = tradeStartTime * 1000;
+    if (tradeEndTime < 1e12) tradeEndTime = tradeEndTime * 1000;
+    const tradeTimeRange = tradeEndTime - tradeStartTime;
+
+    // Функции преобразования координат
+    const priceToY = (price: number) => {
+      return padding.top + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
+    };
+
+    const timeToX = (time: number) => {
+      return padding.left + ((time - tradeStartTime) / tradeTimeRange) * chartWidth;
+    };
+
+    // Рисуем сетку
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 1;
+
+    // Горизонтальные линии
+    for (let i = 0; i <= 5; i++) {
+      const price = minPrice + (maxPrice - minPrice) * (i / 5);
+      const y = priceToY(price);
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(padding.left + chartWidth, y);
+      ctx.stroke();
+    }
+
+    // Вертикальные линии
+    for (let i = 0; i <= 5; i++) {
+      const x = padding.left + (chartWidth * i) / 5;
+      ctx.beginPath();
+      ctx.moveTo(x, padding.top);
+      ctx.lineTo(x, padding.top + chartHeight);
+      ctx.stroke();
+    }
+
+    // Рисуем свечи
+    tradeCandles.forEach((candle) => {
+      const x = timeToX(candle.start);
+      const candleWidth = Math.max(2, chartWidth / tradeCandles.length * 0.8);
+      const candleLeft = x - candleWidth / 2;
+      
+      const isUp = candle.close >= candle.open;
+      const candleColor = isUp ? '#32ac41' : '#f7525f';
+      
+      const bodyTop = priceToY(Math.max(candle.open, candle.close));
+      const bodyBottom = priceToY(Math.min(candle.open, candle.close));
+      const bodyHeight = bodyBottom - bodyTop;
+      
+      // Рисуем тень
+      ctx.strokeStyle = candleColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, priceToY(candle.high));
+      ctx.lineTo(x, priceToY(candle.low));
+      ctx.stroke();
+      
+      // Рисуем тело свечи
+      ctx.fillStyle = candleColor;
+      ctx.fillRect(candleLeft, bodyTop, candleWidth, Math.max(1, bodyHeight));
+      
+      ctx.strokeStyle = candleColor;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(candleLeft, bodyTop, candleWidth, Math.max(1, bodyHeight));
+    });
+
+    // Рисуем линию входа
+    const entryY = priceToY(entryPrice);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, entryY);
+    ctx.lineTo(padding.left + chartWidth, entryY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Подпись линии входа
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(`Вход: ${entryPrice.toFixed(2)}`, padding.left - 10, entryY + 4);
+
+    // Рисуем метки на оси Y
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 5; i++) {
+      const price = minPrice + (maxPrice - minPrice) * (i / 5);
+      const y = priceToY(price);
+      ctx.fillText(price.toFixed(2), padding.left - 10, y + 4);
+    }
+
+    // Рисуем метки на оси X
+    ctx.textAlign = 'center';
+    for (let i = 0; i <= 5; i++) {
+      const ratio = i / 5;
+      const time = tradeStartTime + tradeTimeRange * ratio;
+      const date = new Date(time);
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      const x = timeToX(time);
+      ctx.fillText(`${hours}:${minutes}:${seconds}`, x, padding.top + chartHeight + 20);
+    }
+  }, [tradeCandles, selectedTrade]);
+
   // Перерисовка при изменении типа графика (chartView)
   useEffect(() => {
     // Используем scheduleRender для немедленной перерисовки
@@ -1378,30 +2102,46 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     return () => clearInterval(intervalId);
   }, [betMarkers]);
 
-  // Анимация индикатора загрузки на маркерах (обновляется чаще для плавности)
+  // Анимация индикатора загрузки на маркерах и физики отталкивания
   useEffect(() => {
-    // Проверяем, есть ли маркеры с expirationTime
-    const hasActiveMarkers = betMarkers.some(m => m.expirationTime && m.expirationTime > getServerTime());
+    // Проверяем, есть ли маркеры
+    const hasMarkers = betMarkers.length > 0;
     
-    if (!hasActiveMarkers) {
-      return; // Нет активных маркеров, не запускаем анимацию
+    if (!hasMarkers) {
+      // Очищаем анимированные позиции при отсутствии маркеров
+      animated_marker_positions_ref.current.clear();
+      if (marker_animation_frame_ref.current) {
+        cancelAnimationFrame(marker_animation_frame_ref.current);
+        marker_animation_frame_ref.current = null;
+      }
+      return;
     }
+    
+    const hasActiveMarkers = betMarkers.some(m => m.expirationTime && m.expirationTime > getServerTime());
     
     let animationFrameId: number;
     
     const animate = () => {
-      // Вызываем перерисовку для обновления анимации индикатора загрузки
+      // Вызываем перерисовку для обновления анимации индикатора загрузки и физики
       if (renderCandlesRef.current) {
         renderCandlesRef.current();
       }
       animationFrameId = requestAnimationFrame(animate);
     };
     
-    animationFrameId = requestAnimationFrame(animate);
+    // Запускаем анимацию, если есть активные маркеры или если нужно анимировать физику
+    if (hasActiveMarkers || betMarkers.length > 0) {
+      animationFrameId = requestAnimationFrame(animate);
+      marker_animation_frame_ref.current = animationFrameId;
+    }
     
     return () => {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
+      }
+      if (marker_animation_frame_ref.current) {
+        cancelAnimationFrame(marker_animation_frame_ref.current);
+        marker_animation_frame_ref.current = null;
       }
     };
   }, [betMarkers]);
@@ -2023,7 +2763,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
           startPoint: finalStartTimePrice,
           endPoint: finalEndTimePrice,
           path: pathTimePrice,
-          color: '#ffa500',
+          color: drawingColor,
+          line_width: drawingLineWidth,
         };
         
         setSavedDrawings(prev => [...prev, newDrawing]);
@@ -2062,7 +2803,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       document.removeEventListener('mousemove', handleDocumentMouseMove);
       document.removeEventListener('mouseup', handleDocumentMouseUp);
     };
-  }, [convertCandles, scheduleRender, checkDrawingModeActive, smoothPath, calculateViewportWithPrices]);
+  }, [convertCandles, scheduleRender, checkDrawingModeActive, smoothPath, calculateViewportWithPrices, drawingColor, drawingLineWidth]);
 
   // Рендерим при изменении анимированных свечей
   useEffect(() => {
@@ -2169,8 +2910,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       return null;
     },
     addBetMarker: (time: number, price: number, direction: 'buy' | 'sell', expirationTime?: number, tradeId?: string, amount?: number) => {
-      const isDemoMode = tradingMode === 'demo';
-      const newMarker: BetMarker = {
+      const is_demo_mode = tradingMode === 'demo';
+      const new_marker: BetMarker = {
         id: `bet-marker-${Date.now()}-${Math.random()}`,
         time,
         price, // Цена входа (для позиционирования на графике)
@@ -2179,13 +2920,19 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         createdAt: getServerTime(),
         expirationTime,
         tradeId,
-        isDemo: isDemoMode,
+        isDemo: is_demo_mode,
       };
+      
+      // Сохраняем маркер в pending_markers_ref, если у него есть tradeId
+      // Это позволяет временно сохранять маркер до его появления в Redux
+      if (tradeId) {
+        pending_markers_ref.current.set(tradeId, new_marker);
+      }
       
       setBetMarkers(prev => {
         // Если маркер с таким tradeId уже существует, удаляем его перед добавлением нового
         const filtered = tradeId ? prev.filter(m => m.tradeId !== tradeId) : prev;
-        const updated = [...filtered, newMarker];
+        const updated = [...filtered, new_marker];
         
         // Принудительно вызываем перерисовку
         if (renderCandlesRef.current) {
@@ -2200,6 +2947,11 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       });
     },
     removeBetMarkerByTradeId: (tradeId: string) => {
+      // Удаляем маркер из pending_markers_ref
+      if (tradeId) {
+        pending_markers_ref.current.delete(tradeId);
+      }
+      
       setBetMarkers(prev => {
         const updated = prev.filter(m => m.tradeId !== tradeId);
         
@@ -2222,28 +2974,155 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         setIsMarkerSidebarOpen(true);
       }
     },
+    openTradeSidebar: (trade: TradeData) => {
+      // Создаем временный маркер из данных сделки для отображения в сайдбаре
+      const tempMarker: BetMarker = {
+        id: `trade-${trade.id}`,
+        time: trade.created_at < 1e12 ? trade.created_at * 1000 : trade.created_at,
+        price: trade.entry_price,
+        direction: trade.direction,
+        createdAt: trade.created_at < 1e12 ? trade.created_at * 1000 : trade.created_at,
+        expirationTime: trade.expiration_time < 1e12 ? trade.expiration_time * 1000 : trade.expiration_time,
+        tradeId: trade.id,
+        amount: trade.amount,
+        isDemo: tradingMode === 'demo',
+      };
+      setSelectedMarker(tempMarker);
+      setSelectedTrade(trade);
+      setIsMarkerSidebarOpen(true);
+    },
   }), [tradingMode]);
 
-  // Автоматическое удаление маркеров с истекшим временем
+  // Обработка завершения маркеров с анимацией и уведомлениями
   useEffect(() => {
+    const COMPLETION_ANIMATION_DURATION = 2000; // 2 секунды на анимацию завершения
+    
     const checkExpiredMarkers = () => {
       const currentTime = getServerTime();
+      const currentPrice = animatedPriceRef.current;
+      
       setBetMarkers(prev => {
-        const expiredMarkers = prev.filter(m => 
-          m.expirationTime && m.expirationTime <= currentTime
-        );
+        const updated = prev.map(marker => {
+          // Проверяем, истек ли маркер и еще не в процессе завершения
+          if (marker.expirationTime && marker.expirationTime <= currentTime && 
+              (!marker.completionState || marker.completionState === 'active')) {
+            
+            // Рассчитываем результат
+            if (currentPrice && currentPrice > 0) {
+              const entryPrice = marker.price;
+              const exitPrice = currentPrice;
+              const amount = marker.amount || 1;
+              
+              // Расчет прибыли/убытка
+              const priceDiff = marker.direction === 'buy' 
+                ? exitPrice - entryPrice 
+                : entryPrice - exitPrice;
+              
+              const profitPercent = entryPrice > 0 ? (priceDiff / entryPrice) * 100 : 0;
+              const profit = (profitPercent / 100) * amount;
+              const isWin = profit > 0;
+              
+              console.log('[CandlesCanvas] 🎯 Маркер завершился:', {
+                tradeId: marker.tradeId,
+                direction: marker.direction,
+                entryPrice,
+                exitPrice,
+                profit,
+                profitPercent,
+                isWin
+              });
+              
+              // Добавляем завершенную сделку в историю - это увеличит счетчик новых сделок
+              if (marker.tradeId) {
+                // Получаем информацию о валюте из currencyPair
+                const currencyInfo = currencyPair ? getCurrencyInfo(currencyPair.split('/')[0] || currencyPair) : null;
+                const baseCurrency = currencyInfo?.base_currency || (currencyPair ? currencyPair.split('/')[0] : null);
+                const quoteCurrency = currencyInfo?.quote_currency || (currencyPair ? currencyPair.split('/')[1] : 'USDT');
+                const symbol = currencyPair || null;
+                
+                const historyEntry: TradeHistoryEntry = {
+                  id: marker.tradeId,
+                  price: entryPrice,
+                  direction: marker.direction,
+                  amount: amount,
+                  entryPrice: entryPrice,
+                  exitPrice: exitPrice,
+                  profit: profit,
+                  profitPercent: profitPercent,
+                  isWin: isWin,
+                  createdAt: marker.createdAt || currentTime,
+                  completedAt: currentTime,
+                  expirationTime: marker.expirationTime || null,
+                  symbol: symbol,
+                  baseCurrency: baseCurrency,
+                  quoteCurrency: quoteCurrency,
+                  isDemo: marker.isDemo ?? (tradingMode === 'demo'),
+                  is_demo: marker.isDemo ?? (tradingMode === 'demo'),
+                };
+                
+                console.log('[CandlesCanvas] 📊 Добавление завершенной сделки в историю через addTradeHistory', {
+                  tradeId: marker.tradeId,
+                  historyEntry,
+                  completedAt: historyEntry.completedAt,
+                });
+                
+                dispatch(addTradeHistory(historyEntry));
+                
+                console.log('[CandlesCanvas] ✅ addTradeHistory вызван, счетчик должен увеличиться');
+              }
+              
+              // Добавляем уведомление
+              setCompletionNotifications(notifications => [
+                ...notifications,
+                {
+                  id: `notification-${marker.id}-${Date.now()}`,
+                  tradeId: marker.tradeId,
+                  direction: marker.direction,
+                  amount: amount,
+                  isWin,
+                  profit: Math.abs(profit),
+                  profitPercent,
+                  exitPrice
+                }
+              ]);
+              
+              // Обновляем маркер с состоянием завершения
+              return {
+                ...marker,
+                completionState: 'completing',
+                completionStartTime: currentTime,
+                result: {
+                  isWin,
+                  profit,
+                  profitPercent,
+                  exitPrice
+                }
+              };
+            }
+            
+            return marker;
+          }
+          
+          // Проверяем, нужно ли удалить завершенный маркер (после анимации)
+          if (marker.completionState === 'completing' && marker.completionStartTime) {
+            const elapsed = currentTime - marker.completionStartTime;
+            if (elapsed >= COMPLETION_ANIMATION_DURATION) {
+              return {
+                ...marker,
+                completionState: 'completed'
+              };
+            }
+          }
+          
+          return marker;
+        });
         
-        if (expiredMarkers.length > 0) {
-          console.log('[CandlesCanvas] Удаление истекших маркеров', {
-            expiredCount: expiredMarkers.length,
-            expiredMarkers: expiredMarkers.map(m => ({ tradeId: m.tradeId, expirationTime: m.expirationTime, currentTime }))
-          });
-          
-          const updated = prev.filter(m => 
-            !m.expirationTime || m.expirationTime > currentTime
-          );
-          
-          // Принудительно вызываем перерисовку
+        // Удаляем маркеры в состоянии 'completed'
+        const filtered = updated.filter(m => m.completionState !== 'completed');
+        
+        // Если были изменения, вызываем перерисовку
+        if (filtered.length !== prev.length || 
+            updated.some((m, i) => m.completionState !== prev[i]?.completionState)) {
           if (renderCandlesRef.current) {
             requestAnimationFrame(() => {
               if (renderCandlesRef.current) {
@@ -2251,16 +3130,14 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
               }
             });
           }
-          
-          return updated;
         }
         
-        return prev;
+        return filtered;
       });
     };
 
-    // Проверяем каждую секунду
-    const interval = setInterval(checkExpiredMarkers, 1000);
+    // Проверяем чаще для плавной анимации
+    const interval = setInterval(checkExpiredMarkers, 100);
     
     return () => clearInterval(interval);
   }, []);
@@ -2273,45 +3150,30 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     // Используем точный индекс (без округления) для интерполяции времени между свечами
     const relative = pixelX / rect.width;
     const exactIndex = viewport.fromIndex + relative * viewport.candlesPerScreen;
-    const clampedIndex = Math.max(0, Math.min(chartCandles.length - 1, exactIndex));
     
     // Вычисляем точное время через интерполяцию между свечами
+    // Разрешаем координаты за пределами массива свечей (как в CanvasChart.ts)
     let time: number;
-    const floorIndex = Math.floor(clampedIndex);
-    const ceilIndex = Math.min(chartCandles.length - 1, Math.ceil(clampedIndex));
+    const timeframeDuration = getTimeframeDurationMs(timeframe) ?? 60_000;
     
-    if (floorIndex === ceilIndex) {
-      // Если индекс точно совпадает с индексом свечи
-      time = chartCandles[floorIndex].openTime;
+    if (exactIndex < 0) {
+      // Координаты слева от первой свечи
+      const firstCandle = chartCandles[0];
+      const timeDiff = chartCandles.length > 1 ? chartCandles[1].openTime - firstCandle.openTime : timeframeDuration;
+      time = firstCandle.openTime + exactIndex * timeDiff;
+    } else if (exactIndex >= chartCandles.length - 1) {
+      // Координаты справа от последней свечи
+      const lastCandle = chartCandles[chartCandles.length - 1];
+      const timeDiff = chartCandles.length > 1 ? lastCandle.openTime - chartCandles[chartCandles.length - 2].openTime : timeframeDuration;
+      time = lastCandle.openTime + (exactIndex - (chartCandles.length - 1)) * timeDiff;
     } else {
-      // Интерполируем время между двумя свечами
+      // Координаты внутри массива свечей - интерполируем
+      const floorIndex = Math.floor(exactIndex);
+      const ceilIndex = Math.ceil(exactIndex);
       const floorCandle = chartCandles[floorIndex];
       const ceilCandle = chartCandles[ceilIndex];
-      const fraction = clampedIndex - floorIndex;
-      
-      // Вычисляем временной интервал между свечами
-      let timeInterval = 0;
-      if (chartCandles.length > 1) {
-        if (floorIndex < chartCandles.length - 1) {
-          timeInterval = chartCandles[floorIndex + 1].openTime - floorCandle.openTime;
-        } else if (floorIndex > 0) {
-          timeInterval = floorCandle.openTime - chartCandles[floorIndex - 1].openTime;
-        } else {
-          timeInterval = ceilCandle.openTime - floorCandle.openTime;
-        }
-      }
-      
-      // Если временной интервал не может быть определен из соседних свечей, используем разницу между floor и ceil
-      if (timeInterval === 0 && ceilIndex > floorIndex) {
-        timeInterval = ceilCandle.openTime - floorCandle.openTime;
-      }
-      
-      // Если все еще не можем определить, используем фиксированный интервал (1 минута как fallback)
-      if (timeInterval === 0) {
-        timeInterval = 60_000; // 1 минута по умолчанию
-      }
-      
-      time = floorCandle.openTime + fraction * timeInterval;
+      const ratio = exactIndex - floorIndex;
+      time = floorCandle.openTime + (ceilCandle.openTime - floorCandle.openTime) * ratio;
     }
     
     // Преобразуем Y (пиксель -> цена)
@@ -2349,15 +3211,31 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     }
     
     return { time, price };
-  }, [topPadding, ochlBottomPadding]);
+  }, [topPadding, ochlBottomPadding, timeframe]);
   
   const timePriceToPixel = useCallback((time: number, price: number, viewport: ViewportState, chartCandles: ChartCandle[], rect: DOMRect, debugId?: string): { x: number; y: number } | null => {
+    // Логируем для маркеров (когда debugId начинается с "marker-")
+    const isMarkerCall = debugId && debugId.startsWith('marker-');
+    
     if (chartCandles.length === 0) {
+      if (isMarkerCall) {
+        console.log('[CandlesCanvas] timePriceToPixel: ❌ Нет свечей', { debugId, time, price });
+      }
       return null;
     }
     
     // Проверяем, что viewport имеет валидные значения цены
     if (viewport.minPrice === undefined || viewport.maxPrice === undefined || viewport.maxPrice === viewport.minPrice) {
+      if (isMarkerCall) {
+        console.log('[CandlesCanvas] timePriceToPixel: ❌ Невалидный viewport', {
+          debugId,
+          time,
+          price,
+          minPrice: viewport.minPrice,
+          maxPrice: viewport.maxPrice,
+          isEqual: viewport.maxPrice === viewport.minPrice
+        });
+      }
       return null;
     }
     
@@ -2427,36 +3305,16 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     const ratio = (price - viewport.minPrice) / (viewport.maxPrice - viewport.minPrice);
     const y = (1 - ratio) * chartAreaHeight;
     
-    // Логируем при отрисовке сохранённых рисунков
-    if (debugId) {
-      console.log('[CandlesCanvas] timePriceToPixel', {
-        debugId,
-        inputTime: time,
-        inputPrice: price,
-        rect: { width: rect.width, height: rect.height },
-        topPadding,
-        ochlBottomPadding,
-        chartAreaHeight,
-        minPrice: viewport.minPrice,
-        maxPrice: viewport.maxPrice,
-        priceRange: viewport.maxPrice - viewport.minPrice,
-        ratio: ratio.toFixed(10), // Высокая точность для выявления проблем с округлением
-        outputPixelX: x,
-        outputPixelY: y,
-        finalYWithPadding: y + topPadding,
-        // Проверка обратного преобразования для отладки
-        reverseCheck: {
-          calculatedPrice: viewport.minPrice + ratio * (viewport.maxPrice - viewport.minPrice),
-          originalPrice: price,
-          priceDifference: Math.abs(viewport.minPrice + ratio * (viewport.maxPrice - viewport.minPrice) - price)
-        }
-      });
-    }
+    // Логирование отключено для производительности
     
     // Убираем проверку диапазона - рисунки должны отображаться всегда, даже если они вне видимой области
     // Canvas автоматически обрежет их при отрисовке
     
-    return { x, y };
+    const result = { x, y };
+    
+    // Логирование для маркеров отключено для производительности
+    
+    return result;
   }, [topPadding, ochlBottomPadding]);
   
   // Вспомогательная функция для вычисления расстояния от точки до отрезка
@@ -2581,6 +3439,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     chartCandles: ChartCandle[],
     rect: DOMRect
   ): boolean => {
+    // ВАЖНО: Используем актуальный viewport для вычисления позиции маркера
+    // При зуме viewport обновляется, поэтому все вычисления должны использовать актуальные значения
     const markerPixel = timePriceToPixel(marker.time, marker.price, viewport, chartCandles, rect);
     if (!markerPixel) return false;
 
@@ -2619,23 +3479,11 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     const labelPaddingX = 10;
     const labelHeight = 24;
     const labelWidth = labelMetrics.width + labelPaddingX * 2;
-    const offsetFromLabel = 8;
+    const offsetFromHandle = 8; // Отступ от кружка до плашки
     const handleSize = 6;
 
-    const labelX = markerX - labelWidth - offsetFromLabel;
-    const labelY = markerY;
-    const labelRectY = labelY - labelHeight / 2;
-
-    // Проверяем попадание в метку (прямоугольник)
-    // Используем adjustedPointY, так как координаты маркера в системе области рисования
-    // Добавляем небольшой запас для удобства клика
-    const labelClickPadding = 5;
-    if (point.x >= labelX - labelClickPadding && point.x <= labelX + labelWidth + labelClickPadding &&
-        adjustedPointY >= labelRectY - labelClickPadding && adjustedPointY <= labelRectY + labelHeight + labelClickPadding) {
-      return true;
-    }
-
-    // Вычисляем позицию handle (кружка)
+    // Вычисляем позицию handle (кружка) - как в функции отрисовки
+    // ВАЖНО: Используем актуальный rect.width и viewport для правильного вычисления при изменении зума
     let lineEndX = rect.width;
     if (marker.expirationTime) {
       let expirationExactIndex: number;
@@ -2682,32 +3530,59 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         }
       }
 
+      // ВАЖНО: Используем актуальный viewport.fromIndex и viewport.candlesPerScreen для правильного вычисления при зуме
       const expirationRelative = (expirationExactIndex - viewport.fromIndex) / viewport.candlesPerScreen;
+      // ВАЖНО: Используем актуальный rect.width для правильного вычисления при изменении размера контейнера
       lineEndX = expirationRelative * rect.width;
-      lineEndX = Math.max(labelX + labelWidth + offsetFromLabel, Math.min(rect.width, lineEndX));
+      lineEndX = Math.max(markerX, Math.min(rect.width, lineEndX));
     }
 
+    // Позиция кружка (handle) - место завершения сделки
     const handleX = lineEndX;
-    const handleY = labelY;
+    // Используем скорректированную позицию handle из animated_marker_positions_ref, если она есть
+    // Это необходимо, так как маркеры визуально отталкиваются друг от друга при близком расположении
+    const handleKey = `${marker.id}_handle`;
+    const adjustedHandleY = animated_marker_positions_ref.current.get(handleKey);
+    const handleY = adjustedHandleY !== undefined ? adjustedHandleY : markerY;
 
-    // Проверяем попадание в линию между меткой и handle
-    const lineStartX = labelX + labelWidth + offsetFromLabel;
-    const lineStartY = labelY;
+    // Плашка размещается СПРАВА от кружка (как в функции отрисовки)
+    const labelX = handleX + offsetFromHandle;
+    // Используем скорректированную позицию label из animated_marker_positions_ref, если она есть
+    // Это необходимо, так как маркеры визуально отталкиваются друг от друга при близком расположении
+    const adjustedLabelY = animated_marker_positions_ref.current.get(marker.id);
+    const labelY = adjustedLabelY !== undefined ? adjustedLabelY : markerY;
+    const labelRectY = labelY - labelHeight / 2;
+
+    const lineStartX = markerX;
+    const lineStartY = markerY;
+
+    // Проверяем попадание в метку (прямоугольник)
+    // Используем adjustedPointY, так как координаты маркера в системе области рисования
+    // Добавляем небольшой запас для удобства клика
+    const labelClickPadding = 5;
+    const labelCheckX = point.x >= labelX - labelClickPadding && point.x <= labelX + labelWidth + labelClickPadding;
+    const labelCheckY = adjustedPointY >= labelRectY - labelClickPadding && adjustedPointY <= labelRectY + labelHeight + labelClickPadding;
+    if (labelCheckX && labelCheckY) {
+      return true;
+    }
+
+    // Проверяем попадание в линию между точкой маркера и handle
     if (point.x >= Math.min(lineStartX, handleX) && point.x <= Math.max(lineStartX, handleX)) {
       const lineClickTolerance = 8; // Допустимое расстояние от линии для клика
       const distanceToLine = Math.abs(adjustedPointY - lineStartY);
       if (distanceToLine <= lineClickTolerance) {
-        console.log('[CandlesCanvas] isPointOnMarker: попадание в линию', {
-          markerId: marker.id,
-          pointX: point.x,
-          pointY: point.y,
-          adjustedPointY,
-          lineStartX,
-          lineStartY,
-          handleX,
-          distanceToLine,
-          lineClickTolerance
-        });
+        return true;
+      }
+    }
+
+    // Проверяем попадание в линию между handle и плашкой
+    const lineFromHandleToLabelStartX = handleX;
+    const lineFromHandleToLabelEndX = labelX;
+    if (point.x >= Math.min(lineFromHandleToLabelStartX, lineFromHandleToLabelEndX) && 
+        point.x <= Math.max(lineFromHandleToLabelStartX, lineFromHandleToLabelEndX)) {
+      const lineClickTolerance = 8;
+      const distanceToLine = Math.abs(adjustedPointY - handleY);
+      if (distanceToLine <= lineClickTolerance) {
         return true;
       }
     }
@@ -2719,59 +3594,10 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     const distance = Math.sqrt(dx * dx + dy * dy);
     const isInHandle = distance <= handleSize + 10; // Увеличен запас для удобства клика
     if (isInHandle) {
-      console.log('[CandlesCanvas] isPointOnMarker: попадание в handle', {
-        markerId: marker.id,
-        pointX: point.x,
-        pointY: point.y,
-        adjustedPointY,
-        handleX,
-        handleY,
-        distance,
-        handleSize: handleSize + 10
-      });
       return true;
     }
 
-    // Логируем детальную информацию о проверке попадания (только если близко)
-    const minDistance = Math.min(
-      Math.abs(point.x - labelX),
-      Math.abs(point.x - (labelX + labelWidth)),
-      Math.abs(adjustedPointY - labelRectY),
-      Math.abs(adjustedPointY - (labelRectY + labelHeight)),
-      distance
-    );
-    if (minDistance < 50) {
-      const labelCheckX = point.x >= labelX - labelClickPadding && point.x <= labelX + labelWidth + labelClickPadding;
-      const labelCheckY = adjustedPointY >= labelRectY - labelClickPadding && adjustedPointY <= labelRectY + labelHeight + labelClickPadding;
-      
-      console.log('[CandlesCanvas] isPointOnMarker: 🔍 Детальная проверка попадания', {
-        markerId: marker.id,
-        '🖱️ Точка': { x: point.x.toFixed(2), y: point.y.toFixed(2), adjustedY: adjustedPointY.toFixed(2), topPadding },
-        '📍 Маркер позиция': { x: markerPixel.x.toFixed(2), y: markerPixel.y.toFixed(2) },
-        '📦 Label область': {
-          labelX: labelX.toFixed(2),
-          labelRectY: labelRectY.toFixed(2),
-          labelWidth: labelWidth.toFixed(2),
-          labelHeight: labelHeight.toFixed(2),
-          padding: labelClickPadding,
-          minX: (labelX - labelClickPadding).toFixed(2),
-          maxX: (labelX + labelWidth + labelClickPadding).toFixed(2),
-          minY: (labelRectY - labelClickPadding).toFixed(2),
-          maxY: (labelRectY + labelHeight + labelClickPadding).toFixed(2),
-          '❌ X проверка': `${point.x.toFixed(2)} >= ${(labelX - labelClickPadding).toFixed(2)} && ${point.x.toFixed(2)} <= ${(labelX + labelWidth + labelClickPadding).toFixed(2)} = ${labelCheckX}`,
-          '❌ Y проверка': `${adjustedPointY.toFixed(2)} >= ${(labelRectY - labelClickPadding).toFixed(2)} && ${adjustedPointY.toFixed(2)} <= ${(labelRectY + labelHeight + labelClickPadding).toFixed(2)} = ${labelCheckY}`,
-          '✅ Попадает в Label': labelCheckX && labelCheckY
-        },
-        '🎯 Handle': { 
-          handleX: handleX.toFixed(2), 
-          handleY: handleY.toFixed(2), 
-          distance: distance.toFixed(2), 
-          radius: (handleSize + 10).toFixed(2), 
-          isInHandle 
-        },
-        '📏 Минимальное расстояние до маркера': minDistance.toFixed(2)
-      });
-    }
+    // Детальное логирование отключено для производительности
 
     return false;
   }, [timePriceToPixel, formatPrice, formatRemainingTime, formatTimeForTicks, timeframe, topPadding]);
@@ -2780,7 +3606,10 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
-    if (!canvas || !container) return;
+    if (!canvas || !container) {
+      console.log('[CandlesCanvas] handleMouseMove: ранний выход - нет canvas или container');
+      return;
+    }
 
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -2813,6 +3642,9 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         const topPadding = 50;
         const eraserX = x;
         const eraserY = y - topPadding; // Координата в области рисования
+        
+        // Обновляем позицию ластика для отрисовки (в абсолютных координатах canvas)
+        eraserPositionRef.current = { x, y };
         
         // Проверяем каждый рисунок и удаляем те, которые попадают в радиус ластика
         const linesToRemove: string[] = [];
@@ -2860,6 +3692,9 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         } else {
         }
       } else {
+        // Обновляем позицию ластика для отрисовки (даже когда не зажата кнопка)
+        eraserPositionRef.current = { x, y };
+        scheduleRender();
       }
       
       // Устанавливаем курсор для ластика
@@ -3105,6 +3940,40 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
           }
         }
         
+        // Обновляем перекрестие во время панорамирования, чтобы оно следовало за мышью
+        const candlesToRender = animatedCandlesRef.current;
+        if (candlesToRender.length > 0) {
+          const viewportWithPrices = calculateViewportWithPrices(clampedViewport, chartCandles);
+          if (viewportWithPrices) {
+            const pixelToIndex = (pixelX: number): number => {
+              const relative = pixelX / rect.width;
+              return clampedViewport.fromIndex + relative * clampedViewport.candlesPerScreen;
+            };
+
+            const index = pixelToIndex(x);
+            const candleIndex = Math.round(index);
+            
+            // Всегда обновляем позицию мыши (hoverX, hoverY), даже если candleIndex вне границ
+            setHoverX(x);
+            setHoverY(y);
+            
+            if (candleIndex >= 0 && candleIndex < chartCandles.length) {
+              const candle = chartCandles[candleIndex];
+              setHoverIndex(candleIndex);
+              setHoverCandle(candle);
+            } else if (chartCandles.length > 0) {
+              // Если индекс вне границ, используем последнюю свечу для отображения цены
+              // но сохраняем hoverIndex как null, чтобы перекрестие все равно отображалось
+              const lastCandle = chartCandles[chartCandles.length - 1];
+              setHoverIndex(null);
+              setHoverCandle(lastCandle); // Используем последнюю свечу для получения цены
+            } else {
+              setHoverIndex(null);
+              setHoverCandle(null);
+            }
+          }
+        }
+        
         scheduleRender();
       }
       return;
@@ -3118,68 +3987,58 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     const currentViewport = viewportRef.current;
     if (!currentViewport) return;
     
-    const viewportWithPrices: ViewportState = {
-      centerIndex: currentViewport.centerIndex,
-      fromIndex: currentViewport.fromIndex,
-      toIndex: currentViewport.toIndex,
-      candlesPerScreen: currentViewport.candlesPerScreen,
-      minPrice: currentViewport.minPrice,
-      maxPrice: currentViewport.maxPrice,
-    };
+    // Вычисляем viewport с правильными ценами (та же логика, что в handleMouseDown)
+    const viewportWithPrices = calculateViewportWithPrices(currentViewport, chartCandles);
+    if (!viewportWithPrices) return;
     
-    // Проверяем наведение на маркеры ставок (только если не в режиме рисования)
+    // Проверяем наведение на кнопки удаления зафиксированных линий (ПЕРЕД другими проверками)
+    let hoveredButton = false;
+    let hoveringCloseButton = false;
+    if (fixed_price_button_rects_ref.current.size > 0) {
+      for (const buttonRect of fixed_price_button_rects_ref.current.values()) {
+        if (
+          x >= buttonRect.x &&
+          x <= buttonRect.x + buttonRect.width &&
+          y >= buttonRect.y &&
+          y <= buttonRect.y + buttonRect.height
+        ) {
+          hoveredButton = true;
+          hoveringCloseButton = true;
+          if (canvas) {
+            canvas.style.cursor = 'pointer';
+          }
+          break;
+        }
+      }
+    }
+    
+    // Обновляем состояние наведения на кнопку закрытия
+    setIsHoveringCloseButton(hoveringCloseButton);
+    
+    // Проверяем наведение на кнопку фиксации цены
+    if (!hoveredButton && bell_button_rect_ref.current) {
+      const buttonRect = bell_button_rect_ref.current;
+      if (
+        x >= buttonRect.x &&
+        x <= buttonRect.x + buttonRect.width &&
+        y >= buttonRect.y &&
+        y <= buttonRect.y + buttonRect.height
+      ) {
+        hoveredButton = true;
+        if (canvas) {
+          canvas.style.cursor = 'pointer';
+        }
+      }
+    }
+    
+    // Проверяем наведение на маркеры ставок (только если не в режиме рисования и не на кнопке)
     let hoveredMarker = false;
     let currentHoveredMarkerId: string | null = null;
-    if (!drawingMode && betMarkers.length > 0) {
-      // Логируем текущую позицию курсора
-      console.log('[CandlesCanvas] 🖱️ Mouse position:', {
-        x: x.toFixed(2),
-        y: y.toFixed(2),
-        topPadding,
-        adjustedY: (y - topPadding).toFixed(2),
-        canvasRect: {
-          width: rect.width,
-          height: rect.height
-        }
-      });
-      
-      // Получаем позиции всех маркеров
-      const markerPositions = betMarkers.map(marker => {
-        const markerPixel = timePriceToPixel(marker.time, marker.price, viewportWithPrices, chartCandles, rect);
-        const distance = markerPixel ? Math.sqrt(Math.pow(x - markerPixel.x, 2) + Math.pow(y - markerPixel.y, 2)) : Infinity;
-        return {
-          id: marker.id,
-          position: markerPixel ? { x: markerPixel.x.toFixed(2), y: markerPixel.y.toFixed(2) } : null,
-          distance: distance < Infinity ? parseFloat(distance.toFixed(2)) : Infinity
-        };
-      });
-      
-      // Находим минимальное расстояние
-      const minDistance = Math.min(...markerPositions.map(m => m.distance));
-      
-      // Логируем информацию о маркерах когда мышь близко (в радиусе 300 пикселей)
-      if (minDistance < 300 && minDistance !== Infinity) {
-        console.log('[CandlesCanvas] 🖱️ Мышь близко к маркерам', {
-          '🖱️ Мышь': { x: x.toFixed(2), y: y.toFixed(2) },
-          '📍 Маркеры': markerPositions.filter(m => m.distance < 300),
-          '📏 Минимальное расстояние': minDistance.toFixed(2)
-        });
-      }
-      
+    
+    if (!drawingMode && !hoveredButton && betMarkers.length > 0) {
       for (let i = betMarkers.length - 1; i >= 0; i--) {
         const marker = betMarkers[i];
         const isOnMarker = isPointOnMarker({ x, y }, marker, viewportWithPrices, chartCandles, rect);
-        
-        // Логируем результат проверки для каждого маркера, если мышь близко
-        if (markerPositions[i].distance < 300 && markerPositions[i].distance !== Infinity) {
-          console.log('[CandlesCanvas] 🔍 Проверка попадания на маркер', {
-            markerId: marker.id,
-            '🖱️ Мышь': { x: x.toFixed(2), y: y.toFixed(2) },
-            '📍 Маркер позиция': markerPositions[i].position,
-            '📏 Расстояние': markerPositions[i].distance.toFixed(2),
-            '✅ Попадает': isOnMarker
-          });
-        }
         
         if (isOnMarker) {
           hoveredMarker = true;
@@ -3187,19 +4046,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
           if (canvas) {
             canvas.style.cursor = 'pointer';
           }
-          // Логируем при наведении на маркер (только один раз при начале наведения)
-          if (previousHoveredMarkerIdRef.current !== marker.id) {
-            const markerPixel = timePriceToPixel(marker.time, marker.price, viewportWithPrices, chartCandles, rect);
-            console.log('[CandlesCanvas] ✅✅✅ HOVERING OVER MARKER! ✅✅✅', {
-              id: marker.id,
-              tradeId: marker.tradeId,
-              direction: marker.direction,
-              price: marker.price,
-              '🖱️ Мышь': { x: x.toFixed(2), y: y.toFixed(2) },
-              '📍 Маркер позиция': markerPixel ? { x: markerPixel.x.toFixed(2), y: markerPixel.y.toFixed(2) } : null
-            });
-            previousHoveredMarkerIdRef.current = marker.id;
-          }
+          previousHoveredMarkerIdRef.current = marker.id;
           break;
         }
       }
@@ -3210,8 +4057,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       previousHoveredMarkerIdRef.current = null;
     }
     
-    // Проверяем наведение на сохраненные рисунки (только если не в режиме рисования и не на маркере)
-    if (!drawingMode && !hoveredMarker && savedDrawings.length > 0) {
+    // Проверяем наведение на сохраненные рисунки (только если не в режиме рисования и не на маркере и не на кнопке)
+    if (!drawingMode && !hoveredMarker && !hoveredButton && savedDrawings.length > 0) {
       // Проверяем наведение на рисунки (в обратном порядке, чтобы выбрать верхний)
       let hoveredDrawing = false;
       for (let i = savedDrawings.length - 1; i >= 0; i--) {
@@ -3225,10 +4072,10 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         }
       }
       
-      if (!hoveredDrawing && canvas) {
+      if (!hoveredDrawing && canvas && !hoveredButton) {
         canvas.style.cursor = 'crosshair';
       }
-    } else if (!drawingMode && !hoveredMarker && canvas) {
+    } else if (!drawingMode && !hoveredMarker && !hoveredButton && canvas) {
       canvas.style.cursor = 'crosshair';
     }
 
@@ -3241,19 +4088,47 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     const index = pixelToIndex(x);
     const candleIndex = Math.round(index);
     
-    if (candleIndex >= 0 && candleIndex < chartCandles.length) {
-      const candle = chartCandles[candleIndex];
-      setHoverIndex(candleIndex);
-      setHoverCandle(candle);
-      setHoverX(x);
-      setHoverY(y);
-    } else {
-      setHoverIndex(null);
-      setHoverCandle(null);
-      setHoverX(null);
-      setHoverY(null);
+    // Обновляем перекрестие только если позиция изменилась
+    const shouldUpdate = 
+      (hoverIndex !== candleIndex) ||
+      (hoverX === null || Math.abs(hoverX - x) > 0.5) ||
+      (hoverY === null || Math.abs(hoverY - y) > 0.5);
+    
+    if (shouldUpdate) {
+      // Проверяем, находится ли мышь в пределах canvas
+      const isWithinCanvas = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
+      
+      if (isWithinCanvas) {
+        // Всегда обновляем позицию мыши, даже если candleIndex вне границ
+        setHoverX(x);
+        setHoverY(y);
+        
+        if (candleIndex >= 0 && candleIndex < chartCandles.length) {
+          // Если индекс валиден, используем соответствующую свечу
+          const candle = chartCandles[candleIndex];
+          setHoverIndex(candleIndex);
+          setHoverCandle(candle);
+        } else if (chartCandles.length > 0) {
+          // Если индекс вне границ, используем последнюю свечу для отображения цены
+          // но сохраняем hoverIndex как null, чтобы перекрестие все равно отображалось
+          const lastCandle = chartCandles[chartCandles.length - 1];
+          setHoverIndex(null);
+          setHoverCandle(lastCandle); // Используем последнюю свечу для получения цены
+        } else {
+          setHoverIndex(null);
+          setHoverCandle(null);
+        }
+      } else {
+        // Мышь вне canvas - сбрасываем все
+        setHoverIndex(null);
+        setHoverCandle(null);
+        setHoverX(null);
+        setHoverY(null);
+      }
+      // Немедленно вызываем перерисовку для плавного следования перекрестия за мышью
+      scheduleRender();
     }
-  }, [convertCandles, scheduleRender, checkDrawingModeActive, drawingMode, savedDrawings, selectedDrawingIds, isPointOnLine, betMarkers, isPointOnMarker, topPadding, selectionBox, eraserRadius, distanceToLineSegment, timePriceToPixel, calculateViewportWithPrices]);
+  }, [convertCandles, scheduleRender, checkDrawingModeActive, drawingMode, savedDrawings, selectedDrawingIds, isPointOnLine, betMarkers, isPointOnMarker, topPadding, selectionBox, eraserRadius, distanceToLineSegment, timePriceToPixel, calculateViewportWithPrices, hoverIndex, hoverX, hoverY]);
 
   // Закрываем контекстное меню при клике
   useEffect(() => {
@@ -3281,6 +4156,104 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     
     // ВАЖНО: Проверяем режим рисования через DOM
     const drawingCheck = checkDrawingModeActive();
+    
+    // Проверяем клик на кнопки удаления зафиксированных линий (ПЕРЕД другими проверками)
+    // ВАЖНО: Проверяем в обратном порядке, чтобы кнопки, которые рисуются позже (ближе к курсору), обрабатывались первыми
+    if (!drawingCheck.isActive && fixed_price_button_rects_ref.current.size > 0) {
+      const container = containerRef.current;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Создаем массив кнопок и сортируем по Y координате (сверху вниз)
+        const buttons = Array.from(fixed_price_button_rects_ref.current.entries());
+        buttons.sort((a, b) => a[1].y - b[1].y);
+        
+        // Проверяем клик на кнопки удаления (снизу вверх, чтобы ближайшая к курсору обрабатывалась первой)
+        for (let i = buttons.length - 1; i >= 0; i--) {
+          const [price, buttonRect] = buttons[i];
+          // Увеличиваем область клика для лучшей доступности
+          const clickPadding = 4;
+          if (
+            x >= buttonRect.x - clickPadding &&
+            x <= buttonRect.x + buttonRect.width + clickPadding &&
+            y >= buttonRect.y - clickPadding &&
+            y <= buttonRect.y + buttonRect.height + clickPadding
+          ) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            setFixedPrices(prev => {
+              const newSet = new Set(prev);
+              // Ищем зафиксированную цену с учетом погрешности
+              let foundPrice: number | null = null;
+              const epsilon = 0.000001; // Порог сравнения для цен
+              for (const fixedPrice of newSet) {
+                if (Math.abs(fixedPrice - price) < epsilon) {
+                  foundPrice = fixedPrice;
+                  break;
+                }
+              }
+              
+              if (foundPrice !== null) {
+                newSet.delete(foundPrice);
+              }
+              return newSet;
+            });
+            
+            scheduleRender();
+            return;
+          }
+        }
+      }
+    }
+    
+    // Проверяем клик на колокольчик/крестик для фиксации цены (только если не кликнули на кнопку закрытия)
+    if (!drawingCheck.isActive && bell_button_rect_ref.current) {
+      const container = containerRef.current;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const buttonRect = bell_button_rect_ref.current;
+        if (
+          x >= buttonRect.x &&
+          x <= buttonRect.x + buttonRect.width &&
+          y >= buttonRect.y &&
+          y <= buttonRect.y + buttonRect.height
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          setFixedPrices(prev => {
+            const newSet = new Set(prev);
+            // Ищем зафиксированную цену с учетом погрешности
+            let foundPrice: number | null = null;
+            const epsilon = 0.000001; // Порог сравнения для цен
+            for (const fixedPrice of newSet) {
+              if (Math.abs(fixedPrice - buttonRect.price) < epsilon) {
+                foundPrice = fixedPrice;
+                break;
+              }
+            }
+            
+            if (foundPrice !== null) {
+              // Если цена уже зафиксирована, удаляем её
+              newSet.delete(foundPrice);
+            } else {
+              // Если цена не зафиксирована, добавляем её
+              newSet.add(buttonRect.price);
+            }
+            return newSet;
+          });
+          
+          scheduleRender();
+          return;
+        }
+      }
+    }
     
     // ВАЖНО: Для ластика не начинаем рисование, а позволяем handleMouseMove обрабатывать удаление
     if (drawingCheck.isActive && drawingCheck.drawingMode === 'eraser') {
@@ -3332,6 +4305,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       const canvas = canvasRef.current;
       const container = containerRef.current;
       if (canvas && container) {
+        // ВАЖНО: Получаем актуальный rect при каждом клике, чтобы учесть изменения размера контейнера
         const rect = container.getBoundingClientRect();
         const topPadding = 50;
         const x = e.clientX - rect.left;
@@ -3340,6 +4314,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         const candlesToRender = animatedCandlesRef.current;
         if (candlesToRender.length > 0) {
           const chartCandles = convertCandles(candlesToRender);
+          // ВАЖНО: Получаем актуальный viewport при каждом клике, чтобы учесть изменения зума
           const currentViewport = viewportRef.current;
           if (currentViewport) {
             const viewportWithPrices = calculateViewportWithPrices(currentViewport, chartCandles);
@@ -3347,6 +4322,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
               // Ищем маркер, на который кликнули (проверяем в обратном порядке, чтобы выбрать верхний)
               for (let i = betMarkers.length - 1; i >= 0; i--) {
                 const marker = betMarkers[i];
+                // ВАЖНО: Передаем актуальный rect и viewport для правильного вычисления области клика
                 const isOnMarker = isPointOnMarker({ x, y }, marker, viewportWithPrices, chartCandles, rect);
                 if (isOnMarker) {
                   e.preventDefault();
@@ -3697,7 +4673,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         startPoint: finalStartTimePrice,
         endPoint: finalEndTimePrice,
         path: pathTimePrice,
-        color: '#ffa500',
+        color: drawingColor,
+        line_width: drawingLineWidth,
       };
       
       console.log('[CandlesCanvas] handleMouseUp: сохранение рисунка', {
@@ -3860,7 +4837,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     if (canvas) {
       canvas.style.cursor = 'crosshair';
     }
-  }, [scheduleRender, drawingMode, savedDrawings, selectedDrawingIds, isPointOnLine, smoothPath, checkDrawingModeActive, convertCandles, pixelToTimePrice, calculateViewportWithPrices, hoverCandle, betMarkers, isPointOnMarker, selectionBox, timePriceToPixel]);
+  }, [scheduleRender, drawingMode, savedDrawings, selectedDrawingIds, isPointOnLine, smoothPath, checkDrawingModeActive, convertCandles, calculateViewportWithPrices, hoverCandle, betMarkers, isPointOnMarker, selectionBox, timePriceToPixel, drawingColor, drawingLineWidth]);
 
   const handleMouseLeave = useCallback(() => {
     isDraggingRef.current = false;
@@ -3869,6 +4846,12 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
     // Сбрасываем флаг нажатия мыши для ластика
     if (isEraserMouseDownRef.current) {
       isEraserMouseDownRef.current = false;
+    }
+    
+    // Сбрасываем позицию ластика при выходе мыши
+    if (eraserPositionRef.current) {
+      eraserPositionRef.current = null;
+      scheduleRender();
     }
     
     setHoverIndex(null);
@@ -3926,9 +4909,11 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
       }
     }
     
-    // Если кликнули не на рисунок, все равно показываем меню в месте клика
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
-  }, [checkDrawingModeActive, savedDrawings, isPointOnLine, convertCandles, calculateViewportWithPrices, scheduleRender]);
+    // Если кликнули не на рисунок, показываем меню только если есть выбранные элементы
+    if (selectedDrawingIds.size > 0) {
+      setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    }
+  }, [checkDrawingModeActive, savedDrawings, isPointOnLine, convertCandles, calculateViewportWithPrices, scheduleRender, selectedDrawingIds]);
 
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -4021,12 +5006,12 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
         onMouseLeave={handleMouseLeave}
         onContextMenu={handleContextMenu}
       />
-      {contextMenuPosition && (
+      {contextMenuPosition && selectedDrawingIds.size > 0 && (
         <div
           style={{
             position: 'fixed',
-            left: contextMenuPosition.x,
-            top: contextMenuPosition.y,
+            left: contextMenuPosition.x + 5,
+            top: contextMenuPosition.y + 5,
             backgroundColor: '#1a1a1a',
             border: '1px solid #333',
             borderRadius: '4px',
@@ -4037,8 +5022,7 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {selectedDrawingIds.size > 0 && (
-            <div
+          <div
               style={{
                 padding: '8px 16px',
                 cursor: 'pointer',
@@ -4059,9 +5043,10 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
                 scheduleRender();
               }}
             >
-              {selectedDrawingIds.size === 1 ? 'Удалить' : `Удалить (${selectedDrawingIds.size})`}
+              {selectedDrawingIds.size === 1 
+                ? t('trading.deleteDrawing') 
+                : t('trading.deleteDrawings', { count: selectedDrawingIds.size.toString() })}
             </div>
-          )}
         </div>
       )}
       {/* Сайдбар с информацией о ставке */}
@@ -4081,6 +5066,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
             onClick={() => {
               setIsMarkerSidebarOpen(false);
               setSelectedMarker(null);
+              setSelectedTrade(null);
+              setTradeCandles([]);
             }}
           />
           <div
@@ -4117,6 +5104,8 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
                 onClick={() => {
                   setIsMarkerSidebarOpen(false);
                   setSelectedMarker(null);
+                  setSelectedTrade(null);
+                  setTradeCandles([]);
                 }}
                 style={{
                   background: 'transparent',
@@ -4209,50 +5198,93 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
                     </div>
                   </div>
                   {(() => {
-                    const trade = activeTrades.find(t => t.id === selectedMarker.tradeId);
+                    const trade = activeTrades.find(t => t.id === selectedMarker.tradeId) || selectedTrade;
                     if (trade) {
+                      // Calculate end amount
+                      let endAmount: number | null = null;
+                      const tradeAmount = trade.amount;
+                      const tradeEntryPrice = 'entryPrice' in trade ? trade.entryPrice : trade.entry_price;
+                      const tradeCurrentPrice = 'currentPrice' in trade ? trade.currentPrice : trade.current_price;
+                      const tradeProfitPercentage = 'profitPercentage' in trade ? trade.profitPercentage : trade.profit_percentage;
+                      const tradeExpirationTime = 'expirationTime' in trade ? trade.expirationTime : trade.expiration_time;
+                      
+                      if (tradeProfitPercentage !== undefined && tradeProfitPercentage !== null) {
+                        // Use profit percentage if available
+                        endAmount = tradeAmount + (tradeAmount * tradeProfitPercentage / 100);
+                      } else if (tradeCurrentPrice !== null && tradeCurrentPrice !== undefined && tradeEntryPrice) {
+                        // Calculate based on price difference
+                        const tradeDirection = trade.direction;
+                        const priceDiff = tradeDirection === 'buy' 
+                          ? tradeCurrentPrice - tradeEntryPrice 
+                          : tradeEntryPrice - tradeCurrentPrice;
+                        const profitPercent = tradeEntryPrice > 0 ? (priceDiff / tradeEntryPrice) * 100 : 0;
+                        endAmount = tradeAmount + (tradeAmount * profitPercent / 100);
+                      }
+                      
                       return (
                         <>
                           <div style={{ marginBottom: '20px' }}>
                             <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.markerInfo.amount')}</div>
                             <div style={{ color: '#fff', fontSize: '13px' }}>
-                              {formatPrice(trade.amount)}
+                              {formatPrice(tradeAmount)}
                             </div>
                           </div>
                           <div style={{ marginBottom: '20px' }}>
-                            <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.entryPrice')}</div>
-                            <div style={{ color: '#fff', fontSize: '13px' }}>
-                              {formatPrice(trade.entryPrice)}
+                            <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.markerInfo.startAmount')}</div>
+                            <div style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>
+                              {formatPrice(tradeAmount)}
                             </div>
                           </div>
-                          {trade.currentPrice !== null && trade.currentPrice !== undefined && (
+                          {endAmount !== null && (
                             <div style={{ marginBottom: '20px' }}>
-                              <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.currentPrice')}</div>
-                              <div style={{ color: '#fff', fontSize: '13px' }}>
-                                {formatPrice(trade.currentPrice)}
-                              </div>
-                            </div>
-                          )}
-                          {trade.profitPercentage !== undefined && trade.profitPercentage !== null && (
-                            <div style={{ marginBottom: '20px' }}>
-                              <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.profit')} (%)</div>
+                              <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.markerInfo.endAmount')}</div>
                               <div
                                 style={{
-                                  color: trade.profitPercentage >= 0 ? '#32AC41' : '#F7525F',
+                                  color: endAmount >= tradeAmount ? '#32AC41' : '#F7525F',
                                   fontSize: '13px',
                                   fontWeight: 600,
                                 }}
                               >
-                                {formatPercent(trade.profitPercentage)}
+                                {formatPrice(endAmount)}
                               </div>
                             </div>
                           )}
                           <div style={{ marginBottom: '20px' }}>
-                            <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.markerInfo.tradeEndTime')}</div>
+                            <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.entryPrice')}</div>
                             <div style={{ color: '#fff', fontSize: '13px' }}>
-                              {formatDateTimeUTC(trade.expirationTime)}
+                              {formatPrice(tradeEntryPrice)}
                             </div>
                           </div>
+                          {tradeCurrentPrice !== null && tradeCurrentPrice !== undefined && (
+                            <div style={{ marginBottom: '20px' }}>
+                              <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.currentPrice')}</div>
+                              <div style={{ color: '#fff', fontSize: '13px' }}>
+                                {formatPrice(tradeCurrentPrice)}
+                              </div>
+                            </div>
+                          )}
+                          {tradeProfitPercentage !== undefined && tradeProfitPercentage !== null && (
+                            <div style={{ marginBottom: '20px' }}>
+                              <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.profit')} (%)</div>
+                              <div
+                                style={{
+                                  color: tradeProfitPercentage >= 0 ? '#32AC41' : '#F7525F',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {formatPercent(tradeProfitPercentage)}
+                              </div>
+                            </div>
+                          )}
+                          {tradeExpirationTime && (
+                            <div style={{ marginBottom: '20px' }}>
+                              <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{t('trading.markerInfo.tradeEndTime')}</div>
+                              <div style={{ color: '#fff', fontSize: '13px' }}>
+                                {formatDateTimeUTC(tradeExpirationTime)}
+                              </div>
+                            </div>
+                          )}
                         </>
                       );
                     }
@@ -4267,6 +5299,34 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
                   {formatDateTimeUTC(selectedMarker.createdAt)}
                 </div>
               </div>
+              
+              {/* График для завершенных сделок */}
+              {selectedTrade && selectedTrade.completed_at && (
+                <div style={{ marginTop: '30px', borderTop: '1px solid #333', paddingTop: '20px' }}>
+                  <h3 style={{ color: '#fff', fontSize: '14px', fontWeight: 600, marginBottom: '15px' }}>
+                    График цены
+                  </h3>
+                  {loadingCandles ? (
+                    <div style={{ color: '#888', fontSize: '12px', textAlign: 'center', padding: '40px 0' }}>
+                      Загрузка данных...
+                    </div>
+                  ) : tradeCandles.length === 0 ? (
+                    <div style={{ color: '#888', fontSize: '12px', textAlign: 'center', padding: '40px 0' }}>
+                      Нет данных для отображения
+                    </div>
+                  ) : (
+                    <canvas 
+                      ref={tradeChartCanvasRef}
+                      style={{
+                        width: '100%',
+                        height: '250px',
+                        backgroundColor: '#0f0f0f',
+                        borderRadius: '4px',
+                      }}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <style>{`
@@ -4289,9 +5349,46 @@ const CandlesCanvas = forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(({ can
           `}</style>
         </>
       )}
+      
+      {/* Контейнер для уведомлений о завершении маркеров */}
+      {completionNotifications.length > 0 && (
+        <div className="marker-completion-notifications-container">
+          {completionNotifications.map(notification => (
+            <MarkerCompletionNotificationComponent
+              key={notification.id}
+              notification={{
+                ...notification,
+                currency: userProfile?.currency || 'USD'
+              }}
+              onClose={(id) => {
+                setCompletionNotifications(prev => prev.filter(n => n.id !== id));
+              }}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Уведомления о достижении цены - снизу справа на графике */}
+      {priceReachedNotifications.length > 0 && (
+        <div className="price-reached-notifications-container">
+          {priceReachedNotifications.map(notification => (
+            <PriceReachedNotification
+              key={notification.id}
+              id={notification.id}
+              price={notification.price}
+              currencyPair={notification.currencyPair}
+              onClose={(id) => {
+                setPriceReachedNotifications(prev => prev.filter(n => n.id !== id));
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
-});
+};
+
+const CandlesCanvas = React.forwardRef<CandlesCanvasHandle, CandlesCanvasProps>(CandlesCanvasComponent);
 
 CandlesCanvas.displayName = 'CandlesCanvas';
 

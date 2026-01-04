@@ -11,6 +11,8 @@ import { fetchProfile } from "@src/entities/user/model/slice";
 import { fetchCurrencyCategories } from "@src/entities/currency/model/slice";
 import { selectCurrencyCategories, selectCurrencyCategoriesLoading, selectCurrencyCategoriesError } from "@src/entities/currency/model/selectors";
 import { apiClient, currencyApi, type CurrencyCategory, type Currency } from "@src/shared/api";
+import { setTradeHistory, setNewTradesCount } from "@src/entities/trading/model/slice";
+import type { TradeHistoryEntry } from "@src/entities/trading/model/types";
 import { useTradingWebSocket } from "@src/entities/websoket/useTradingWebSocket";
 import {
     WebSocketStartTradingRequest,
@@ -42,6 +44,7 @@ import { TradingTutorial } from '@src/widgets/onboarding/TradingTutorial';
 import { RightSidebar } from '@src/features/trading-terminal/components/RightSidebar';
 import { SignalsPanel } from '@src/features/trading-terminal/components/SignalsPanel';
 import { TradesHistoryPanel } from '@src/features/trading-terminal/components/TradesHistoryPanel';
+import { convertFromUSDSync } from '@src/shared/lib/currency/exchangeRates';
 import './TradingPage.css';
 
 const PricePanelWrapper = ({ children }: { children: React.ReactNode }) => {
@@ -192,6 +195,40 @@ const TradingPageComponent = () => {
     const [showTutorial, setShowTutorial] = useState(false);
     const [isSignalsPanelOpen, setIsSignalsPanelOpen] = useState(true);
     const [isTradesHistoryPanelOpen, setIsTradesHistoryPanelOpen] = useState(true);
+    const [isSignalsPanelClosing, setIsSignalsPanelClosing] = useState(false);
+    const [isTradesHistoryPanelClosing, setIsTradesHistoryPanelClosing] = useState(false);
+    const [shouldRenderSignalsPanel, setShouldRenderSignalsPanel] = useState(true);
+    const [shouldRenderTradesHistoryPanel, setShouldRenderTradesHistoryPanel] = useState(true);
+
+    // Обработка плавного закрытия панели сигналов
+    useEffect(() => {
+        if (!isSignalsPanelOpen && shouldRenderSignalsPanel) {
+            setIsSignalsPanelClosing(true);
+            const timer = setTimeout(() => {
+                setShouldRenderSignalsPanel(false);
+                setIsSignalsPanelClosing(false);
+            }, 300); // Время анимации
+            return () => clearTimeout(timer);
+        } else if (isSignalsPanelOpen && !shouldRenderSignalsPanel) {
+            setShouldRenderSignalsPanel(true);
+            setIsSignalsPanelClosing(false);
+        }
+    }, [isSignalsPanelOpen, shouldRenderSignalsPanel]);
+
+    // Обработка плавного закрытия панели истории
+    useEffect(() => {
+        if (!isTradesHistoryPanelOpen && shouldRenderTradesHistoryPanel) {
+            setIsTradesHistoryPanelClosing(true);
+            const timer = setTimeout(() => {
+                setShouldRenderTradesHistoryPanel(false);
+                setIsTradesHistoryPanelClosing(false);
+            }, 300); // Время анимации
+            return () => clearTimeout(timer);
+        } else if (isTradesHistoryPanelOpen && !shouldRenderTradesHistoryPanel) {
+            setShouldRenderTradesHistoryPanel(true);
+            setIsTradesHistoryPanelClosing(false);
+        }
+    }, [isTradesHistoryPanelOpen, shouldRenderTradesHistoryPanel]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -406,17 +443,30 @@ const TradingPageComponent = () => {
     }, [pricePanelData]);
     
     const handleTradingModeChange = (mode: 'manual' | 'demo') => {
+        console.log('[TradingPage] 🔄 ========== ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ТОРГОВЛИ ==========');
+        console.log('[TradingPage] 🔄 Старый режим:', tradingModeLocal);
+        console.log('[TradingPage] 🔄 Новый режим:', mode);
+        console.log('[TradingPage] 🔄 Демо баланс:', userProfile?.demo_balance);
+        console.log('[TradingPage] 🔄 Реальный баланс:', userProfile?.balance);
+        
         // Обновляем Redux сразу, чтобы избежать задержки
         dispatch(setTradingMode(mode));
         setTradingModeLocal(mode);
         localStorage.setItem('tradingMode', mode);
+        
+        console.log('[TradingPage] 🔄 Redux и localStorage обновлены');
         
         if (isConnected && sendMessage) {
             sendMessage({
                 type: 'set-trading-mode',
                 mode: mode
             });
+            console.log('[TradingPage] 🔄 Сообщение set-trading-mode отправлено через WebSocket');
+        } else {
+            console.log('[TradingPage] 🔄 WebSocket не подключен, пропуск отправки сообщения');
         }
+        
+        console.log('[TradingPage] 🔄 ========== ПЕРЕКЛЮЧЕНИЕ РЕЖИМА ЗАВЕРШЕНО ==========');
     };
     
     // Объявляем handleDurationSelect перед handleDurationSelectCallback
@@ -457,6 +507,81 @@ const TradingPageComponent = () => {
             tradingMode
         });
         
+        // Всегда выполняем HTTP запрос для получения истории
+        if (userProfile?.id && (tradingMode === 'manual' || tradingMode === 'demo')) {
+            (async () => {
+                try {
+                    const params = new URLSearchParams({
+                        limit: '50',
+                        offset: '0',
+                    });
+                    params.append('mode', tradingMode);
+                    
+                    console.log('[TradingPage] handleRequestTradeHistory: HTTP запрос истории', { mode: tradingMode, userId: userProfile.id });
+                    
+                    const response = await apiClient<{ trades: any[]; count: number }>(
+                        `/trading/history?${params.toString()}`
+                    );
+                    
+                    console.log('[TradingPage] handleRequestTradeHistory: HTTP ответ', { 
+                        hasResponse: !!response, 
+                        hasTrades: !!response?.trades, 
+                        tradesCount: response?.trades?.length ?? 0,
+                        firstTrade: response?.trades?.[0],
+                        responseData: response
+                    });
+                    
+                    const tradesData = response?.data?.trades || response?.trades;
+                    const newTradesCount = response?.data?.newTradesCount ?? response?.newTradesCount ?? 0;
+                    
+                    // Сохраняем счетчик новых сделок
+                    dispatch(setNewTradesCount(newTradesCount));
+                    
+                    if (tradesData && Array.isArray(tradesData)) {
+                        const transformedTrades: TradeHistoryEntry[] = tradesData.map((trade: any) => {
+                            const isDemo = trade.isDemo === true || trade.is_demo === true;
+                            return {
+                                id: String(trade.id ?? ''),
+                                price: trade.price ?? trade.entryPrice ?? 0,
+                                direction: trade.direction,
+                                amount: trade.amount ?? 0,
+                                entryPrice: trade.entryPrice ?? trade.price ?? 0,
+                                exitPrice: trade.exitPrice ?? trade.price ?? 0,
+                                profit: trade.profit ?? 0,
+                                profitPercent: trade.profitPercent ?? trade.profit_percent ?? 0,
+                                isWin: trade.isWin ?? trade.is_win ?? false,
+                                createdAt: typeof trade.createdAt === 'number' 
+                                    ? trade.createdAt 
+                                    : (trade.created_at ? (typeof trade.created_at === 'number' ? trade.created_at : new Date(trade.created_at).getTime()) : Date.now()),
+                                completedAt: typeof trade.completedAt === 'number' && trade.completedAt > 0
+                                    ? trade.completedAt
+                                    : (trade.completed_at ? (typeof trade.completed_at === 'number' && trade.completed_at > 0 ? trade.completed_at : (trade.completed_at ? new Date(trade.completed_at).getTime() : null)) : null),
+                                expirationTime: typeof trade.expirationTime === 'number'
+                                    ? trade.expirationTime
+                                    : (trade.expiration_time ? (typeof trade.expiration_time === 'number' ? trade.expiration_time : new Date(trade.expiration_time).getTime()) : null),
+                                symbol: trade.symbol ?? trade.pair ?? null,
+                                baseCurrency: trade.baseCurrency ?? trade.base_currency ?? null,
+                                quoteCurrency: trade.quoteCurrency ?? trade.quote_currency ?? null,
+                                isDemo: isDemo,
+                                is_demo: trade.is_demo ?? isDemo,
+                                is_copied: trade.is_copied ?? trade.isCopied ?? false,
+                                copy_subscription_id: trade.copy_subscription_id ?? trade.copySubscriptionId ?? null,
+                                copied_from_user_id: trade.copied_from_user_id ?? trade.copiedFromUserId ?? null,
+                            };
+                        });
+                        
+                        const sortedTrades = transformedTrades.sort((a, b) => b.completedAt - a.completedAt);
+                        dispatch(setTradeHistory(sortedTrades));
+                        
+                        console.log('[TradingPage] handleRequestTradeHistory: обновлено в Redux', { count: sortedTrades.length });
+                    }
+                } catch (error) {
+                    console.error('[TradingPage] handleRequestTradeHistory: HTTP ошибка', error);
+                }
+            })();
+        }
+        
+        // Также отправляем WebSocket запрос для синхронизации
         if (pricePanelData?.requestTradeHistory) {
             // Всегда загружаем полную историю, не только новые сделки
             console.log('[TradingPage] handleRequestTradeHistory: вызов pricePanelData.requestTradeHistory');
@@ -484,13 +609,6 @@ const TradingPageComponent = () => {
             } else {
                 console.warn('[TradingPage] handleRequestTradeHistory: режим не manual/demo', { currentMode });
             }
-        } else {
-            console.warn('[TradingPage] handleRequestTradeHistory: нет способа отправить запрос', {
-                hasPricePanelData: !!pricePanelData,
-                hasRequestTradeHistory: !!pricePanelData?.requestTradeHistory,
-                isConnected,
-                hasSendMessage: !!sendMessage
-            });
         }
     };
     
@@ -512,8 +630,11 @@ const TradingPageComponent = () => {
     // Мемоизируем пропсы для PricePanel, чтобы предотвратить ререндеры
     if (!pricePanelData) {
     }
+    // Используем currentMarketPrice как fallback, если currentPrice равен null
+    // Это гарантирует, что кнопки будут активны, как только придут тики
+    const effective_current_price = pricePanelData?.currentPrice ?? pricePanelData?.currentMarketPrice ?? null;
     const pricePanelProps = {
-        currentPrice: pricePanelData?.currentPrice ?? null,
+        currentPrice: effective_current_price,
         price1: pricePanelData?.price1 ?? null,
         price2: pricePanelData?.price2 ?? null,
         priceDiff: pricePanelData?.priceDiff ?? 0,
@@ -552,13 +673,59 @@ const TradingPageComponent = () => {
     // Это предотвращает переключение баланса на реальный при любых обновлениях профиля
     const actualBalance = tradingModeLocal === 'demo' ? demoBalance : Number(userProfile?.balance || 0);
     
+    // Логирование баланса отключено для уменьшения спама
+    
+    // Отслеживаем предыдущий режим для определения переключения
+    const prevTradingModeRef = useRef(tradingModeLocal);
+    
     useEffect(() => {
+        console.log('[TradingPage] 🔍 useEffect для обновления суммы ставки:', {
+            tradingModeLocal,
+            prevTradingMode: prevTradingModeRef.current,
+            actualBalance,
+            hasSetManualTradeAmount: !!pricePanelData?.setManualTradeAmount,
+            currentManualAmount: pricePanelData?.manualTradeAmount
+        });
+        
         if (pricePanelData?.setManualTradeAmount) {
-            if (actualBalance === 0) {
-                pricePanelData.setManualTradeAmount('0.00');
+            const modeChanged = prevTradingModeRef.current !== tradingModeLocal;
+            const switchedToDemo = modeChanged && tradingModeLocal === 'demo';
+            const switchedToManual = modeChanged && tradingModeLocal === 'manual';
+            
+            // При переключении на демо режим с балансом > 0 устанавливаем минимальную сумму
+            if (switchedToDemo && actualBalance > 0) {
+                const minAmountUSD = 1;
+                const minAmountInUserCurrency = userProfile?.currency === 'USD'
+                    ? minAmountUSD
+                    : convertFromUSDSync(minAmountUSD, userProfile?.currency || 'USD');
+                const formattedAmount = minAmountInUserCurrency.toFixed(2);
+                console.log('[TradingPage] 🔄 Переключение на демо режим - устанавливаем минимальную сумму:', {
+                    minAmountUSD,
+                    minAmountInUserCurrency,
+                    formattedAmount,
+                    userCurrency: userProfile?.currency || 'USD'
+                });
+                pricePanelData.setManualTradeAmount(formattedAmount);
             }
+            // Сбрасываем только если баланс действительно 0 в manual режиме
+            else if (actualBalance === 0 && tradingModeLocal !== 'demo') {
+                console.log('[TradingPage] 🔄 Сброс суммы ставки на 0.00 (баланс = 0 в manual режиме)');
+                pricePanelData.setManualTradeAmount('0.00');
+            } else {
+                console.log('[TradingPage] ✅ Сумма ставки не изменяется:', {
+                    actualBalance,
+                    tradingModeLocal,
+                    modeChanged,
+                    switchedToDemo,
+                    switchedToManual,
+                    reason: tradingModeLocal === 'demo' ? 'demo режим' : 'баланс > 0'
+                });
+            }
+            
+            // Обновляем предыдущий режим
+            prevTradingModeRef.current = tradingModeLocal;
         }
-    }, [tradingModeLocal, actualBalance, pricePanelData?.setManualTradeAmount]);
+    }, [tradingModeLocal, actualBalance, pricePanelData?.setManualTradeAmount, userProfile?.currency]);
     
     // Убрано логирование баланса для уменьшения нагрузки
     
@@ -715,8 +882,9 @@ const TradingPageComponent = () => {
 
     // handleDurationSelect перемещен выше, перед handleDurationSelectCallback
 
-    const handleBaseChange = useCallback((base: string) => {
+    const handleBaseChange = useCallback((base: string, quote?: string) => {
         // Используем Redux для обновления выбранной валютной пары
+        // quote передается через TradingTerminal, который устанавливает forcedCurrency
         dispatch(setSelectedBase(base));
     }, [dispatch]);
 
@@ -934,8 +1102,8 @@ const TradingPageComponent = () => {
                     </Suspense>
                     
                     {/* Панели выезжают между trading-controls-panel-wrapper и right-sidebar-wrapper (вместо price-panel-wrapper) */}
-                    <div className={`panels-wrapper ${isSignalsPanelOpen || isTradesHistoryPanelOpen ? 'panels-wrapper--visible' : ''}`}>
-                        {isTradesHistoryPanelOpen && (
+                    <div className={`panels-wrapper ${(shouldRenderSignalsPanel || shouldRenderTradesHistoryPanel) ? 'panels-wrapper--visible' : ''}`}>
+                        {shouldRenderTradesHistoryPanel && (
                             <TradesHistoryPanel
                                 isOpen={isTradesHistoryPanelOpen}
                                 onClose={() => {}}
@@ -949,10 +1117,15 @@ const TradingPageComponent = () => {
                                 onRequestActiveTrades={pricePanelProps.onRequestActiveTrades}
                                 onRequestTradeHistory={pricePanelProps.onRequestTradeHistory}
                                 isBothOpen={isSignalsPanelOpen && isTradesHistoryPanelOpen}
+                                onOpenTradeSidebar={(trade: any) => {
+                                  if ((window as any).__tradingTerminalOpenTradeSidebar) {
+                                    (window as any).__tradingTerminalOpenTradeSidebar(trade);
+                                  }
+                                }}
                             />
                         )}
                         
-                        {isSignalsPanelOpen && (
+                        {shouldRenderSignalsPanel && (
                             <SignalsPanel
                                 isOpen={isSignalsPanelOpen}
                                 onClose={() => {}}
@@ -983,13 +1156,26 @@ const TradingPageComponent = () => {
                         <button
                             className="tutorial-button tutorial-button--sidebar"
                             onClick={() => {
+                                // Закрываем все открытые меню перед запуском обучения
+                                const chartMenu = document.querySelector('.chart-navigation-menu.open') as HTMLElement;
+                                if (chartMenu) {
+                                    const closeButton = chartMenu.querySelector('.chart-navigation-menu__close') as HTMLElement;
+                                    if (closeButton) {
+                                        closeButton.click();
+                                    }
+                                }
+                                const navButton = document.querySelector('.chart-navigation-button.menu-open') as HTMLElement;
+                                if (navButton) {
+                                    navButton.click();
+                                }
+                                
                                 setShowTutorial(true);
                                 if (typeof window !== 'undefined' && (window as any).__startTradingTutorial) {
                                     (window as any).__startTradingTutorial();
                                 }
                             }}
-                            aria-label={t('trading.showTutorial', { defaultValue: 'Show tutorial' })}
-                            title={t('trading.showTutorial', { defaultValue: 'Show tutorial' })}
+                            aria-label="Show tutorial"
+                            title="Show tutorial"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -1017,7 +1203,7 @@ const TradingPageComponent = () => {
             <SignalsModal
                 manualTradeAmount={pricePanelProps.manualTradeAmount}
             />
-
+            
             <TradingTutorial forceShow={showTutorial} onClose={() => setShowTutorial(false)} />
 
                                 </div>

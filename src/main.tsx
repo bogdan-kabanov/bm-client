@@ -9,8 +9,8 @@ import { LanguageProvider } from './app/providers/LanguageProvider.tsx';
 import { TradeNotificationProvider } from '@src/widgets/trade-notification/TradeNotificationContainer';
 import { NotificationProvider } from '@src/shared/ui/notification/NotificationProvider';
 import { ErrorBoundary } from '@src/shared/ui/ErrorBoundary';
-import logoIcon from '@src/assets/logo-icon.ico';
-import fullLogo from '@src/assets/full-logo.png';
+import logoIcon from '@src/assets/logos/logo-icon.ico';
+import fullLogo from '@src/assets/logos/full-logo-light.png';
 import { ReactProfiler } from '@src/shared/lib/ReactProfiler';
 
 if (import.meta.hot) {
@@ -35,7 +35,7 @@ if (import.meta.hot) {
             padding: 12px 20px;
             border-radius: 8px;
             z-index: 99999;
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Manrope', sans-serif;
             font-size: 14px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             display: flex;
@@ -360,7 +360,7 @@ try {
   const rootElement = document.getElementById('root');
   if (rootElement) {
     rootElement.innerHTML = `
-      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; font-family: 'Roboto', sans-serif; padding: 20px; text-align: center;">
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; font-family: 'Manrope', sans-serif; padding: 20px; text-align: center;">
         <h1 style="color: #ff4444; margin-bottom: 20px;">Ошибка загрузки приложения</h1>
         <p style="color: #666; margin-bottom: 20px;">Не удалось загрузить приложение. Пожалуйста, обновите страницу.</p>
         <button onclick="window.location.reload()" style="padding: 10px 20px; background: #4a9eff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">

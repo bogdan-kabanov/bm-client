@@ -13,7 +13,7 @@ export interface UserProfile {
 
 export interface TradingTerminalProps {
   selectedBase: string;
-  onBaseChange: (base: string) => void;
+  onBaseChange: (base: string, quote?: string) => void;
   isTradingActive: boolean;
   onStartTrading: () => void;
   selectedDuration: string;

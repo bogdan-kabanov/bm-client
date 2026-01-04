@@ -636,10 +636,8 @@ export function drawAreaChart(
     const avgPrice = (candle.open + candle.close) / 2;
     const priceChangePercent = avgPrice > 0 ? (priceDiff / avgPrice) * 100 : 0;
     const isDoji = priceChangePercent < 0.0001 || priceDiff < 1e-8;
-    // More strict check: green only if close is significantly greater than open
-    // This prevents green candles that visually look like they're going down due to rounding errors
-    const minChangeForColor = avgPrice * 0.0001; // 0.01% minimum change to determine color
-    const isGreen = !isDoji && (candle.close - candle.open) > minChangeForColor;
+    // Green candle if close > open, red if close < open
+    const isGreen = !isDoji && candle.close > candle.open;
     
     const isHovered = hoverIndex === i;
     const barLeft = x - barWidth / 2;
@@ -892,10 +890,8 @@ export function drawCandles(
         pixelHeight
       });
     }
-    // More strict check: green only if close is significantly greater than open
-    // This prevents green candles that visually look like they're going down due to rounding errors
-    const minChangeForColor = avgPrice * 0.0001; // 0.01% minimum change to determine color
-    const isGreen = !isDoji && (candle.close - candle.open) > minChangeForColor;
+    // Green candle if close > open, red if close < open
+    const isGreen = !isDoji && candle.close > candle.open;
     
     // Аномальные свечи отображаются оранжевым цветом
     let color: string;
@@ -1041,8 +1037,19 @@ export function drawCrosshair(
   topPadding: number,
   chartAreaHeight: number,
   timeframe: Timeframe,
+  fixedPrices?: Set<number>,
+  bellButtonRectRef?: { current: { x: number; y: number; width: number; height: number; price: number } | null },
+  isHoveringCloseButton?: boolean,
 ): void {
-  if (hoverIndex === null || hoverCandle === null || hoverX === null) return;
+  // Отображаем перекрестие, если есть позиция мыши, даже если hoverIndex равен null
+  // Это позволяет показывать перекрестие, когда мышь за пределами видимых свечей, но в пределах canvas
+  if (hoverX === null) {
+    // Очищаем ref кнопки, если hoverX равен null
+    if (bellButtonRectRef) {
+      bellButtonRectRef.current = null;
+    }
+    return;
+  }
 
   ctx.save();
   ctx.strokeStyle = '#666';
@@ -1062,9 +1069,130 @@ export function drawCrosshair(
     ctx.moveTo(0, hoverY);
     ctx.lineTo(width, hoverY);
     ctx.stroke();
+
+    // Вычисляем цену из координаты Y
+    const adjustedY = hoverY - topPadding;
+    const ratio = 1 - (adjustedY / chartAreaHeight);
+    const price = viewport.minPrice + ratio * (viewport.maxPrice - viewport.minPrice);
+
+    // Отображаем цену прижатой к правому краю графика без отступа
+    ctx.setLineDash([]);
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    
+    const priceText = formatPrice(price);
+    const textMetrics = ctx.measureText(priceText);
+    const textWidth = textMetrics.width;
+    const textHeight = 16;
+    const paddingX = 8;
+    const paddingY = 4;
+    const rectWidth = textWidth + paddingX * 2;
+    const rectHeight = textHeight + paddingY * 2;
+    
+    // Прижимаем маркер к правому краю без отступа
+    const rectX = width - rectWidth;
+    const rectY = hoverY - rectHeight / 2;
+    const textX = width - paddingX;
+    const textY = hoverY;
+    
+    // Проверяем, зафиксирована ли эта цена (с учетом погрешности)
+    let isFixed = false;
+    if (fixedPrices && fixedPrices.size > 0) {
+      const epsilon = 0.000001; // Порог сравнения для цен
+      for (const fixedPrice of fixedPrices) {
+        if (Math.abs(fixedPrice - price) < epsilon) {
+          isFixed = true;
+          break;
+        }
+      }
+    }
+    
+    // Размер иконки колокольчика/крестика
+    const iconSize = 16;
+    const iconPadding = 4;
+    const iconX = rectX - iconSize - iconPadding;
+    const iconY = hoverY - iconSize / 2;
+    
+    // Сохраняем позицию кнопки для обработки кликов
+    if (bellButtonRectRef) {
+      bellButtonRectRef.current = {
+        x: iconX,
+        y: iconY,
+        width: iconSize,
+        height: iconSize,
+        price: price,
+      };
+    }
+    
+    // Серо-синий светлый цвет (мягкий, едва заметно синий)
+    ctx.fillStyle = 'rgba(180, 200, 220, 0.75)';
+    
+    // Рисуем закругленный прямоугольник как у других маркеров
+    const borderRadius = 6;
+    fillRoundedRect(ctx, rectX, rectY, rectWidth, rectHeight, borderRadius);
+    
+    // Рисуем текст
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillText(priceText, textX, textY);
+    
+    // Рисуем иконку колокольчика или крестика слева от маркера
+    // Скрываем кнопку колокольчика, если курсор над кнопкой закрытия fixed price line
+    if (isFixed) {
+      drawCrossIcon(ctx, iconX, iconY, iconSize);
+    } else if (!isHoveringCloseButton) {
+      // Не рисуем колокольчик, если курсор над кнопкой закрытия
+      drawBellIcon(ctx, iconX, iconY, iconSize);
+    }
+  } else {
+    // Очищаем ref кнопки, если hoverY равен null
+    if (bellButtonRectRef) {
+      bellButtonRectRef.current = null;
+    }
   }
 
   ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawBellIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+  ctx.save();
+  
+  // Рисуем квадратную кнопку с фоном
+  const borderRadius = 4;
+  ctx.fillStyle = 'rgba(180, 200, 220, 0.85)';
+  fillRoundedRect(ctx, x, y, size, size, borderRadius);
+  
+  // TODO: Добавить иконку колокольчика здесь
+  
+  ctx.restore();
+}
+
+function drawCrossIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+  ctx.save();
+  
+  // Рисуем квадратную кнопку с фоном
+  const borderRadius = 4;
+  ctx.fillStyle = 'rgba(180, 200, 220, 0.85)';
+  fillRoundedRect(ctx, x, y, size, size, borderRadius);
+  
+  // Рисуем крестик
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  
+  const centerX = x + size / 2;
+  const centerY = y + size / 2;
+  const iconSize = size * 0.5;
+  const offset = iconSize * 0.35;
+  
+  ctx.beginPath();
+  ctx.moveTo(centerX - offset, centerY - offset);
+  ctx.lineTo(centerX + offset, centerY + offset);
+  ctx.moveTo(centerX + offset, centerY - offset);
+  ctx.lineTo(centerX - offset, centerY + offset);
+  ctx.stroke();
+  
   ctx.restore();
 }
 
@@ -1082,6 +1210,10 @@ const drawTimeLineLastLogTime = 0;
 // Статическая переменная для хранения последнего серверного времени и локального времени для интерполяции
 let lastServerTimeSnapshot: number | null = null;
 let lastLocalTimeSnapshot: number | null = null;
+
+// Переменные для логирования движения линии времени
+let lastLineX: number | null = null;
+let lastLineTimeIndex: number | null = null;
 
 // Состояние для плавной анимации линии времени (как CSS transition 0.6s)
 // Храним анимированный timeIndex вместо пикселей, чтобы при скроллинге линия не отрывалась
@@ -1110,6 +1242,8 @@ export function resetTimeLineAnimation(): void {
   lastServerTimeSnapshot = null;
   lastLocalTimeSnapshot = null;
   lastViewportFromIndex = null;
+  lastLineX = null;
+  lastLineTimeIndex = null;
 }
 
 export function drawTimeLine(
@@ -1167,15 +1301,13 @@ export function drawTimeLine(
   const timeToDisplay = rawTime;
   const timeToUse = rawTime;
   
-  // Логирование отключено для производительности
-  // Анимация линии времени теперь работает через плавную интерполяцию позиции
-
+  // Вычисляем timeIndex напрямую из интерполированного времени для плавного движения
+  // Линия должна двигаться постоянно на основе реального времени, а не ждать обновлений от сервера
   let timeIndex: number | null = null;
 
   if (candles.length > 0) {
     const lastCandle = candles[candles.length - 1];
     const lastCandleEndTime = lastCandle.openTime + timeframeDurationMs;
-    const timeUntilNewCandle = lastCandleEndTime - rawTime;
     
     if (rawTime >= lastCandle.openTime && rawTime <= lastCandleEndTime) {
       const timeSinceLastCandle = rawTime - lastCandle.openTime;
@@ -1215,10 +1347,7 @@ export function drawTimeLine(
   
   if (lastFirstCandleTime !== null && firstCandleTime !== null && firstCandleTime !== lastFirstCandleTime) {
     // Первая свеча изменилась - это означает смену валютной пары
-    // Сбрасываем состояние анимации для мгновенного отображения линии в правильной позиции
-    currentAnimatedTimeIndex = timeIndex;
-    targetTimeIndex = timeIndex;
-    lastAnimationTime = now;
+    // Сбрасываем состояние для мгновенного отображения линии в правильной позиции
     lastFirstCandleTime = firstCandleTime;
     lastViewportFromIndex = viewport.fromIndex;
   } else {
@@ -1226,64 +1355,18 @@ export function drawTimeLine(
     if (firstCandleTime !== null) {
       lastFirstCandleTime = firstCandleTime;
     }
-    
-    // Инициализируем позиции при первом вызове
-    if (currentAnimatedTimeIndex === null || targetTimeIndex === null || lastAnimationTime === null) {
-      currentAnimatedTimeIndex = timeIndex;
-      targetTimeIndex = timeIndex;
-      lastAnimationTime = now;
-      lastViewportFromIndex = viewport.fromIndex;
-    } else {
-      // Если произошел скроллинг, корректируем currentAnimatedTimeIndex так,
-      // чтобы временная линия оставалась на своем времени, а не двигалась к целевому
-      if (viewportChanged && currentAnimatedTimeIndex !== null) {
-        // При скроллинге временная линия должна оставаться на своем времени
-        // Обновляем currentAnimatedTimeIndex на основе текущего времени, чтобы линия не двигалась
-        currentAnimatedTimeIndex = timeIndex;
-        targetTimeIndex = timeIndex;
-      } else {
-        // Обновляем целевой индекс времени на основе серверного времени
-        targetTimeIndex = timeIndex;
-      }
-      lastViewportFromIndex = viewport.fromIndex;
-    }
+    lastViewportFromIndex = viewport.fromIndex;
   }
 
-  // Плавная интерполяция текущего индекса времени к целевому (как CSS transition 0.6s)
-  // lastAnimationTime уже обновлен выше при сбросе/инициализации, поэтому вычисляем deltaTime
-  const deltaTime = lastAnimationTime !== null ? now - lastAnimationTime : 0;
-  lastAnimationTime = now;
-
-  if (currentAnimatedTimeIndex !== null && Math.abs(currentAnimatedTimeIndex - targetTimeIndex) > 0.0001) {
-    // Вычисляем расстояние до цели в индексах времени
-    const distance = targetTimeIndex - currentAnimatedTimeIndex;
-    const absDistance = Math.abs(distance);
-    
-    // Вычисляем скорость движения на основе расстояния и длительности анимации
-    // Но ограничиваем максимальной скоростью для плавности
-    const idealSpeed = absDistance / TIME_LINE_ANIMATION_DURATION; // индексов в мс
-    const maxSpeed = MAX_TIME_INDEX_PER_SECOND / 1000; // индексов в мс
-    const speed = Math.min(idealSpeed, maxSpeed);
-    
-    // Вычисляем шаг для этого кадра (в индексах времени)
-    const step = speed * deltaTime;
-    
-    // Двигаемся к цели
-    if (absDistance <= step) {
-      // Если осталось меньше шага, устанавливаем точно
-      currentAnimatedTimeIndex = targetTimeIndex;
-    } else {
-      // Плавно двигаемся к цели с постоянной скоростью
-      currentAnimatedTimeIndex += distance > 0 ? step : -step;
-    }
-  } else {
-    // Если уже на месте или очень близко, устанавливаем точно
-    currentAnimatedTimeIndex = targetTimeIndex;
-  }
-
-  // Вычисляем пиксельную позицию на основе анимированного индекса времени и текущего viewport
-  // Это позволяет линии плавно двигаться даже при скроллинге
-  const currentX = xIndexToPixel(currentAnimatedTimeIndex, viewport, width);
+  // Используем timeIndex напрямую для плавного движения без задержек
+  // Интерполяция времени уже происходит выше через rawTime, поэтому просто используем вычисленный timeIndex
+  // Вычисляем пиксельную позицию на основе timeIndex и текущего viewport
+  // Это обеспечивает плавное движение линии в реальном времени
+  const currentX = xIndexToPixel(timeIndex, viewport, width);
+  
+  // Логирование движения линии отключено для производительности
+  lastLineX = currentX;
+  lastLineTimeIndex = timeIndex;
   
   // Проверяем, видна ли линия на экране
   if (currentX < -10 || currentX > width + 10) {
@@ -1294,7 +1377,8 @@ export function drawTimeLine(
   
   // Используем интерполированную позицию для плавного движения
   // Sub-pixel rendering обеспечит плавное движение линии без пропуска пикселей
-  const roundedX = currentX;
+  // Используем точную позицию без округления для максимально плавного движения
+  const exactX = currentX;
 
   const timeStr = formatTimeWithSeconds(timeToUse);
   // Прижимаем маркер к верху с отступом 1px
@@ -1312,7 +1396,7 @@ export function drawTimeLine(
   
   // Центрируем маркер относительно линии времени
   // Используем плавную позицию для плавного движения маркера
-  let rectX = roundedX - rectWidth / 2;
+  let rectX = exactX - rectWidth / 2;
   
   // Проверяем границы и корректируем позицию при необходимости
   if (rectX < 0) {
@@ -1322,8 +1406,8 @@ export function drawTimeLine(
   }
   
   const bgGradient = ctx.createLinearGradient(rectX, rectY, rectX + rectWidth, rectY + rectHeight);
-  bgGradient.addColorStop(0, 'rgba(221, 187, 115, 0.95)');
-  bgGradient.addColorStop(1, 'rgba(221, 187, 115, 0.95)');
+  bgGradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+  bgGradient.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
   ctx.fillStyle = bgGradient;
   
   const borderRadius = 6;
@@ -1333,134 +1417,23 @@ export function drawTimeLine(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(timeStr, rectX + rectWidth / 2, rectY + rectHeight / 2);
-
-  // Параметры треугольника: настройка через высоту и ширину (проще для широкого и низкого треугольника)
-  // ИЛИ через длины всех трех сторон (для точной настройки)
   
-  // СПОСОБ 1: Через высоту и ширину (рекомендуется для широкого и низкого треугольника)
-  const useHeightAndWidth = true; // true = использовать высоту и ширину, false = использовать длины сторон
-  const triangleHeight = 6; // Высота треугольника (небольшая для низкого треугольника)
-  const triangleBaseWidth = 20; // Ширина основания (большая для широкого треугольника)
+  // Рисуем линию времени снизу вверх, заканчивается у нижнего края маркера
+  // Используем точную позицию без округления для максимально плавного движения
+  const lineEndY = rectY + rectHeight; // Линия заканчивается у нижнего края маркера
   
-  // СПОСОБ 2: Через длины всех трех сторон (для точной настройки)
-  const leftSideLength = 10; // Длина левой стороны (от верхней точки до левой нижней)
-  const rightSideLength = 10; // Длина правой стороны (от верхней точки до правой нижней)
-  const baseSideLength = 20; // Длина основания (от левой нижней до правой нижней точки)
-  // ВАЖНО: baseSideLength должно быть меньше суммы leftSideLength + rightSideLength (неравенство треугольника)
-  
-  // Расстояние от маркера до треугольника (можно настроить, в пикселях)
-  const triangleOffsetFromMarker = 6; // Отступ треугольника от нижнего края маркера
-  
-  // Позиция верхней точки треугольника с учетом отступа от маркера
-  const triangleTopY = rectY + rectHeight + triangleOffsetFromMarker;
-  
-  // Расстояние от треугольника до кружка (будет использовано для вычисления начала линии)
-  const triangleToCircleDistance = 4; // Расстояние от нижней точки треугольника до верхней точки кружка
-  const circleRadius = 3;
-  // Нижняя точка треугольника: triangleTopY + triangleHeight
-  // Верхняя точка кружка: circleY - circleRadius
-  // Расстояние между ними: triangleToCircleDistance
-  // Поэтому: circleY - circleRadius = triangleTopY + triangleHeight + triangleToCircleDistance
-  const circleY = triangleTopY + triangleHeight + triangleToCircleDistance + circleRadius;
-  
-  // Вычисляем начало линии: такое же расстояние от нижней точки кружка до начала линии
-  const circleToLineDistance = 4; // Расстояние от нижней точки кружка до начала линии времени
-  // Нижняя точка кружка: circleY + circleRadius
-  // Начало линии: lineStartY
-  // Расстояние между ними: circleToLineDistance
-  const lineStartY = circleY + circleRadius + circleToLineDistance;
-  
-  // Рисуем линию времени снизу вверх, заканчивается до кружка сверху
-  const lineEndY = circleY - circleRadius; // Линия заканчивается до верхней точки кружка
-  ctx.strokeStyle = '#DDBB73';
-  ctx.lineWidth = 2 / 3;
+  // Настройки для плавного рендеринга линии без "тикания"
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.lineWidth = 1;
   ctx.setLineDash([]);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  
+  // Рисуем линию с использованием точной позиции (sub-pixel rendering)
+  // Canvas автоматически использует sub-pixel rendering для плавного движения
   ctx.beginPath();
-  ctx.moveTo(roundedX, height); // Начинаем снизу графика
-  ctx.lineTo(roundedX, lineEndY); // Заканчиваем до кружка сверху
-  ctx.stroke();
-  
-  // Угол левой стороны от вертикали (используется только если useHeightAndWidth = false)
-  const leftAngle = -45; // Угол левой стороны от вертикали (отрицательный = влево)
-  
-  // Общий угол поворота треугольника (можно настроить, в градусах)
-  const triangleRotationAngle = 180; // 0 = вниз, 90 = вправо, -90 = влево, 180 = вверх
-  
-  // Центр вращения треугольника (точка прижатия к маркеру + отступ)
-  // Используем плавную позицию для плавного движения треугольника
-  const rotationCenterX = roundedX;
-  const rotationCenterY = triangleTopY;
-  
-  // Конвертируем угол поворота из градусов в радианы
-  const rotationRad = (triangleRotationAngle * Math.PI) / 180;
-  
-  // Вычисляем точки треугольника
-  const topPoint = { x: 0, y: 0 };
-  let leftPoint, rightPoint;
-  
-  if (useHeightAndWidth) {
-    // СПОСОБ 1: Через высоту и ширину (проще для широкого и низкого треугольника)
-    leftPoint = {
-      x: -triangleBaseWidth / 2,
-      y: triangleHeight,
-    };
-    rightPoint = {
-      x: triangleBaseWidth / 2,
-      y: triangleHeight,
-    };
-  } else {
-    // СПОСОБ 2: Через длины всех трех сторон
-    const leftAngleRad = (leftAngle * Math.PI) / 180;
-    
-    // Левая нижняя точка (вычисляется через длину и угол)
-    leftPoint = {
-      x: leftSideLength * Math.sin(leftAngleRad),
-      y: leftSideLength * Math.cos(leftAngleRad),
-    };
-    
-    // Правая нижняя точка вычисляется через закон косинусов
-    const cosAngle = (leftSideLength ** 2 + rightSideLength ** 2 - baseSideLength ** 2) / 
-                     (2 * leftSideLength * rightSideLength);
-    const angleBetweenSides = Math.acos(Math.max(-1, Math.min(1, cosAngle)));
-    const rightAngleRad = leftAngleRad + angleBetweenSides;
-    
-    // Правая нижняя точка (вычисляется через длину и угол)
-    rightPoint = {
-      x: rightSideLength * Math.sin(rightAngleRad),
-      y: rightSideLength * Math.cos(rightAngleRad),
-    };
-  }
-  
-  const trianglePoints = [topPoint, leftPoint, rightPoint];
-  
-  // Применяем общий поворот к точкам треугольника
-  const rotatedPoints = trianglePoints.map(point => {
-    const cos = Math.cos(rotationRad);
-    const sin = Math.sin(rotationRad);
-    return {
-      x: rotationCenterX + point.x * cos - point.y * sin,
-      y: rotationCenterY + point.x * sin + point.y * cos,
-    };
-  });
-  
-  // Рисуем треугольник с поворотом
-  ctx.fillStyle = 'rgba(221, 187, 115, 0.95)';
-  ctx.strokeStyle = 'rgba(221, 187, 115, 0.8)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(rotatedPoints[0].x, rotatedPoints[0].y);
-  ctx.lineTo(rotatedPoints[1].x, rotatedPoints[1].y);
-  ctx.lineTo(rotatedPoints[2].x, rotatedPoints[2].y);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  
-  ctx.fillStyle = 'rgba(221, 187, 115, 0.9)';
-  ctx.strokeStyle = 'rgba(221, 187, 115, 0.8)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(roundedX, circleY, circleRadius, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(exactX, height); // Начинаем снизу графика
+  ctx.lineTo(exactX, lineEndY); // Заканчиваем у нижнего края маркера
   ctx.stroke();
 
   ctx.restore();
@@ -1727,35 +1700,130 @@ export function drawActiveCandlePriceLine(
   ctx.stroke();
 
   const priceText = formatPrice(price);
-  const textPadding = 8;
-  const textX = width - 10;
   const textY = y;
 
   ctx.font = '12px monospace';
   const textMetrics = ctx.measureText(priceText);
   const textWidth = textMetrics.width;
   const textHeight = 16;
-  const paddingX = 6;
-  const paddingY = 3;
-  const rectX = textX - textWidth - paddingX * 2;
-  const rectY = textY - textHeight / 2 - paddingY;
+  const paddingX = 8;
+  const paddingY = 4;
   const rectWidth = textWidth + paddingX * 2;
   const rectHeight = textHeight + paddingY * 2;
   
+  // Прижимаем маркер к правому краю canvas без отступа
+  const rectX = width - rectWidth;
+  const rectY = textY - rectHeight / 2;
+  const textX = width - paddingX;
+  
   const bgGradient = ctx.createLinearGradient(rectX, rectY, rectX + rectWidth, rectY + rectHeight);
-  bgGradient.addColorStop(0, 'rgba(74, 158, 255, 0.95)');
-  bgGradient.addColorStop(1, 'rgba(74, 158, 255, 0.95)');
+  bgGradient.addColorStop(0, 'rgba(72, 75, 215, 0.95)');
+  bgGradient.addColorStop(1, 'rgba(72, 75, 215, 0.95)');
   ctx.fillStyle = bgGradient;
   
   const borderRadius = 6;
   fillRoundedRect(ctx, rectX, rectY, rectWidth, rectHeight, borderRadius);
-
+  
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
-  ctx.fillText(priceText, textX - paddingX, textY);
+  ctx.fillText(priceText, textX, textY);
 
   ctx.setLineDash([]);
+  ctx.restore();
+}
+
+export function drawFixedPriceLines(
+  ctx: CanvasRenderingContext2D,
+  fixedPrices: Set<number>,
+  viewport: ViewportState,
+  width: number,
+  fullHeight: number,
+  topPadding: number,
+  chartAreaHeight: number,
+  fixedPriceButtonRectsRef?: { current: Map<number, { x: number; y: number; width: number; height: number }> },
+): void {
+  if (fixedPrices.size === 0) {
+    if (fixedPriceButtonRectsRef) {
+      fixedPriceButtonRectsRef.current.clear();
+    }
+    return;
+  }
+  
+  ctx.save();
+  ctx.strokeStyle = 'rgba(180, 200, 220, 0.6)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  
+  // Очищаем старые позиции кнопок
+  if (fixedPriceButtonRectsRef) {
+    fixedPriceButtonRectsRef.current.clear();
+  }
+  
+  fixedPrices.forEach(price => {
+    const adjustedY = priceToPixel(price, viewport, chartAreaHeight);
+    const y = adjustedY + topPadding;
+    
+    // Разрешаем отрисовку линии даже если она немного вне видимой области
+    if (y < -50 || y > fullHeight + 50) return;
+    
+    // Рисуем горизонтальную линию
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+    
+    // Рисуем плашку с ценой прижатую к правому краю
+    ctx.setLineDash([]);
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    
+    const priceText = formatPrice(price);
+    const textMetrics = ctx.measureText(priceText);
+    const textWidth = textMetrics.width;
+    const textHeight = 16;
+    const paddingX = 8;
+    const paddingY = 4;
+    const rectWidth = textWidth + paddingX * 2;
+    const rectHeight = textHeight + paddingY * 2;
+    
+    // Прижимаем маркер к правому краю без отступа
+    const rectX = width - rectWidth;
+    const rectY = y - rectHeight / 2;
+    const textX = width - paddingX;
+    const textY = y;
+    
+    // Серо-синий светлый цвет (мягкий, едва заметно синий)
+    ctx.fillStyle = 'rgba(180, 200, 220, 0.75)';
+    
+    // Рисуем закругленный прямоугольник
+    const borderRadius = 6;
+    fillRoundedRect(ctx, rectX, rectY, rectWidth, rectHeight, borderRadius);
+    
+    // Рисуем текст
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.fillText(priceText, textX, textY);
+    
+    // Рисуем квадратик с крестиком слева от плашки
+    const iconSize = 16;
+    const iconPadding = 4;
+    const iconX = rectX - iconSize - iconPadding;
+    const iconY = y - iconSize / 2;
+    
+    drawCrossIcon(ctx, iconX, iconY, iconSize);
+    
+    // Сохраняем позицию кнопки для обработки кликов
+    if (fixedPriceButtonRectsRef) {
+      fixedPriceButtonRectsRef.current.set(price, {
+        x: iconX,
+        y: iconY,
+        width: iconSize,
+        height: iconSize,
+      });
+    }
+  });
+  
   ctx.restore();
 }
 
@@ -1861,8 +1929,8 @@ export function drawPriceTimeIntersectionMarker(
   // Добавляем topPadding к Y координате, так как маркер рисуется после ctx.restore()
   const markerY = priceY + (topPadding || 0);
 
-  ctx.fillStyle = 'rgba(74, 158, 255, 0.9)';
-  ctx.strokeStyle = 'rgba(74, 158, 255, 0.8)';
+  ctx.fillStyle = 'rgba(72, 75, 215, 0.9)';
+  ctx.strokeStyle = 'rgba(72, 75, 215, 0.8)';
   ctx.lineWidth = 1;
 
   ctx.beginPath();
@@ -1890,8 +1958,8 @@ export function drawPriceTimeIntersectionMarker(
     const adjustedRectX = adjustedTextX - textWidth - paddingX;
     
     const bgGradient = ctx.createLinearGradient(adjustedRectX, rectY, adjustedRectX + rectWidth, rectY + rectHeight);
-    bgGradient.addColorStop(0, 'rgba(74, 158, 255, 0.95)');
-    bgGradient.addColorStop(1, 'rgba(74, 158, 255, 0.95)');
+    bgGradient.addColorStop(0, 'rgba(72, 75, 215, 0.95)');
+    bgGradient.addColorStop(1, 'rgba(72, 75, 215, 0.95)');
     ctx.fillStyle = bgGradient;
     
     const borderRadius = 6;
@@ -1905,8 +1973,8 @@ export function drawPriceTimeIntersectionMarker(
     ctx.fillText(countdownStr, adjustedTextX, textY);
   } else {
     const bgGradient = ctx.createLinearGradient(rectX, rectY, rectX + rectWidth, rectY + rectHeight);
-    bgGradient.addColorStop(0, 'rgba(74, 158, 255, 0.95)');
-    bgGradient.addColorStop(1, 'rgba(74, 158, 255, 0.95)');
+    bgGradient.addColorStop(0, 'rgba(72, 75, 215, 0.95)');
+    bgGradient.addColorStop(1, 'rgba(72, 75, 215, 0.95)');
     ctx.fillStyle = bgGradient;
     
     const borderRadius = 6;
@@ -2485,8 +2553,9 @@ export function renderChart(params: RenderParams): void {
   // Ластик тоже рисуем после restore, чтобы использовать абсолютные координаты canvas
   drawEraserArea(ctx, drawingState, params.eraserPosition, width, height);
   drawActiveCandlePriceLine(ctx, candles, viewport, width, chartAreaHeight, height, topPadding, realCandles, params.animatedPrice);
-  drawCrosshair(ctx, hoverIndex, hoverCandle, hoverX, hoverY, viewport, width, height, topPadding, chartAreaHeight, timeframe);
   drawTimeLine(ctx, currentTime, candles, viewport, width, height, timeframe);
+  // Перекрестие рисуется ПОСЛЕ временной линии, чтобы быть поверх неё
+  drawCrosshair(ctx, hoverIndex, hoverCandle, hoverX, hoverY, viewport, width, height, topPadding, chartAreaHeight, timeframe);
   
   // Градиент при наведении на buy/sell рисуется на всю высоту графика
   drawHoveredButtonGradient(ctx, candles, viewport, width, height, topPadding, chartAreaHeight, params.hoveredButton, realCandles, params.animatedPrice);

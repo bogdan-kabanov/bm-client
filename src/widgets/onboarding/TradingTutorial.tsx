@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import './TradingTutorial.css';
 
@@ -7,55 +7,8 @@ interface TutorialStep {
   selector: string;
   title: string;
   description: string;
-  images?: string[];
   position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
 }
-
-const TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    id: 'welcome',
-    selector: '',
-    title: 'Добро пожаловать!',
-    description: 'Добро пожаловать в платформу трейдинга! Давайте пройдем краткое обучение, чтобы вы могли максимально эффективно использовать все возможности.',
-    images: ['/images/tutorial-1.png', '/images/tutorial-2.png', '/images/tutorial-3.png'],
-    position: 'center'
-  },
-  {
-    id: 'balance',
-    selector: '.balance-item--primary',
-    title: 'Баланс',
-    description: 'Здесь отображается ваш текущий баланс. Вы можете переключаться между реальным и демо-счетом, нажав на этот элемент.',
-    position: 'bottom'
-  },
-  {
-    id: 'trading-terminal',
-    selector: '.chart-toolbar',
-    title: 'Терминал трейдинга',
-    description: 'Это основной терминал, где вы можете видеть графики цен, выбирать валютные пары и управлять торговлей.',
-    position: 'right'
-  },
-  {
-    id: 'trading-controls',
-    selector: '.trading-controls-panel',
-    title: 'Панель управления',
-    description: 'Здесь вы можете настроить параметры торговли: сумму сделки, время экспирации и другие настройки для ручной торговли.',
-    position: 'left'
-  },
-  {
-    id: 'trade-buttons',
-    selector: '.manual-trade-buttons',
-    title: 'Кнопки торговли',
-    description: 'Используйте кнопки "Купить" и "Продать" для совершения сделок в ручном режиме. Выберите направление и нажмите соответствующую кнопку.',
-    position: 'top'
-  },
-  {
-    id: 'price-panel',
-    selector: '.price-panel',
-    title: 'Панель цен',
-    description: 'Здесь отображается текущая цена, разница между биржами, история сделок и активные позиции.',
-    position: 'left'
-  }
-];
 
 interface TradingTutorialProps {
   forceShow?: boolean;
@@ -64,13 +17,71 @@ interface TradingTutorialProps {
 
 export const TradingTutorial = ({ forceShow, onClose }: TradingTutorialProps = {}) => {
   const { t } = useLanguage();
+  
+  const getTutorialSteps = (t: (key: string) => string): TutorialStep[] => [
+    {
+      id: 'welcome',
+      selector: '',
+      title: t('onboarding.welcome.title'),
+      description: t('onboarding.welcome.description'),
+      position: 'center'
+    },
+    {
+      id: 'balance',
+      selector: '.balance-item--primary',
+      title: t('onboarding.balance.title'),
+      description: t('onboarding.balance.description'),
+      position: 'bottom'
+    },
+    {
+      id: 'trading-terminal',
+      selector: '.chart-navigation-button',
+      title: t('onboarding.trading.title'),
+      description: t('onboarding.trading.description'),
+      position: 'bottom'
+    },
+    {
+      id: 'trading-controls',
+      selector: '.trading-controls-panel',
+      title: t('onboarding.tradingControls.title'),
+      description: t('onboarding.tradingControls.description'),
+      position: 'left'
+    },
+    {
+      id: 'price-panel',
+      selector: '.price-panel',
+      title: t('onboarding.pricePanel.title'),
+      description: t('onboarding.pricePanel.description'),
+      position: 'left'
+    }
+  ];
+
+  const TUTORIAL_STEPS = useMemo(() => getTutorialSteps(t), [t]);
+  
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [highlightedElement, setHighlightedElement] = useState<HTMLElement | null>(null);
-  const [highlightPosition, setHighlightPosition] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const originalZIndexesRef = useRef<Map<HTMLElement, string>>(new Map());
+  const [highlightPosition, setHighlightPosition] = useState<{ 
+    top: number; 
+    left: number; 
+    width: number; 
+    height: number;
+  } | null>(null);
+  
+  const [menuPosition, setMenuPosition] = useState<{ 
+    top: number; 
+    left: number; 
+    width: number; 
+    height: number;
+  } | null>(null);
+  
+  const [pricePanelPosition, setPricePanelPosition] = useState<{ 
+    top: number; 
+    left: number; 
+    width: number; 
+    height: number;
+  } | null>(null);
+  
+  const maskIdRef = useRef(`tutorial-mask-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
   // Проверяем, был ли уже показан туториал
   useEffect(() => {
@@ -102,148 +113,237 @@ export const TradingTutorial = ({ forceShow, onClose }: TradingTutorialProps = {
     };
   }, []);
 
-  // Обновляем позицию выделения при изменении шага или размера окна
+  // Открываем панели и меню при переходе на соответствующие шаги
   useEffect(() => {
     if (!isVisible) return;
-
-    const updateHighlight = () => {
-      const step = TUTORIAL_STEPS[currentStep];
-      
-      if (!step.selector) {
-        // Для шага welcome не выделяем элемент
-        setHighlightedElement(null);
-        setHighlightPosition(null);
-        return;
+    
+    const step = TUTORIAL_STEPS[currentStep];
+    
+    // Открываем панель управления торговлей
+    if (step.selector === '.trading-controls-panel') {
+      // Проверяем, скрыта ли панель
+      const wrapper = document.querySelector('.trading-controls-panel-wrapper') as HTMLElement;
+      if (wrapper && wrapper.classList.contains('trading-controls-panel-wrapper--hidden')) {
+        // Отправляем событие для открытия панели
+        if (typeof window !== 'undefined') {
+          const openPanel = () => {
+            window.dispatchEvent(new CustomEvent('showCenterPanel'));
+          };
+          
+          openPanel();
+          setTimeout(openPanel, 100);
+          setTimeout(openPanel, 300);
+          setTimeout(openPanel, 500);
+        }
       }
-
-      // Небольшая задержка для того, чтобы элементы успели отрендериться
-      const timeoutId = setTimeout(() => {
-        // Функция для поиска элемента с несколькими попытками
-        const findElement = (attempt: number = 0, maxAttempts: number = 15): void => {
-          let element = document.querySelector(step.selector) as HTMLElement;
-          
-          // Если элемент не найден напрямую, пробуем найти через wrapper
-          if (!element && step.selector === '.trading-controls-panel') {
-            const wrapper = document.querySelector('.trading-controls-panel-wrapper');
-            if (wrapper) {
-              element = wrapper.querySelector(step.selector) as HTMLElement;
-            }
-          }
-          
-          if (element) {
-            // Проверяем, что элемент действительно видим
-            const rect = element.getBoundingClientRect();
-            const computedStyle = window.getComputedStyle(element);
-            const isVisible = rect.width > 0 && rect.height > 0 && 
-                             rect.top < window.innerHeight && 
-                             rect.bottom > 0 &&
-                             rect.left < window.innerWidth && 
-                             rect.right > 0 &&
-                             computedStyle.display !== 'none' &&
-                             computedStyle.visibility !== 'hidden' &&
-                             computedStyle.opacity !== '0';
-            
-            if (isVisible) {
-              updateElementHighlight(element);
-              return;
-            }
-          }
-          
-          // Если элемент не найден, пробуем еще раз
-          if (attempt < maxAttempts) {
-            setTimeout(() => findElement(attempt + 1, maxAttempts), 200);
-          } else {
-            // После всех попыток, если элемент не найден, скрываем выделение
-            // НЕ переходим автоматически к следующему шагу - пользователь должен нажать кнопку
-            console.warn(`[TradingTutorial] Элемент не найден: ${step.selector} (шаг ${currentStep + 1})`);
-            setHighlightedElement(null);
-            setHighlightPosition(null);
-          }
-        };
-        
-        findElement();
-      }, 100);
       
-      const updateElementHighlight = (element: HTMLElement) => {
-        // Восстанавливаем z-index предыдущего элемента, если был
-        if (highlightedElement && originalZIndexesRef.current.has(highlightedElement)) {
-          const originalZIndex = originalZIndexesRef.current.get(highlightedElement);
-          highlightedElement.style.zIndex = originalZIndex || '';
-          originalZIndexesRef.current.delete(highlightedElement);
+      // Также открываем меню выбора валют
+      setTimeout(() => {
+        const navButton = document.querySelector('.chart-navigation-button') as HTMLElement;
+        const menu = document.querySelector('.chart-navigation-menu.open') as HTMLElement;
+        
+        if (navButton && !menu) {
+          // Открываем меню, кликая на кнопку
+          navButton.click();
+          
+          // Повторяем попытки, если меню не открылось
+          let attempts = 0;
+          const tryOpen = () => {
+            attempts++;
+            const currentMenu = document.querySelector('.chart-navigation-menu.open') as HTMLElement;
+            if (!currentMenu && attempts < 10) {
+              navButton.click();
+              setTimeout(tryOpen, 200);
+            }
+          };
+          setTimeout(tryOpen, 300);
         }
+      }, 600);
+    }
+  }, [currentStep, isVisible, TUTORIAL_STEPS]);
 
+  // Обновляем позицию выделения при изменении шага
+  useEffect(() => {
+    if (!isVisible) {
+      setHighlightPosition(null);
+      return;
+    }
+
+    const step = TUTORIAL_STEPS[currentStep];
+    
+    if (!step.selector) {
+      setHighlightPosition(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      // Для trading-controls-panel ищем внутри wrapper, даже если он скрыт
+      let element = document.querySelector(step.selector) as HTMLElement;
+      
+      if (!element && step.selector === '.trading-controls-panel') {
+        const wrapper = document.querySelector('.trading-controls-panel-wrapper');
+        if (wrapper) {
+          element = wrapper.querySelector(step.selector) as HTMLElement;
+        }
+      }
+      
+      if (element) {
         const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
         
-        // Проверяем, что элемент видим и имеет валидные размеры
-        if (rect.width === 0 || rect.height === 0 || 
-            rect.top < -1000 || rect.left < -1000 ||
-            rect.width > window.innerWidth * 1.5 || 
-            rect.height > window.innerHeight * 1.5) {
-          // Элемент невидим или имеет некорректные размеры - не показываем выделение
-          setHighlightedElement(null);
+        // Проверяем, видим ли элемент
+        if (rect.width > 0 && rect.height > 0 && 
+            style.display !== 'none' && 
+            style.visibility !== 'hidden' && 
+            style.opacity !== '0') {
+          setHighlightPosition({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          });
+        } else {
           setHighlightPosition(null);
-          return;
         }
-
-        setHighlightedElement(element);
-        setHighlightPosition({
-          top: rect.top,
-          left: rect.left,
-          width: rect.width,
-          height: rect.height
-        });
-
-        // Сохраняем оригинальный z-index и устанавливаем новый, чтобы элемент был виден поверх overlay
-        const computedZIndex = window.getComputedStyle(element).zIndex;
-        const inlineZIndex = element.style.zIndex;
-        const originalZIndex = inlineZIndex || computedZIndex;
+      } else {
+        setHighlightPosition(null);
+      }
+      
+      // Также проверяем открытое меню навигации
+      const openMenu = document.querySelector('.chart-navigation-menu.open') as HTMLElement;
+      if (openMenu) {
+        const menuRect = openMenu.getBoundingClientRect();
+        const menuStyle = window.getComputedStyle(openMenu);
         
-        if (!originalZIndexesRef.current.has(element)) {
-          originalZIndexesRef.current.set(element, originalZIndex);
+        if (menuRect.width > 0 && menuRect.height > 0 && 
+            menuStyle.display !== 'none' && 
+            menuStyle.visibility !== 'hidden' && 
+            menuStyle.opacity !== '0') {
+          setMenuPosition({
+            top: menuRect.top,
+            left: menuRect.left,
+            width: menuRect.width,
+            height: menuRect.height
+          });
+        } else {
+          setMenuPosition(null);
         }
+      } else {
+        setMenuPosition(null);
+      }
+      
+      // Проверяем панель цен
+      const pricePanel = document.querySelector('.price-panel') as HTMLElement;
+      if (pricePanel) {
+        const panelRect = pricePanel.getBoundingClientRect();
+        const panelStyle = window.getComputedStyle(pricePanel);
         
-        if (computedZIndex === 'auto' || !computedZIndex || parseInt(computedZIndex) < 10001) {
-          element.style.zIndex = '10001';
+        if (panelRect.width > 0 && panelRect.height > 0 && 
+            panelStyle.display !== 'none' && 
+            panelStyle.visibility !== 'hidden' && 
+            panelStyle.opacity !== '0') {
+          setPricePanelPosition({
+            top: panelRect.top,
+            left: panelRect.left,
+            width: panelRect.width,
+            height: panelRect.height
+          });
+        } else {
+          setPricePanelPosition(null);
         }
-      };
-
-      return () => clearTimeout(timeoutId);
+      } else {
+        setPricePanelPosition(null);
+      }
     };
 
-    updateHighlight();
-    const resizeHandler = () => updateHighlight();
-    const scrollHandler = () => updateHighlight();
+    // Даем время на рендеринг и открытие панели
+    const timeoutId = setTimeout(updatePosition, step.selector === '.trading-controls-panel' ? 500 : 100);
+    
+    // Обновляем при изменении размера окна
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
 
-    window.addEventListener('resize', resizeHandler);
-    window.addEventListener('scroll', scrollHandler, true);
-
-    // Периодически проверяем наличие элемента (на случай, если он появится позже)
-    const intervalId = setInterval(updateHighlight, 500);
+    // Для trading-controls-panel делаем повторные попытки
+    let retryCount = 0;
+    const maxRetries = 10;
+    const retryInterval = setInterval(() => {
+      if (step.selector === '.trading-controls-panel' && retryCount < maxRetries) {
+        retryCount++;
+        updatePosition();
+      } else {
+        clearInterval(retryInterval);
+      }
+    }, 200);
+    
+    // Постоянно отслеживаем открытое меню навигации и панель цен
+    const menuCheckInterval = setInterval(() => {
+      // Проверяем открытое меню навигации
+      const openMenu = document.querySelector('.chart-navigation-menu.open') as HTMLElement;
+      if (openMenu) {
+        const menuRect = openMenu.getBoundingClientRect();
+        const menuStyle = window.getComputedStyle(openMenu);
+        
+        if (menuRect.width > 0 && menuRect.height > 0 && 
+            menuStyle.display !== 'none' && 
+            menuStyle.visibility !== 'hidden' && 
+            menuStyle.opacity !== '0') {
+          setMenuPosition({
+            top: menuRect.top,
+            left: menuRect.left,
+            width: menuRect.width,
+            height: menuRect.height
+          });
+        } else {
+          setMenuPosition(null);
+        }
+      } else {
+        setMenuPosition(null);
+      }
+      
+      // Проверяем панель цен
+      const pricePanel = document.querySelector('.price-panel') as HTMLElement;
+      if (pricePanel) {
+        const panelRect = pricePanel.getBoundingClientRect();
+        const panelStyle = window.getComputedStyle(pricePanel);
+        
+        if (panelRect.width > 0 && panelRect.height > 0 && 
+            panelStyle.display !== 'none' && 
+            panelStyle.visibility !== 'hidden' && 
+            panelStyle.opacity !== '0') {
+          setPricePanelPosition({
+            top: panelRect.top,
+            left: panelRect.left,
+            width: panelRect.width,
+            height: panelRect.height
+          });
+        } else {
+          setPricePanelPosition(null);
+        }
+      } else {
+        setPricePanelPosition(null);
+      }
+    }, 100);
 
     return () => {
-      clearInterval(intervalId);
-      window.removeEventListener('resize', resizeHandler);
-      window.removeEventListener('scroll', scrollHandler, true);
-      
-      // Восстанавливаем z-index всех элементов при размонтировании
-      originalZIndexesRef.current.forEach((originalZIndex, element) => {
-        element.style.zIndex = originalZIndex || '';
-      });
-      originalZIndexesRef.current.clear();
+      clearTimeout(timeoutId);
+      clearInterval(retryInterval);
+      clearInterval(menuCheckInterval);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [currentStep, isVisible, highlightedElement]);
+  }, [currentStep, isVisible, TUTORIAL_STEPS]);
 
   const handleNext = useCallback(() => {
     if (currentStep < TUTORIAL_STEPS.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(prev => prev + 1);
     } else {
       handleComplete();
     }
-  }, [currentStep]);
+  }, [currentStep, TUTORIAL_STEPS.length]);
 
-  const handlePrevious = useCallback(() => {
+  const handleBack = useCallback(() => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep(prev => prev - 1);
     }
   }, [currentStep]);
 
@@ -252,388 +352,195 @@ export const TradingTutorial = ({ forceShow, onClose }: TradingTutorialProps = {
   }, []);
 
   const handleComplete = useCallback(() => {
-    // Восстанавливаем z-index всех элементов
-    originalZIndexesRef.current.forEach((originalZIndex, element) => {
-      element.style.zIndex = originalZIndex || '';
-    });
-    originalZIndexesRef.current.clear();
-    
-    setIsVisible(false);
-    setHighlightedElement(null);
-    setHighlightPosition(null);
     localStorage.setItem('tradingTutorialCompleted', 'true');
+    setIsVisible(false);
     if (onClose) {
       onClose();
     }
   }, [onClose]);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   const step = TUTORIAL_STEPS[currentStep];
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
 
-  // Вычисляем позицию тултипа с проверкой границ экрана
+  // Вычисляем позицию тултипа
   let tooltipStyle: React.CSSProperties = {};
-  const tooltipMaxWidth = 400; // Максимальная ширина тултипа
-  const tooltipMinWidth = 320; // Минимальная ширина тултипа
-  const tooltipHeight = 300; // Примерная высота тултипа
-  const margin = 20; // Отступ от краев экрана
+  const tooltipMaxWidth = 400;
+  const margin = 20;
   
-  if (step.selector && highlightPosition) {
-    const scrollY = window.scrollY;
-    const scrollX = window.scrollX;
-    
-    // Проверяем, виден ли элемент на экране
-    const elementTop = highlightPosition.top - scrollY;
-    const elementLeft = highlightPosition.left - scrollX;
-    const elementBottom = elementTop + highlightPosition.height;
-    const elementRight = elementLeft + highlightPosition.width;
-    
-    // Если элемент полностью за экраном, показываем тултип в центре
-    if (elementBottom < 0 || elementTop > window.innerHeight || 
-        elementRight < 0 || elementLeft > window.innerWidth) {
-      tooltipStyle = {
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-        zIndex: 10002
-      };
-    } else {
-      // Элемент виден, используем обычное позиционирование
-      const position = step.position || 'bottom';
-    
-    let baseStyle: React.CSSProperties = {};
-    
-    switch (position) {
-      case 'top':
-        baseStyle = {
-          bottom: window.innerHeight - (highlightPosition.top - scrollY) + 20,
-          left: highlightPosition.left - scrollX + highlightPosition.width / 2,
-          transform: 'translateX(-50%)'
-        };
-        break;
-      case 'bottom':
-        baseStyle = {
-          top: highlightPosition.top - scrollY + highlightPosition.height + 20,
-          left: highlightPosition.left - scrollX + highlightPosition.width / 2,
-          transform: 'translateX(-50%)'
-        };
-        break;
-      case 'left':
-        baseStyle = {
-          top: highlightPosition.top - scrollY + highlightPosition.height / 2,
-          right: window.innerWidth - (highlightPosition.left - scrollX) + 20,
-          transform: 'translateY(-50%)'
-        };
-        break;
-      case 'right':
-        baseStyle = {
-          top: highlightPosition.top - scrollY + highlightPosition.height / 2,
-          left: highlightPosition.left - scrollX + highlightPosition.width + 20,
-          transform: 'translateY(-50%)'
-        };
-        break;
-    }
-    
-    // Корректируем позицию, чтобы тултип не выходил за границы экрана
-    // Используем временный элемент для измерения реальных размеров тултипа
-    const tooltipWidth = tooltipMaxWidth;
-    const tooltipHeightActual = tooltipHeight;
-    
-    if (typeof baseStyle.left === 'number') {
-      // Проверяем левую границу
-      if (baseStyle.left - tooltipWidth / 2 < margin) {
-        baseStyle.left = margin + tooltipWidth / 2;
-      }
-      // Проверяем правую границу
-      if (baseStyle.left + tooltipWidth / 2 > window.innerWidth - margin) {
-        baseStyle.left = window.innerWidth - margin - tooltipWidth / 2;
-      }
-      // Если все еще выходит, центрируем
-      if (baseStyle.left < margin || baseStyle.left > window.innerWidth - margin) {
-        baseStyle.left = window.innerWidth / 2;
-        baseStyle.transform = 'translateX(-50%)';
-      }
-    }
-    
-    if (typeof baseStyle.right === 'number') {
-      // Преобразуем right в left для удобства проверки
-      const rightValue = baseStyle.right;
-      const leftValue = window.innerWidth - rightValue;
-      if (leftValue - tooltipWidth / 2 < margin || leftValue + tooltipWidth / 2 > window.innerWidth - margin) {
-        baseStyle.right = undefined;
-        baseStyle.left = window.innerWidth / 2;
-        baseStyle.transform = 'translateX(-50%)';
-      }
-    }
-    
-    if (typeof baseStyle.top === 'number') {
-      // Проверяем верхнюю границу
-      if (baseStyle.top < margin) {
-        baseStyle.top = margin;
-        if (baseStyle.transform && baseStyle.transform.includes('translateX')) {
-          baseStyle.transform = 'translateX(-50%)';
-        } else {
-          baseStyle.transform = 'translate(-50%, 0)';
-        }
-      }
-      // Проверяем нижнюю границу
-      if (baseStyle.top + tooltipHeightActual > window.innerHeight - margin) {
-        // Пробуем разместить выше элемента
-        const newTop = elementTop - tooltipHeightActual - margin;
-        if (newTop >= margin) {
-          baseStyle.top = newTop;
-        } else {
-          // Если не помещается выше, размещаем в центре экрана
-          baseStyle.top = (window.innerHeight - tooltipHeightActual) / 2;
-        }
-        if (baseStyle.transform && baseStyle.transform.includes('translateX')) {
-          baseStyle.transform = 'translateX(-50%)';
-        } else {
-          baseStyle.transform = 'translate(-50%, 0)';
-        }
-      }
-    }
-    
-    if (typeof baseStyle.bottom === 'number') {
-      // Преобразуем bottom в top для удобства проверки
-      const bottomValue = baseStyle.bottom;
-      const topValue = window.innerHeight - bottomValue;
-      if (topValue < margin || topValue + tooltipHeightActual > window.innerHeight - margin) {
-        baseStyle.bottom = undefined;
-        baseStyle.top = (window.innerHeight - tooltipHeightActual) / 2;
-        baseStyle.transform = 'translateX(-50%)';
-      }
-    }
-    
-    // Финальная проверка: если тултип все еще выходит за границы, центрируем его
-    if (typeof baseStyle.top === 'number' && (baseStyle.top < 0 || baseStyle.top + tooltipHeightActual > window.innerHeight)) {
-      baseStyle.top = (window.innerHeight - tooltipHeightActual) / 2;
-      baseStyle.left = window.innerWidth / 2;
-      baseStyle.right = undefined;
-      baseStyle.bottom = undefined;
-      baseStyle.transform = 'translate(-50%, -50%)';
-    }
-    
-    tooltipStyle = {
-      ...baseStyle,
-      maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-      zIndex: 10002
-    };
-    }
-  } else if (isFirstStep) {
+  if (step.position === 'center' || !highlightPosition) {
     tooltipStyle = {
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
       maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-      zIndex: 10002
     };
-  } else if (step.selector && !highlightPosition) {
-    // Если элемент не найден, показываем тултип в позиции, указанной в step.position
-    const position = step.position || 'center';
+  } else if (highlightPosition) {
+    const position = step.position || 'bottom';
+    
     switch (position) {
-      case 'left':
-        tooltipStyle = {
-          top: '50%',
-          right: `${margin}px`,
-          transform: 'translateY(-50%)',
-          maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-          zIndex: 10002
-        };
-        break;
-      case 'right':
-        tooltipStyle = {
-          top: '50%',
-          left: `${margin}px`,
-          transform: 'translateY(-50%)',
-          maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-          zIndex: 10002
-        };
-        break;
       case 'top':
         tooltipStyle = {
-          bottom: `${margin}px`,
-          left: '50%',
+          bottom: window.innerHeight - highlightPosition.top + margin,
+          left: Math.max(margin, Math.min(highlightPosition.left + highlightPosition.width / 2, window.innerWidth - margin)),
           transform: 'translateX(-50%)',
           maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-          zIndex: 10002
         };
         break;
       case 'bottom':
         tooltipStyle = {
-          top: `${margin}px`,
-          left: '50%',
+          top: highlightPosition.top + highlightPosition.height + margin,
+          left: Math.max(margin, Math.min(highlightPosition.left + highlightPosition.width / 2, window.innerWidth - margin)),
           transform: 'translateX(-50%)',
           maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-          zIndex: 10002
         };
         break;
-      default:
+      case 'left':
         tooltipStyle = {
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+          top: Math.max(margin, Math.min(highlightPosition.top + highlightPosition.height / 2, window.innerHeight - margin)),
+          right: window.innerWidth - highlightPosition.left + margin,
+          transform: 'translateY(-50%)',
           maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
-          zIndex: 10002
         };
+        break;
+      case 'right':
+        tooltipStyle = {
+          top: Math.max(margin, Math.min(highlightPosition.top + highlightPosition.height / 2, window.innerHeight - margin)),
+          left: highlightPosition.left + highlightPosition.width + margin,
+          transform: 'translateY(-50%)',
+          maxWidth: `${Math.min(tooltipMaxWidth, window.innerWidth - margin * 2)}px`,
+        };
+        break;
+    }
+    
+    // Корректируем позицию, чтобы не выходила за границы
+    if (tooltipStyle.left !== undefined) {
+      const left = typeof tooltipStyle.left === 'number' ? tooltipStyle.left : 0;
+      if (left < margin) {
+        tooltipStyle.left = margin;
+        tooltipStyle.transform = 'translateX(0)';
+      } else if (left > window.innerWidth - margin) {
+        tooltipStyle.left = window.innerWidth - margin;
+        tooltipStyle.transform = 'translateX(-100%)';
+      }
+    }
+    
+    if (tooltipStyle.top !== undefined) {
+      const top = typeof tooltipStyle.top === 'number' ? tooltipStyle.top : 0;
+      if (top < margin) {
+        tooltipStyle.top = margin;
+      } else if (top > window.innerHeight - 200) {
+        tooltipStyle.top = window.innerHeight - 200;
+      }
     }
   }
 
-  // Вычисляем позиции для overlay с дыркой
-  const overlayParts = highlightPosition ? (() => {
-    const top = Math.max(0, highlightPosition.top - window.scrollY);
-    const left = Math.max(0, highlightPosition.left - window.scrollX);
-    const bottom = top + highlightPosition.height;
-    const right = left + highlightPosition.width;
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    
-    // Проверяем, что позиции валидны
-    if (top >= height || left >= width || bottom <= 0 || right <= 0) {
-      return null;
-    }
-    
-    return {
-      top: { top: 0, left: 0, right: 0, height: Math.max(0, top) },
-      left: { top: Math.max(0, top), left: 0, width: Math.max(0, left), height: Math.max(0, highlightPosition.height) },
-      right: { top: Math.max(0, top), left: Math.min(width, right), right: 0, height: Math.max(0, highlightPosition.height) },
-      bottom: { top: Math.min(height, bottom), left: 0, right: 0, bottom: 0 }
-    };
-  })() : null;
+  // Создаем SVG mask для выреза
+  const maskParams = highlightPosition ? {
+    x: highlightPosition.left,
+    y: highlightPosition.top,
+    width: highlightPosition.width,
+    height: highlightPosition.height,
+  } : null;
+  
+  const menuMaskParams = menuPosition ? {
+    x: menuPosition.left,
+    y: menuPosition.top,
+    width: menuPosition.width,
+    height: menuPosition.height,
+  } : null;
+  
+  const pricePanelMaskParams = pricePanelPosition ? {
+    x: pricePanelPosition.left,
+    y: pricePanelPosition.top,
+    width: pricePanelPosition.width,
+    height: pricePanelPosition.height,
+  } : null;
 
   return (
     <>
-      {highlightPosition && overlayParts ? (
-        <>
-          {/* Верхняя часть overlay */}
-          {overlayParts.top.height > 0 && (
-            <div 
-              className="trading-tutorial-overlay-part"
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: overlayParts.top.height,
-                background: 'rgba(0, 0, 0, 0.85)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                zIndex: 10000,
-                cursor: 'default',
-                pointerEvents: 'none',
-              }}
-              // Убираем onClick={handleSkip}, чтобы туториал не закрывался автоматически
-            />
-          )}
-          {/* Левая часть overlay */}
-          {overlayParts.left.width > 0 && overlayParts.left.height > 0 && (
-            <div 
-              className="trading-tutorial-overlay-part"
-              style={{
-                position: 'fixed',
-                top: overlayParts.left.top,
-                left: 0,
-                width: overlayParts.left.width,
-                height: overlayParts.left.height,
-                background: 'rgba(0, 0, 0, 0.85)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                zIndex: 10000,
-                cursor: 'default',
-                pointerEvents: 'none',
-              }}
-              // Убираем onClick={handleSkip}, чтобы туториал не закрывался автоматически
-            />
-          )}
-          {/* Правая часть overlay */}
-          {overlayParts.right.height > 0 && overlayParts.right.left < window.innerWidth && (
-            <div 
-              className="trading-tutorial-overlay-part"
-              style={{
-                position: 'fixed',
-                top: overlayParts.right.top,
-                left: overlayParts.right.left,
-                right: 0,
-                height: overlayParts.right.height,
-                background: 'rgba(0, 0, 0, 0.85)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                zIndex: 10000,
-                cursor: 'default',
-                pointerEvents: 'none',
-              }}
-              // Убираем onClick={handleSkip}, чтобы туториал не закрывался автоматически
-            />
-          )}
-          {/* Нижняя часть overlay */}
-          {overlayParts.bottom.top < window.innerHeight && (
-            <div 
-              className="trading-tutorial-overlay-part"
-              style={{
-                position: 'fixed',
-                top: overlayParts.bottom.top,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.85)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                zIndex: 10000,
-                cursor: 'default',
-                pointerEvents: 'none',
-              }}
-              // Убираем onClick={handleSkip}, чтобы туториал не закрывался автоматически
-            />
-          )}
-          {/* Выделение элемента */}
-          <div
-            className="trading-tutorial-highlight"
-            style={{
-              top: `${highlightPosition.top - window.scrollY}px`,
-              left: `${highlightPosition.left - window.scrollX}px`,
-              width: `${highlightPosition.width}px`,
-              height: `${highlightPosition.height}px`,
-            }}
-          />
-        </>
-      ) : (
-        // Если элемент не найден, показываем overlay, но НЕ пропускаем туториал автоматически
-        // Пользователь должен нажать кнопку "Далее" или "Пропустить"
-        <div 
-          ref={overlayRef}
-          className="trading-tutorial-overlay"
-          // Убираем onClick={handleSkip}, чтобы туториал не закрывался автоматически
-          // onClick={handleSkip}
+      {/* SVG для mask */}
+      <svg 
+        width="100%" 
+        height="100%" 
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          pointerEvents: 'none',
+          zIndex: 10000
+        }}
+      >
+        <defs>
+          <mask id={maskIdRef.current}>
+            <rect width="100%" height="100%" fill="white" />
+            {maskParams && (
+              <rect
+                x={maskParams.x}
+                y={maskParams.y}
+                width={maskParams.width}
+                height={maskParams.height}
+                fill="black"
+                rx="8"
+              />
+            )}
+            {menuMaskParams && (
+              <rect
+                x={menuMaskParams.x}
+                y={menuMaskParams.y}
+                width={menuMaskParams.width}
+                height={menuMaskParams.height}
+                fill="black"
+                rx="8"
+              />
+            )}
+            {pricePanelMaskParams && (
+              <rect
+                x={pricePanelMaskParams.x}
+                y={pricePanelMaskParams.y}
+                width={pricePanelMaskParams.width}
+                height={pricePanelMaskParams.height}
+                fill="black"
+                rx="8"
+              />
+            )}
+          </mask>
+        </defs>
+      </svg>
+
+      {/* Overlay с вырезом */}
+      <div
+        className="trading-tutorial-overlay"
+        style={{
+          maskImage: `url(#${maskIdRef.current})`,
+          WebkitMaskImage: `url(#${maskIdRef.current})`,
+        }}
+      />
+
+      {/* Highlight border */}
+      {highlightPosition && (
+        <div
+          className="trading-tutorial-highlight"
+          style={{
+            top: highlightPosition.top - 4,
+            left: highlightPosition.left - 4,
+            width: highlightPosition.width + 8,
+            height: highlightPosition.height + 8,
+          }}
         />
       )}
 
+      {/* Tooltip */}
       <div
-        ref={tooltipRef}
-        className={`trading-tutorial-tooltip trading-tutorial-tooltip--${step.position || 'center'}`}
+        className={`trading-tutorial-tooltip ${step.position === 'center' ? 'trading-tutorial-tooltip--center' : ''}`}
         style={tooltipStyle}
-        onClick={(e) => e.stopPropagation()}
       >
-        {isFirstStep && step.images && step.images.length > 0 && (
-          <div className="trading-tutorial-images">
-            {step.images.map((img, index) => (
-              <div key={index} className="trading-tutorial-image">
-                <img 
-                  src={img} 
-                  alt={`Tutorial ${index + 1}`}
-                  onError={(e) => {
-                    // Если изображение не загрузилось, скрываем его
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-        
         <div className="trading-tutorial-content">
           <h3 className="trading-tutorial-title">{step.title}</h3>
           <p className="trading-tutorial-description">{step.description}</p>
@@ -643,34 +550,40 @@ export const TradingTutorial = ({ forceShow, onClose }: TradingTutorialProps = {
               {TUTORIAL_STEPS.map((_, index) => (
                 <div
                   key={index}
-                  className={`trading-tutorial-step-indicator ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
+                  className={`trading-tutorial-step-indicator ${
+                    index === currentStep
+                      ? 'active'
+                      : index < currentStep
+                      ? 'completed'
+                      : ''
+                  }`}
                 />
               ))}
             </div>
             
             <div className="trading-tutorial-buttons">
-              {currentStep > 0 && (
+              {!isFirstStep && (
                 <button
                   className="trading-tutorial-button trading-tutorial-button--secondary"
-                  onClick={handlePrevious}
+                  onClick={handleBack}
                 >
-                  Назад
+                  {t('common.back', { defaultValue: 'Back' })}
                 </button>
               )}
               <button
                 className="trading-tutorial-button trading-tutorial-button--primary"
                 onClick={handleNext}
               >
-                {isLastStep ? 'Завершить' : 'Далее'}
+                {isLastStep
+                  ? t('onboarding.complete', { defaultValue: 'Complete' })
+                  : t('onboarding.next', { defaultValue: 'Next' })}
               </button>
-              {!isLastStep && (
-                <button
-                  className="trading-tutorial-button trading-tutorial-button--link"
-                  onClick={handleSkip}
-                >
-                  Пропустить
-                </button>
-              )}
+              <button
+                className="trading-tutorial-button trading-tutorial-button--link"
+                onClick={handleSkip}
+              >
+                {t('onboarding.skip', { defaultValue: 'Skip' })}
+              </button>
             </div>
           </div>
         </div>
@@ -678,4 +591,3 @@ export const TradingTutorial = ({ forceShow, onClose }: TradingTutorialProps = {
     </>
   );
 };
-

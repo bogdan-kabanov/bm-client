@@ -3,7 +3,7 @@ import { User } from '@src/entities/user/model/types';
 import styles from './Header.module.css';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '@/src/app/providers/useLanguage';
-import fullLogo from '@src/assets/full-logo.png';
+import fullLogo from '@src/assets/logos/full-logo-light.png';
 
 interface HeaderProps {
   user: User | null;

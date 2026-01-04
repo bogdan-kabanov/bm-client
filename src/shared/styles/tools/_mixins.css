@@ -124,9 +124,9 @@
 }
 
 :root {
-  --font-family-base: Roboto, sans-serif;
-  --font-family-heading: Roboto, sans-serif;
-  --font-family-mono: Roboto, sans-serif;
+  --font-family-base: 'Manrope', sans-serif;
+  --font-family-heading: 'Manrope', sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', 'Courier New', monospace;
   --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-md: 14px;

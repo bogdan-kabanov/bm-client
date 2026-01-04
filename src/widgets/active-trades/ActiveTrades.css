@@ -32,16 +32,10 @@
 .active-trades .active-trades-list,.active-trades .trade-history-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    gap: 8px;
     width: 100%;
     box-sizing: border-box;
     position: relative;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain
 }
 
 .active-trades .active-trades-list::-webkit-scrollbar,.active-trades .trade-history-list::-webkit-scrollbar {
@@ -63,41 +57,14 @@
 }
 
 .active-trades .trade-history-item {
-    background: #ffffff05;
-    border: 1px solid rgba(33,38,52,.8);
     border-radius: 6px;
     padding: 6px;
     transition: all .3s ease;
     width: 100%;
     box-sizing: border-box;
     position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
     min-height: 60px;
-    display: flex;
-    flex-direction: column;
-}
-
-.active-trades .trade-history-item:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 30%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    transform: translate(-100%) skew(-20deg)
-}
-
-.active-trades .trade-history-item.buy:before {
-    background: linear-gradient(90deg,#32ac411a 0% 50%,#32ac4100);
-    animation: tradeShine 3s ease-in-out infinite
-}
-
-.active-trades .trade-history-item.sell:before {
-    background: linear-gradient(90deg,#f7525f1a 0% 50%,#f7525f00);
-    animation: tradeShine 3s ease-in-out infinite
+    background: #14172A;
 }
 
 .active-trades .trade-history-item:hover {
@@ -106,15 +73,11 @@
 }
 
 .active-trades .trade-history-item.buy {
-    border-left: 2px solid #32ac41
+    border-left: 2px solid #22C55E
 }
 
 .active-trades .trade-history-item.sell {
-    border-left: 2px solid #f7525f
-}
-
-.active-trades .trade-history-item.win,.active-trades .trade-history-item.loss {
-    background: #ffffff08
+    border-left: 2px solid #EF4444
 }
 
 .active-trades .trade-history-item .trade-history-row {
@@ -133,7 +96,6 @@
     margin-bottom: 4px;
     min-height: 20px;
     gap: 4px;
-    min-width: 0;
     max-width: 100%
 }
 
@@ -141,23 +103,19 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    min-width: 0;
     flex: 1 1 auto;
-    overflow: hidden;
-    max-width: calc(100% - 100px)
 }
 
 .active-trades .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
     background: #ffffff14;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     position: relative;
-    flex-shrink: 0
 }
 
 .active-trades .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-view {
@@ -167,10 +125,6 @@
     align-items: center;
     justify-content: center;
     border-radius: inherit;
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(145deg,#ffffff2e,#ffffff0d 45%,#fff0);
-    box-shadow: inset 0 1px 2px #ffffff2e,0 4px 12px #00000059
 }
 
 .active-trades .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-view:after {
@@ -186,10 +140,6 @@
     border-radius: inherit
 }
 
-.active-trades .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-view.currency-icon--image:after {
-    animation: currency-icon-shine 3.6s ease-in-out infinite
-}
-
 .active-trades .trade-history-item .trade-history-row-top .trade-currency-wrapper .trade-currency-icon .trade-currency-icon-img {
     width: 100%;
     height: 100%;
@@ -203,12 +153,14 @@
 }
 
 .active-trades .trade-history-item .trade-history-row-top .trade-currency {
-    font-size: .9em;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 400;
     color: #fff;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     display: flex;
     align-items: center;
-    gap: 4px
+    gap: 8px
 }
 
 .active-trades .trade-history-item .trade-history-row-top .trade-currency .copied-trade-marker {
@@ -219,12 +171,9 @@
 }
 
 .active-trades .trade-history-item .trade-history-row-top .trade-profit {
-    font-size: .85em;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 400;
     white-space: nowrap;
-    flex-shrink: 0;
-    text-align: right;
-    min-width: 70px
 }
 
 .active-trades .trade-history-item .trade-history-row-bottom {
@@ -237,22 +186,18 @@
 }
 
 .active-trades .trade-history-item .trade-history-row-bottom .trade-time {
-    color: #ffffff80;
-    font-size: .75em;
+    color: #7D7C8C;
+    font-size: 14px;
+    font-weight: 400;
     white-space: nowrap;
-    flex-shrink: 0;
-    min-width: 80px;
-    text-align: left;
     display: flex;
     align-items: center;
     gap: 6px
 }
 
-.active-trades .trade-history-item .trade-history-row-bottom .trade-time .trade-arrow {
-    font-size: 1.2em;
-    line-height: 1;
-    flex-shrink: 0;
-    font-weight: bolder
+.active-trades .trade-history-item .trade-history-row-bottom .trade-time img {
+    height: 21px;
+    width: 21px;
 }
 
 .active-trades .trade-history-item .trade-history-row-bottom .trade-time .trade-arrow.arrow-up {
@@ -265,7 +210,7 @@
 
 
 .active-trades .trade-history-item .trade-history-row-top .trade-profit.win {
-    color: #32ac41
+    color: #22C55E;
 }
 
 .active-trades .trade-history-item .trade-history-row-top .trade-profit.loss {
@@ -273,35 +218,27 @@
 }
 
 .active-trades .trade-history-item .trade-history-row-bottom .trade-middle {
-    text-align: right;
-    font-size: .85em;
-    font-weight: 500;
-    color: #fffc;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 16px;
+    font-weight: 400;
+    color: #fff;
     white-space: nowrap;
-    flex-shrink: 0;
-    min-width: 70px;
-    margin-left: auto
 }
 
 .active-trades .trade-history-item .active-trade-progress {
-    margin-top: auto;
+    margin: 8px 0;
     width: 100%;
 }
 
 .active-trades .trade-history-item .active-trade-progress-bar-container {
     width: 100%;
     height: 3px;
-    background: rgba(255, 255, 255, 0.1);
+    background: #292E41;
     border-radius: 2px;
-    overflow: hidden;
 }
 
 .active-trades .trade-history-item .active-trade-progress-bar {
     height: 100%;
-    background: #ffffff;
+    background: #484BD7;
     border-radius: 2px;
     transition: width 0.5s ease;
 }
@@ -574,6 +511,11 @@
         gap: 6px;
     }
 
+    .active-trades .trade-history-item .trade-history-row-top {
+        margin-bottom: 6px;
+        gap: 6px;
+    }
+
     .active-trades .trade-history-item .trade-history-row-top .trade-currency-wrapper {
         max-width: calc(100% - 90px);
     }
@@ -591,6 +533,9 @@
         gap: 6px;
     }
 
+    .active-trades .trade-history-item .trade-history-row-bottom .trade-left-block .trade-amount-left {
+        font-size: 0.8em;
+    }
 
     .active-trades .trade-history-item .trade-history-row-bottom .trade-middle {
         font-size: 0.8em;
@@ -668,7 +613,9 @@
         min-width: 60px;
     }
 
-    .active-trades .trade-history-item .trade-history-row-bottom .trade-middle {
+    .active-trades .trade-history-item .trade-history-row-bottom .trade-left-block .trade-amount-left,
+    .active-trades .trade-history-item .trade-history-row-bottom .trade-middle,
+    .active-trades .trade-history-item .trade-history-row-bottom .trade-profit {
         font-size: 0.75em;
     }
 
@@ -680,3 +627,4 @@
         font-size: 0.75em;
     }
 }
+

@@ -83,7 +83,6 @@ export const updateUserProfile = createAsyncThunk<
     }
 );
 
-
 export const profileSlice = createSlice({
     name: 'profile',
     initialState,
@@ -102,8 +101,21 @@ export const profileSlice = createSlice({
             }
         },
         updateBalance: (state, action) => {
+            console.log('💳💳💳 [REDUX] updateBalance action called:', {
+                payload: action.payload,
+                currentBalance: state.user?.balance,
+                userId: state.user?.id,
+            });
             if (state.user) {
+                const oldBalance = state.user.balance;
                 state.user.balance = action.payload;
+                console.log('💳💳💳 [REDUX] Balance updated in state:', {
+                    from: oldBalance,
+                    to: action.payload,
+                    difference: action.payload - (oldBalance || 0),
+                });
+            } else {
+                console.warn('💳💳💳 [REDUX] ⚠️ Cannot update balance - state.user is null');
             }
         },
         updateDemoBalance: (state, action) => {

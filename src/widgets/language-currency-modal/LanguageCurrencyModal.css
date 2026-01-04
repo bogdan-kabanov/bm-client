@@ -4,14 +4,18 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.35);
     z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     animation: fadeIn 0.2s ease;
+}
+
+.language-currency-modal-overlay--in-chart {
+    position: absolute;
+    z-index: 3;
 }
 
 @keyframes fadeIn {
@@ -24,11 +28,13 @@
 }
 
 .language-currency-modal {
-    background: #1a1f2e;
+    padding: 24px;
+    gap: 16px;
+    background: #14172A;
     border-radius: 12px;
     width: 100%;
     max-width: 600px;
-    max-height: 90vh;
+    max-height: 63vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
@@ -51,36 +57,39 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    flex-shrink: 0;
 }
 
 .language-currency-modal__tabs {
     display: flex;
-    gap: 8px;
+    flex: 1;
 }
 
 .language-currency-modal__tab {
-    padding: 8px 16px;
+    flex: 1;
+    padding: 12px 16px;
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 14px;
-    font-weight: 500;
+    border-bottom: 1px solid #292E41;
+    border-radius: 8px 8px 0 0;
+    color: #ffffffb3;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    position: relative;
+    transition: all 0.3s ease;
+    text-align: center;
 }
 
 .language-currency-modal__tab:hover {
-    color: rgba(255, 255, 255, 0.8);
+    color: #ffffffe6;
+    background: #ffffff0d;
 }
 
 .language-currency-modal__tab.active {
     color: #fff;
-    border-bottom-color: #009af9;
+    border-bottom: 1px solid #484BD7;
+    background: #484BD71A;
 }
 
 .language-currency-modal__close {
@@ -110,14 +119,12 @@
 
 .language-currency-modal__search {
     position: relative;
-    padding: 16px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
 }
 
 .language-currency-modal__search-icon {
     position: absolute;
-    left: 36px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.4);
@@ -129,8 +136,7 @@
 .language-currency-modal__search-input {
     width: 100%;
     padding: 12px 16px 12px 48px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #292E41;
     border-radius: 8px;
     color: #fff;
     font-size: 14px;
@@ -143,14 +149,12 @@
 }
 
 .language-currency-modal__search-input:focus {
-    background: rgba(255, 255, 255, 0.08);
     border-color: rgba(0, 154, 249, 0.5);
 }
 
 .language-currency-modal__content {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 24px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
@@ -181,12 +185,10 @@
 }
 
 .language-currency-modal__section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    color: #7D7C8C;
+    font-weight: 400;
     margin: 0 0 12px 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .language-currency-modal__list {
@@ -205,7 +207,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 16px;
+    padding: 8px;
     background: transparent;
     border: none;
     border-radius: 6px;
@@ -223,8 +225,7 @@
 }
 
 .language-currency-modal__item.active {
-    background: rgba(0, 154, 249, 0.15);
-    color: #009af9;
+    background: #484BD71A;
 }
 
 .language-currency-modal__item.active:hover:not(:disabled) {
@@ -253,12 +254,11 @@
 }
 
 .language-currency-modal__item.active .language-currency-modal__item-code {
-    color: rgba(0, 154, 249, 0.7);
+    color: white;
 }
 
 .language-currency-modal__check {
-    color: #00ff8c;
-    flex-shrink: 0;
+    color: #22C55E;
     margin-left: auto;
 }
 
@@ -266,7 +266,7 @@
 @media (max-width: 768px) {
     .language-currency-modal {
         max-width: 100%;
-        max-height: 100vh;
+        max-height: 70vh;
         border-radius: 0;
     }
 
@@ -278,13 +278,6 @@
         grid-template-columns: 1fr;
     }
 
-    .language-currency-modal__header {
-        padding: 16px 20px;
-    }
-
-    .language-currency-modal__search {
-        padding: 12px 20px;
-    }
 
     .language-currency-modal__content {
         padding: 16px 20px;

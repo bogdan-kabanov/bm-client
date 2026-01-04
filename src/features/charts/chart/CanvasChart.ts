@@ -3,7 +3,7 @@ import { clampViewport, panViewport, zoomViewport, PanZoomConfig } from './panZo
 import { renderChart, xIndexToPixel, priceToPixel } from './rendering';
 import { getTimeframeDurationMs } from '../ui/utils';
 import { getServerTime } from '@src/shared/lib/serverTime';
-import backgroundImageSrc from '@src/assets/background_chart.png';
+import backgroundImageSrc from '@src/assets/images/backgrounds/background_chart.png';
 import { ActiveCandleUpdater } from './ActiveCandleUpdater';
 
 export class CanvasChart implements CanvasChartHandle {

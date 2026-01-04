@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
-const envDir = resolve(process.cwd(), '..', 'env-config', 'client');
+const envDir = resolve(process.cwd(), '..');
 const env = loadEnv('production', envDir, '');
 
 // Use only values from .env file, no fallbacks

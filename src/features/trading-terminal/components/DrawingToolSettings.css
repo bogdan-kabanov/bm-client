@@ -1,0 +1,143 @@
+.drawing-tool-settings {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translate(100%, -50%);
+  z-index: 10000;
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+
+.drawing-tool-settings--open {
+  transform: translate(0, -50%);
+  pointer-events: auto;
+}
+
+.drawing-tool-settings__content {
+  background: rgba(22, 27, 40, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(108, 144, 255, 0.2);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 20px;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.drawing-tool-settings__label {
+  display: block;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 20px;
+}
+
+.drawing-tool-settings__section {
+  margin-bottom: 24px;
+}
+
+.drawing-tool-settings__section:last-child {
+  margin-bottom: 0;
+}
+
+.drawing-tool-settings__section .color-picker {
+  padding-bottom: 0;
+}
+
+.drawing-tool-settings__section .color-picker .color-square {
+  width: 100px;
+  height: 100px;
+}
+
+.drawing-tool-settings__section .color-picker .color-picker-sliders .slider-group .slider {
+  width: 18px;
+  height: 100px;
+}
+
+.drawing-tool-settings__section-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.drawing-tool-settings__control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.drawing-tool-settings__input {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.drawing-tool-settings__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #61a9ff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.drawing-tool-settings__input::-webkit-slider-thumb:hover {
+  background: #7bb5ff;
+  transform: scale(1.1);
+}
+
+.drawing-tool-settings__input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #61a9ff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.drawing-tool-settings__input::-moz-range-thumb:hover {
+  background: #7bb5ff;
+  transform: scale(1.1);
+}
+
+.drawing-tool-settings__value {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+  font-family: 'Manrope', sans-serif;
+}
+
+.drawing-tool-settings__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.drawing-tool-settings__preview-line {
+  border-radius: 2px;
+  transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease;
+  max-width: 80%;
+  min-width: 20px;
+}
+

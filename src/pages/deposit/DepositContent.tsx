@@ -494,7 +494,7 @@ export function DepositContent({ showLanguageDropdown = true }: DepositContentPr
         
         const numericAmount = parseFloat(usdAmount) || 0;
         if (!numericAmount || numericAmount <= 0) {
-            setPromocodeValidation({ valid: false, error: 'Введите сумму депозита для проверки промокода' });
+            setPromocodeValidation({ valid: false, error: t('deposit.promocodeEnterAmountError') });
             return;
         }
         
@@ -503,7 +503,7 @@ export function DepositContent({ showLanguageDropdown = true }: DepositContentPr
             const validation = await promocodeApi.validate(code.trim(), numericAmount);
             setPromocodeValidation(validation);
         } catch (error: any) {
-            setPromocodeValidation({ valid: false, error: 'Ошибка при проверке промокода' });
+            setPromocodeValidation({ valid: false, error: t('deposit.promocodeValidationError') });
         } finally {
             setValidatingPromocode(false);
         }
@@ -2134,14 +2134,14 @@ export function DepositContent({ showLanguageDropdown = true }: DepositContentPr
                                         {referralPromocode.discountType && referralPromocode.discountValue && (
                                             <div style={{ fontSize: '13px', color: '#555', marginTop: '0.5rem' }}>
                                                 {referralPromocode.discountType === 'percentage' 
-                                                    ? `Скидка: ${referralPromocode.discountValue}%`
-                                                    : `Скидка: $${referralPromocode.discountValue}`
+                                                    ? `Бонус: ${referralPromocode.discountValue}%`
+                                                    : `Бонус: $${referralPromocode.discountValue}`
                                                 }
                                                 {referralPromocode.minAmount && (
                                                     <span> (мин. сумма: ${referralPromocode.minAmount})</span>
                                                 )}
                                                 {referralPromocode.maxDiscount && referralPromocode.discountType === 'percentage' && (
-                                                    <span> (макс. скидка: $${referralPromocode.maxDiscount})</span>
+                                                    <span> (макс. бонус: $${referralPromocode.maxDiscount})</span>
                                                 )}
                                                 {referralPromocode.description && (
                                                     <div style={{ marginTop: '0.5rem', fontSize: '12px', color: '#777', fontStyle: 'italic' }}>
@@ -2208,13 +2208,13 @@ export function DepositContent({ showLanguageDropdown = true }: DepositContentPr
                                 }}>
                                     {promocodeValidation.valid ? (
                                         <span>
-                                            ✓ Промокод применен! Скидка: ${promocodeValidation.discount?.toFixed(2) || 0}
+                                            ✓ Промокод применен! Бонус: ${promocodeValidation.discount?.toFixed(2) || 0}
                                             {promocodeValidation.finalAmount && (
                                                 <span> (Итого: ${promocodeValidation.finalAmount.toFixed(2)})</span>
                                             )}
                                         </span>
                                     ) : (
-                                        <span>✗ {promocodeValidation.error || 'Промокод недействителен'}</span>
+                                        <span>✗ {promocodeValidation.error || t('errors.promocodeInvalid')}</span>
                                     )}
                                 </div>
                             )}

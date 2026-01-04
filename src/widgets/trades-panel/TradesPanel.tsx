@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ActiveTrades } from '@/src/widgets/active-trades/ActiveTrades';
 import { TradeHistory } from '@/src/widgets/trade-history/TradeHistory';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import type { Currency } from '@src/shared/api';
-import { useAppSelector } from '@src/shared/lib/hooks';
-import { selectTradeHistoryByMode, selectTradingMode } from '@src/entities/trading/model/selectors';
+import { useAppSelector, useAppDispatch } from '@src/shared/lib/hooks';
+import { selectTradeHistoryByMode, selectTradingMode, selectNewTradesCount } from '@src/entities/trading/model/selectors';
+import { setNewTradesCount } from '@src/entities/trading/model/slice';
+import { userApi } from '@src/shared/api/user/userApi';
 import './TradesPanel.css';
 
 interface ActiveTrade {
@@ -49,6 +51,7 @@ interface TradesPanelProps {
   resolveCurrencyIconUrls?: (currency?: Currency | null) => string[];
   onRequestActiveTrades?: () => void;
   onRequestTradeHistory?: () => void;
+  onOpenTradeSidebar?: (trade: any) => void;
 }
 
 type TabType = 'active' | 'history';
@@ -63,15 +66,31 @@ export const TradesPanel: React.FC<TradesPanelProps> = ({
   getCurrencyInfo,
   resolveCurrencyIconUrls,
   onRequestActiveTrades,
-  onRequestTradeHistory
+  onRequestTradeHistory,
+  onOpenTradeSidebar
 }) => {
   const { t } = useLanguage();
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const prevTabRef = useRef<TabType>('active');
   const hasRequestedActiveTradesRef = useRef(false);
   const hasRequestedTradeHistoryRef = useRef(false);
   const tradeHistory = useAppSelector(selectTradeHistoryByMode);
   const tradingMode = useAppSelector(selectTradingMode);
+  const newTradesCount = useAppSelector(selectNewTradesCount);
+  
+  // Обновляем timestamp на сервере при открытии вкладки истории и сбрасываем счетчик
+  useEffect(() => {
+    if (activeTab === 'history') {
+      console.log('[TradesPanel] 📋 Открыта вкладка истории, сбрасываем счетчик с', newTradesCount, 'на 0');
+      // Сбрасываем счетчик новых сделок
+      dispatch(setNewTradesCount(0));
+      // Отправляем запрос на обновление timestamp последнего просмотра
+      userApi.updateLastViewedTradeHistoryAt().catch(error => {
+        console.error('[TradesPanel] Ошибка обновления timestamp последнего просмотра истории:', error);
+      });
+    }
+  }, [activeTab, dispatch, newTradesCount]);
 
 
   // Загружаем данные при смене вкладки
@@ -183,7 +202,7 @@ export const TradesPanel: React.FC<TradesPanelProps> = ({
             }
           }}
         >
-          {t('trading.activeTrades') || 'Active Trades'}
+          {t('trading.activeTrades') || 'Open Trades'}
         </button>
         <button
           className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
@@ -196,8 +215,20 @@ export const TradesPanel: React.FC<TradesPanelProps> = ({
               });
             }
           }}
+          style={{ position: 'relative' }}
         >
-          {t('trading.tradeHistory') || 'Trade History'}
+          Trade History
+          {(() => {
+            const shouldShow = newTradesCount > 0;
+            return shouldShow ? (
+              <span 
+                className="history-new-count"
+                title={t('trades.newCompletedTrades')}
+              >
+                {newTradesCount > 99 ? '99+' : newTradesCount}
+              </span>
+            ) : null;
+          })()}
         </button>
       </div>
       
@@ -206,6 +237,7 @@ export const TradesPanel: React.FC<TradesPanelProps> = ({
           <ActiveTrades 
             getCurrencyInfo={getCurrencyInfo}
             resolveCurrencyIconUrls={resolveCurrencyIconUrls}
+            onOpenTradeSidebar={onOpenTradeSidebar}
           />
         )}
         
@@ -219,6 +251,7 @@ export const TradesPanel: React.FC<TradesPanelProps> = ({
             hasMore={hasMoreHistory}
             getCurrencyInfo={getCurrencyInfo}
             resolveCurrencyIconUrls={resolveCurrencyIconUrls}
+            onOpenTradeSidebar={onOpenTradeSidebar}
           />
         )}
       </div>

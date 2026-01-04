@@ -2,7 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { CopyTradingSignalsState, CopySubscriptionItem } from './types';
 
 const initialState: CopyTradingSignalsState = {
-  isMenuOpen: false,
+  isMenuOpen: false, // Deprecated: use isTopPartnersMenuOpen and isSubscriptionsMenuOpen
+  isTopPartnersMenuOpen: false,
+  isSubscriptionsMenuOpen: false,
   subscriptions: [],
   isLoading: false,
   error: null,
@@ -15,6 +17,20 @@ export const copyTradingSignalsSlice = createSlice({
   reducers: {
     setMenuOpen: (state, action: PayloadAction<boolean>) => {
       state.isMenuOpen = action.payload;
+      // For backward compatibility, also set both new states
+      if (action.payload) {
+        state.isTopPartnersMenuOpen = true;
+        state.isSubscriptionsMenuOpen = true;
+      } else {
+        state.isTopPartnersMenuOpen = false;
+        state.isSubscriptionsMenuOpen = false;
+      }
+    },
+    setTopPartnersMenuOpen: (state, action: PayloadAction<boolean>) => {
+      state.isTopPartnersMenuOpen = action.payload;
+    },
+    setSubscriptionsMenuOpen: (state, action: PayloadAction<boolean>) => {
+      state.isSubscriptionsMenuOpen = action.payload;
     },
     setSubscriptions: (state, action: PayloadAction<CopySubscriptionItem[]>) => {
       state.subscriptions = action.payload;
@@ -48,6 +64,8 @@ export const copyTradingSignalsSlice = createSlice({
 
 export const {
   setMenuOpen,
+  setTopPartnersMenuOpen,
+  setSubscriptionsMenuOpen,
   setSubscriptions,
   setLoading,
   setError,

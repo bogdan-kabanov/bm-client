@@ -36,6 +36,7 @@ export const PrivateRoutes = ({ autoAccessGranted }: PrivateRoutesProps) => {
                     <Route path="/deposit/payment" element={<DepositPage />} />
                     <Route path="/withdraw" element={<DepositPage />} />
                     <Route path="/transaction-history" element={<DepositPage />} />
+                    <Route path="/promocodes" element={<DepositPage />} />
                     <Route path="/referrals" element={<ReferralsPage />} />
                     <Route path="/email/verify" element={<EmailVerifyPage />} />
                     <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />

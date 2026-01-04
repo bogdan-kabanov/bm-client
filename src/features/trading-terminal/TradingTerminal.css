@@ -24,6 +24,9 @@
     min-height: calc(100% - 72px);
     max-height: calc(100% - 72px);
     border-radius: 0 !important;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .lightweight-chart .chart-loading-overlay {
@@ -93,7 +96,7 @@
     height: 100%;
     width: 100%;
     min-width: 100%;
-    flex: 1 1 auto
+    flex: 1 1 auto;
 }
 
 @media(max-width: 1024px) {
@@ -105,13 +108,13 @@
 
 .trading-terminal .terminal-main .chart-section-wrapper {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     background: #1b1e2f;
     backdrop-filter: blur(20px);
     position: relative;
     min-height: 0;
     min-width: 100%;
-    flex: 1;
+    flex: 1 1 auto;
     overflow: hidden;
     overflow-x: hidden;
     height: 100%;
@@ -120,7 +123,9 @@
     max-width: 100%;
     visibility: visible;
     opacity: 1;
-    border-radius: 0 !important;
+    border-radius: 8px 8px 0 0;
+    transition: width .28s ease, max-width .28s ease;
+    contain: layout style paint;
 }
 
 @media(max-width: 1024px) {
@@ -135,6 +140,43 @@
         backdrop-filter:none;
         overflow: visible
     }
+}
+
+.trading-terminal .terminal-main .chart-section-wrapper.indicators-sidebar-open {
+    width: calc(100% - clamp(480px, 36vw, 600px));
+    max-width: calc(100% - clamp(480px, 36vw, 600px));
+}
+
+@media(max-width: 1024px) {
+    .trading-terminal .terminal-main .chart-section-wrapper.indicators-sidebar-open {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+.trading-terminal .terminal-main .chart-section-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.trading-terminal .terminal-main .chart-section-wrapper .chart-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    align-items: stretch;
+    margin: 0;
+    padding: 0;
 }
 
 .trading-terminal .terminal-main .chart-section-wrapper .chart-top-bar {
@@ -1564,7 +1606,7 @@
     border-radius: 4px;
     color: #fff;
     font-size: 10px;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Manrope', sans-serif;
     text-align: center;
     outline: none;
 }
@@ -3248,75 +3290,8 @@
     color: #dc3c22
 }
 
-.trading-terminal .terminal-main .main-chart-container {
-    flex: 1 1 auto;
-    position: relative;
-    min-height: 0;
-    max-height: 100%;
-    overflow: hidden;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    min-width: 100%;
-    max-width: 100%;
-    border-radius: 0;
-}
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper {
-    position: relative;
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    height: 100%;
-    max-height: 100%;
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    transition: width .28s ease, max-width .28s ease;
-    min-height: 0;
-    /* СТРОГО обрезаем содержимое, которое выходит за границы графика */
-    overflow: hidden !important;
-    /* Убеждаемся, что содержимое не может выйти за границы */
-    contain: layout style paint;
-    border-radius: 0;
-}
-
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper.indicators-sidebar-open {
-    width: calc(100% - clamp(480px, 36vw, 600px));
-    max-width: calc(100% - clamp(480px, 36vw, 600px));
-}
-
-@media(max-width: 1024px) {
-    .trading-terminal .terminal-main .main-chart-container .main-chart-wrapper.indicators-sidebar-open {
-        width: 100%;
-        max-width: 100%;
-    }
-}
-
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* linear-gradient(270deg, #002cd2 0%, #002cd2 50%, #3e455a 0, #3e455a); */
-    background: linear-gradient(
-        180deg,
-        rgba(21, 25, 48, 0.9) 0%,
-        rgba(30, 30, 51, 0.95) 35%,
-        rgba(39, 39, 61, 0.95) 50%,
-        rgba(30, 30, 51, 0.95) 65%,
-        rgb(10, 9, 20) 100%
-    );
-    backdrop-filter: blur(0px);
-    z-index: 0;
-    pointer-events: none;
-}
-
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay {
     position: absolute;
     bottom: 44px;
     left: 16px;
@@ -3330,7 +3305,7 @@
 }
 
 @media (max-width: 1024px) {
-    .trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay {
         display: block !important; /* Видно на мобильных устройствах */
         visibility: visible !important;
         opacity: 1 !important;
@@ -3347,7 +3322,7 @@
             gap: 6px;
         }
 
-        .trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay {
+        .trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay {
             bottom: 26px;
             left: 8px;
             right: 8px;
@@ -3358,7 +3333,7 @@
 
 /* Элемент скрыт на десктопе */
 @media (min-width: 1025px) {
-    .trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -3366,7 +3341,7 @@
     }
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel {
     pointer-events: auto;
     background: rgba(27, 30, 47, 0.95);
     backdrop-filter: blur(20px);
@@ -3379,45 +3354,48 @@
 }
 
 /* Стили для мобильной версии overlay панели */
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel.chart-overlay-panel .manual-trading-controls {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel.chart-overlay-panel .manual-trading-controls {
     gap: 12px;
     padding: 16px;
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel.chart-overlay-panel .manual-trading-controls .mobile-controls-top {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel.chart-overlay-panel .manual-trading-controls .mobile-controls-top {
     display: flex;
     flex-direction: row;
     gap: 8px;
     align-items: flex-start;
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel.chart-overlay-panel .manual-trading-controls .profit-payout-row {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay .trading-controls-panel.chart-overlay-panel .manual-trading-controls .profit-payout-row {
     display: flex;
     flex-direction: row;
     gap: 8px;
     align-items: stretch;
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .lightweight-chart {
+.trading-terminal .terminal-main .chart-section-wrapper .lightweight-chart {
     flex: 1;
     min-height: 0;
-    min-width: 100%;
+    min-width: 0;
     width: 100%;
     height: 100%;
     --chart-bottom-padding: 180px;
     padding-top: 72px;
     margin-top: -72px;
+    margin-left: 0;
+    margin-right: 0;
     box-sizing: border-box;
     position: relative;
+    overflow: hidden;
 }
 
 @media (max-width: 1024px) {
-    .trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .lightweight-chart {
+    .trading-terminal .terminal-main .chart-section-wrapper .lightweight-chart {
         padding-bottom: var(--mobile-bottom-menu-height, 73px);
     }
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-price-notification {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-price-notification {
     position: absolute;
     top: 20px;
     left: 50%;
@@ -3435,7 +3413,7 @@
     box-shadow: 0 4px 12px #0000004d
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .ohlc-ticker {
+.trading-terminal .terminal-main .chart-section-wrapper .ohlc-ticker {
     position: absolute;
     top: 16px;
     right: 16px;
@@ -3452,13 +3430,13 @@
     z-index: 90
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .ohlc-ticker__time {
+.trading-terminal .terminal-main .chart-section-wrapper .ohlc-ticker__time {
     font-size: 14px;
     color: #ffffffad;
     letter-spacing: .3px
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .ohlc-ticker__row {
+.trading-terminal .terminal-main .chart-section-wrapper .ohlc-ticker__row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3467,19 +3445,19 @@
     font-size: 16px
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .ohlc-ticker__label {
+.trading-terminal .terminal-main .chart-section-wrapper .ohlc-ticker__label {
     color: #8aa2ff;
     min-width: 16px;
     font-size: 16px
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .ohlc-ticker__value {
+.trading-terminal .terminal-main .chart-section-wrapper .ohlc-ticker__value {
     color: #e6f1ff;
     white-space: nowrap;
     font-size: 16px
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar-backdrop {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar-backdrop {
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
@@ -3490,12 +3468,12 @@
     z-index: 40;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar-backdrop.visible {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar-backdrop.visible {
     opacity: 1;
     pointer-events: auto;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar {
     position: relative;
     top: 0;
     right: 0;
@@ -3519,28 +3497,28 @@
 }
 
 @media(max-width: 1024px) {
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar {
         width: min(100%, 420px);
         min-width: min(100%, 420px);
         max-width: min(100%, 420px);
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__header {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__header {
         padding: 20px 24px;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__content {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__content {
         padding: 16px 24px 24px;
         gap: 6px;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item {
         padding: 14px 18px;
         min-height: 72px;
         gap: 14px;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__icon {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__icon {
         width: 44px;
         height: 44px;
         min-width: 44px;
@@ -3550,7 +3528,7 @@
 }
 
 @media(max-width: 768px) {
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar-backdrop {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar-backdrop {
         position: fixed !important;
         inset: 0 !important;
         z-index: 10000 !important;
@@ -3558,7 +3536,7 @@
         backdrop-filter: none !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
@@ -3574,7 +3552,7 @@
         padding-top: max(72px, calc(72px + constant(safe-area-inset-top, 0px))) !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__close {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__close {
         width: 44px !important;
         min-width: 44px !important;
         height: 44px !important;
@@ -3586,13 +3564,13 @@
         flex-shrink: 0 !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__close:active {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__close:active {
         background: rgba(255, 255, 255, 0.25) !important;
         border-color: rgba(255, 255, 255, 0.5) !important;
         transform: scale(0.95) !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__header {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__header {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
@@ -3606,45 +3584,45 @@
         z-index: 10 !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__content {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__content {
         padding: 16px 20px 24px !important;
         gap: 6px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item {
         padding: 14px 16px !important;
         min-height: 72px !important;
         gap: 12px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__icon {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__icon {
         width: 44px !important;
         height: 44px !important;
         min-width: 44px !important;
         min-height: 44px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__name {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__name {
         font-size: 14px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__desc {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__desc {
         font-size: 11px !important;
     }
     
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__toggle {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__toggle {
         padding: 7px 16px !important;
         font-size: 11px !important;
         min-width: 64px !important;
     }
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar.open {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar.open {
     transform: translate(0)
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__header {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3659,14 +3637,14 @@
     z-index: 10;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__title {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__title {
     display: flex;
     flex-direction: column;
     gap: 6px;
     flex: 1;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__title h3 {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__title h3 {
     margin: 0;
     font-size: 20px;
     font-weight: 700;
@@ -3675,14 +3653,14 @@
     line-height: 1.2;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__title span {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__title span {
     font-size: 13px;
     color: rgba(255, 255, 255, 0.65);
     font-weight: 400;
     letter-spacing: 0;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__close {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__close {
     width: 36px;
     height: 36px;
     border-radius: 8px;
@@ -3697,24 +3675,24 @@
     flex-shrink: 0;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__close svg {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__close svg {
     width: 18px;
     height: 18px;
     stroke-width: 2;
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-indicators-sidebar__close:hover {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__close:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
     color: #fff;
     transform: scale(1.05);
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-indicators-sidebar__close:active {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__close:active {
     transform: scale(0.95);
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__content {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__content {
     flex: 1 1 auto;
     overflow-y: auto;
     overflow-x: hidden;
@@ -3726,27 +3704,27 @@
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__content::-webkit-scrollbar {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__content::-webkit-scrollbar {
     width: 8px;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__content::-webkit-scrollbar-track {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__content::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__content::-webkit-scrollbar-thumb {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__content::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 4px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar__content::-webkit-scrollbar-thumb:hover {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar__content::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25);
     background-clip: padding-box;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item {
     width: 100%;
     display: flex;
     align-items: center;
@@ -3764,7 +3742,7 @@
     overflow: hidden;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item::before {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item::before {
     content: '';
     position: absolute;
     top: 0;
@@ -3777,11 +3755,11 @@
     pointer-events: none;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item:hover::before {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item:hover::before {
     opacity: 1;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__icon {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__icon {
     flex-shrink: 0;
     width: 48px;
     height: 48px;
@@ -3804,7 +3782,7 @@
     z-index: 1;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__info {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__info {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -3814,7 +3792,7 @@
     z-index: 1;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__name {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__name {
     font-size: 15px;
     font-weight: 600;
     color: #ffffff;
@@ -3825,7 +3803,7 @@
     letter-spacing: -0.01em;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__desc {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__desc {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.6);
     line-height: 1.4;
@@ -3836,7 +3814,7 @@
 }
 
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__toggle {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__toggle {
     margin-left: auto;
     padding: 8px 20px;
     border-radius: 8px;
@@ -3855,47 +3833,47 @@
     white-space: nowrap;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item:hover {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item:hover {
     border-color: rgba(74, 158, 255, 0.4);
     background: rgba(74, 158, 255, 0.08);
     transform: translateX(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item:hover .indicator-item__icon {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item:hover .indicator-item__icon {
     transform: scale(1.05);
     box-shadow: var(--indicator-icon-shadow, 0 2px 8px rgba(0, 0, 0, 0.2)), 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item:hover .indicator-item__toggle {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item:hover .indicator-item__toggle {
     background: rgba(74, 158, 255, 0.15);
     border-color: rgba(74, 158, 255, 0.3);
     color: #5ba9ff;
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item--active {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item--active {
     border-color: rgba(74, 158, 255, 0.5);
     background: rgba(74, 158, 255, 0.12);
     box-shadow: 0 4px 20px rgba(74, 158, 255, 0.15);
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item--active::before {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item--active::before {
     opacity: 1;
     background: linear-gradient(135deg, rgba(74, 158, 255, 0.12) 0%, rgba(74, 158, 255, 0) 100%);
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item--active .indicator-item__icon {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item--active .indicator-item__icon {
     box-shadow: var(--indicator-icon-shadow, 0 2px 8px rgba(0, 0, 0, 0.2)), 0 6px 20px rgba(74, 158, 255, 0.4);
 }
 
-.trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item--active .indicator-item__toggle {
+.trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item--active .indicator-item__toggle {
     background: rgba(74, 158, 255, 0.25);
     border-color: rgba(74, 158, 255, 0.5);
     color: #5ba9ff;
     font-weight: 700;
 }
 
-.trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .hover-gradient-overlay {
+.trading-terminal .terminal-main .chart-section-wrapper .hover-gradient-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -3908,7 +3886,7 @@
     transition: opacity .3s ease
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay {
     position: absolute;
     top: 64px;
     left: 16px;
@@ -3924,29 +3902,29 @@
     contain: layout style paint
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay .close-widgets-btn {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay .close-widgets-btn {
     display: none
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay::-webkit-scrollbar {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay::-webkit-scrollbar {
     width: 6px
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay::-webkit-scrollbar-track {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay::-webkit-scrollbar-track {
     background: #ffffff0d;
     border-radius: 3px
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay::-webkit-scrollbar-thumb {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay::-webkit-scrollbar-thumb {
     background: #fff3;
     border-radius: 3px
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay::-webkit-scrollbar-thumb:hover {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay::-webkit-scrollbar-thumb:hover {
     background: #ffffff4d
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay .widget-compact {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay .widget-compact {
     background: #1e222d;
     border: none;
     border-radius: 8px;
@@ -3959,12 +3937,12 @@
     height: fit-content
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay .widget-compact :global .panel-title {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay .widget-compact :global .panel-title {
     font-size: 13px!important;
     margin-bottom: 12px!important
 }
 
-.trading-terminal .terminal-main .main-chart-container .widgets-overlay .widget-compact :global .execution-speed,.trading-terminal .terminal-main .main-chart-container .widgets-overlay .widget-compact :global .spread-monitor,.trading-terminal .terminal-main .main-chart-container .widgets-overlay .widget-compact :global .exchange-health-monitor,.trading-terminal .terminal-main .main-chart-container .widgets-overlay .widget-compact :global .arbitrage-alerts {
+.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay .widget-compact :global .execution-speed,.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay .widget-compact :global .spread-monitor,.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay .widget-compact :global .exchange-health-monitor,.trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay .widget-compact :global .arbitrage-alerts {
     padding: 0!important;
     background: transparent!important;
     border: none!important
@@ -4382,7 +4360,7 @@
     min-width: 0;
     max-width: 100%;
     text-align: center;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Manrope', sans-serif;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: .5px;
@@ -4929,7 +4907,7 @@
         overflow: visible
     }
 
-    .trading-terminal .terminal-main .main-chart-container {
+    .trading-terminal .terminal-main .chart-section-wrapper {
         overflow: visible
     }
 
@@ -4953,7 +4931,7 @@
         display: none !important;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .widgets-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay {
         top: 56px;
         left: 12px;
         width: calc(100% - 24px);
@@ -4971,7 +4949,7 @@
         left: 8px
     }
 
-    .trading-terminal .terminal-main .main-chart-container .widgets-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay {
         top: 48px;
         left: 8px;
         width: calc(100% - 16px);
@@ -4995,7 +4973,7 @@
         height: 100%;
     }
 
-    .trading-terminal .terminal-main .main-chart-container {
+    .trading-terminal .terminal-main .chart-section-wrapper {
         min-height: 0;
         height: 100%;
     }
@@ -5006,7 +4984,7 @@
         left: 8px;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .widgets-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay {
         top: calc(env(safe-area-inset-top, 0px) + 48px);
         top: calc(constant(safe-area-inset-top, 0px) + 48px);
         left: 8px;
@@ -5045,7 +5023,7 @@
         left: 6px;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .widgets-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay {
         top: calc(env(safe-area-inset-top, 0px) + 44px);
         top: calc(constant(safe-area-inset-top, 0px) + 44px);
         left: 6px;
@@ -5060,7 +5038,7 @@
         left: 4px;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .widgets-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay {
         top: calc(env(safe-area-inset-top, 0px) + 40px);
         top: calc(constant(safe-area-inset-top, 0px) + 40px);
         left: 4px;
@@ -5079,7 +5057,7 @@
         left: 4px;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .widgets-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .widgets-overlay {
         top: calc(env(safe-area-inset-top, 0px) + 38px);
         top: calc(constant(safe-area-inset-top, 0px) + 38px);
         left: 4px;
@@ -5158,7 +5136,7 @@
         gap: 6px;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay {
         bottom: 24px;
         left: 4px;
         right: 4px;
@@ -5173,46 +5151,46 @@
         min-height: 44px !important;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar {
         padding: 0 !important;
         gap: 0 !important;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .chart-indicators-sidebar__header {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .chart-indicators-sidebar__header {
         padding: 18px 18px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
         margin-bottom: 0 !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .chart-indicators-sidebar__title h3 {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .chart-indicators-sidebar__title h3 {
         font-size: 18px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .chart-indicators-sidebar__title span {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .chart-indicators-sidebar__title span {
         font-size: 12px !important;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .chart-indicators-sidebar__close {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .chart-indicators-sidebar__close {
         min-width: 40px !important;
         min-height: 40px !important;
         width: 40px !important;
         height: 40px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .chart-indicators-sidebar__content {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .chart-indicators-sidebar__content {
         padding: 14px 18px 20px !important;
         gap: 6px !important;
     }
 
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item {
         min-height: 68px !important;
         padding: 12px 14px !important;
         gap: 12px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__icon {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__icon {
         width: 40px !important;
         height: 40px !important;
         min-width: 40px !important;
@@ -5220,16 +5198,16 @@
         font-size: 11px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__name {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__name {
         font-size: 13px !important;
     }
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__desc {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__desc {
         font-size: 11px !important;
     }
     
     
-    .trading-terminal .terminal-main .main-chart-container .chart-indicators-sidebar .indicator-item__toggle {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-indicators-sidebar .indicator-item__toggle {
         padding: 6px 14px !important;
         font-size: 11px !important;
         min-width: 60px !important;
@@ -5296,7 +5274,7 @@
 
 /* КРИТИЧЕСКОЕ ПРАВИЛО: Скрытие chart-bottom-trading-controls-overlay на десктопе */
 @media (min-width: 1025px) {
-    .trading-terminal .terminal-main .main-chart-container .main-chart-wrapper .chart-bottom-trading-controls-overlay {
+    .trading-terminal .terminal-main .chart-section-wrapper .chart-bottom-trading-controls-overlay {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;

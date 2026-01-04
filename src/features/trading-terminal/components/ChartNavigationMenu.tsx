@@ -2,13 +2,15 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { CurrencyCategory, Currency } from '@src/shared/api';
 import { formatPercent, formatPrice } from '../utils/formatUtils';
 import { useLanguage } from '@src/app/providers/useLanguage';
+import { useAppDispatch } from '@src/shared/lib/hooks';
+import { setSelectedCurrencyId } from '@src/entities/trading/model/slice';
 import './ChartNavigationMenu.css';
 
 interface ChartNavigationMenuProps {
   isOpen: boolean;
   onClose: () => void;
   selectedBase: string;
-  onBaseChange: (base: string) => void;
+  onBaseChange: (base: string, quote?: string) => void;
   currencyCategories: CurrencyCategory[];
   currenciesLoading: boolean;
   selectedCategoryId: number | null;
@@ -18,6 +20,8 @@ interface ChartNavigationMenuProps {
   resolveCurrencyAveragePrice?: (baseCurrency: string) => number | null;
   favoriteCurrencies?: string[];
   setFavoriteCurrencies?: (currencies: string[] | ((prev: string[]) => string[])) => void;
+  setForcedCurrency?: (currencyId: number) => void;
+  forcedCurrency?: number | null;
 }
 
 export const ChartNavigationMenu: React.FC<ChartNavigationMenuProps> = ({
@@ -34,8 +38,11 @@ export const ChartNavigationMenu: React.FC<ChartNavigationMenuProps> = ({
   resolveCurrencyAveragePrice,
   favoriteCurrencies = [],
   setFavoriteCurrencies,
+  setForcedCurrency,
+  forcedCurrency,
 }) => {
   const { t } = useLanguage();
+  const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
@@ -114,24 +121,84 @@ export const ChartNavigationMenu: React.FC<ChartNavigationMenuProps> = ({
     return Array.from(uniqueCurrenciesMap.values());
   }, [activeCategories]);
 
-  // Подсчет валют по категориям (только активные валюты)
+  // Подсчет валют по категориям (только активные валюты, с дедупликацией по base_currency)
   const categoryCounts = useMemo(() => {
     const counts: Record<number, number> = {};
     activeCategories.forEach(cat => {
       const activeCurrencies = cat.currencies?.filter(curr => curr.is_active) || [];
-      counts[cat.id] = activeCurrencies.length;
+      
+      // Убираем дубликаты по base_currency (берем первую валюту для каждой базы)
+      const seenBases = new Set<string>();
+      const uniqueCurrencies = activeCurrencies.filter(curr => {
+        const baseCurrency = curr.base_currency.toUpperCase();
+        if (seenBases.has(baseCurrency)) {
+          return false;
+        }
+        seenBases.add(baseCurrency);
+        return true;
+      });
+      
+      counts[cat.id] = uniqueCurrencies.length;
     });
     return counts;
   }, [activeCategories]);
 
-  // Фильтрация валют по поиску и категории
-  const filteredCurrencies = useMemo(() => {
-    let currencies = allCurrencies;
-
-    // Фильтр по категории
+  // Группировка валют по категориям для режима "All"
+  const currenciesByCategory = useMemo(() => {
     if (selectedCategoryId !== null) {
-      currencies = currencies.filter(curr => curr.category_id === selectedCategoryId);
+      return null; // Не группируем, если выбрана конкретная категория
     }
+
+    const grouped = new Map<number, { category: CurrencyCategory; currencies: Currency[] }>();
+    
+    activeCategories.forEach(category => {
+      const categoryCurrencies = (category.currencies || [])
+        .filter(curr => curr.is_active)
+        .filter(curr => {
+          // Фильтр по поиску
+          if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            return curr.base_currency.toLowerCase().includes(query) ||
+                   curr.display_name.toLowerCase().includes(query) ||
+                   curr.symbol.toLowerCase().includes(query);
+          }
+          return true;
+        });
+
+      if (categoryCurrencies.length > 0) {
+        // Сортировка по пейауту (по убыванию)
+        categoryCurrencies.sort((a, b) => {
+          const payoutA = a.profit_1m !== null && a.profit_1m !== undefined 
+            ? a.profit_1m 
+            : (a.profit_percentage !== null && a.profit_percentage !== undefined ? a.profit_percentage : -Infinity);
+          
+          const payoutB = b.profit_1m !== null && b.profit_1m !== undefined 
+            ? b.profit_1m 
+            : (b.profit_percentage !== null && b.profit_percentage !== undefined ? b.profit_percentage : -Infinity);
+          
+          return payoutB - payoutA;
+        });
+
+        grouped.set(category.id, {
+          category,
+          currencies: categoryCurrencies
+        });
+      }
+    });
+
+    // Сортируем категории по order
+    return Array.from(grouped.values()).sort((a, b) => 
+      (a.category.order || 0) - (b.category.order || 0)
+    );
+  }, [activeCategories, selectedCategoryId, searchQuery]);
+
+  // Фильтрация валют по поиску и категории (для режима с выбранной категорией)
+  const filteredCurrencies = useMemo(() => {
+    if (selectedCategoryId === null) {
+      return []; // В режиме "All" используем currenciesByCategory
+    }
+
+    let currencies = allCurrencies.filter(curr => curr.category_id === selectedCategoryId);
 
     // Фильтр по поиску
     if (searchQuery.trim()) {
@@ -160,11 +227,30 @@ export const ChartNavigationMenu: React.FC<ChartNavigationMenuProps> = ({
     });
 
     return currencies;
-  }, [allCurrencies, selectedCategoryId, searchQuery, favoriteCurrencies]);
+  }, [allCurrencies, selectedCategoryId, searchQuery]);
 
   const handleCurrencySelect = (currency: Currency, event: React.MouseEvent) => {
     event.stopPropagation();
-    onBaseChange(currency.base_currency);
+    // Устанавливаем currencyId в Redux и локальный state
+    if (currency.id) {
+      const currencyId = typeof currency.id === 'number' ? currency.id : parseInt(String(currency.id), 10);
+      console.log('[ChartNavigationMenu] Устанавливаем currencyId', { 
+        currency: `${currency.base_currency}_${currency.quote_currency}`, 
+        currencyId 
+      });
+      // Устанавливаем в Redux (основной идентификатор)
+      dispatch(setSelectedCurrencyId(currencyId));
+      // Также устанавливаем в локальный state для совместимости
+      if (setForcedCurrency) {
+        setForcedCurrency(currencyId);
+      }
+    }
+    // Передаем и base, и quote в onBaseChange для точной идентификации валютной пары
+    if (currency.base_currency && currency.quote_currency) {
+      onBaseChange(currency.base_currency, currency.quote_currency);
+    } else {
+      onBaseChange(currency.base_currency);
+    }
     setSearchQuery('');
     // Меню не закрывается при выборе валютной пары
   };
@@ -352,84 +438,185 @@ export const ChartNavigationMenu: React.FC<ChartNavigationMenuProps> = ({
                     {t('trading.currencyControls.profit30s')}
                   </div>
                 </div>
-                {filteredCurrencies.length === 0 ? (
-                  <div className="chart-navigation-menu__empty">
-                    {searchQuery ? t('trading.currencyControls.currenciesNotFound') : t('trading.currencyControls.currenciesUnavailable')}
-                  </div>
-                ) : (
-                  filteredCurrencies.map(currency => {
-                    return (
-                      <div
-                        key={currency.id}
-                        className={`chart-navigation-menu__item ${
-                          currency.base_currency === selectedBase ? 'active' : ''
-                        }`}
-                        onClick={(e) => handleCurrencySelect(currency, e)}
-                        onMouseDown={(e) => e.stopPropagation()}
-                      >
-                        <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--name">
-                          <div className="chart-navigation-menu__item-icon">
-                            {getCurrencyIcon(currency) ? (
-                              <img
-                                src={getCurrencyIcon(currency)!}
-                                alt={currency.base_currency}
-                                className="chart-navigation-menu__item-icon-img"
-                              />
-                            ) : (
-                              <span className="chart-navigation-menu__item-icon-placeholder">
-                                {currency.base_currency.substring(0, 2)}
-                              </span>
-                            )}
+                {selectedCategoryId === null && currenciesByCategory ? (
+                  // Режим "All" - группировка по категориям
+                  currenciesByCategory.length === 0 ? (
+                    <div className="chart-navigation-menu__empty">
+                      {searchQuery ? t('trading.currencyControls.currenciesNotFound') : t('trading.currencyControls.currenciesUnavailable')}
+                    </div>
+                  ) : (
+                    currenciesByCategory.map(({ category, currencies }) => (
+                      <div key={category.id} className="chart-navigation-menu__category-group">
+                        <div className="chart-navigation-menu__category-header">
+                          {category.name_en || category.name}
+                        </div>
+                        {currencies.map(currency => {
+                          // Проверяем активное состояние: если есть forcedCurrency, используем ID, иначе base_currency
+                          const isActive = forcedCurrency 
+                            ? currency.id === forcedCurrency
+                            : currency.base_currency === selectedBase;
+                          
+                          return (
+                          <div
+                            key={currency.id}
+                            className={`chart-navigation-menu__item ${
+                              isActive ? 'active' : ''
+                            }`}
+                            onClick={(e) => handleCurrencySelect(currency, e)}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
+                            <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--name">
+                              <div className="chart-navigation-menu__item-icon">
+                                {getCurrencyIcon(currency) ? (
+                                  <img
+                                    src={getCurrencyIcon(currency)!}
+                                    alt={currency.base_currency}
+                                    className="chart-navigation-menu__item-icon-img"
+                                  />
+                                ) : (
+                                  <span className="chart-navigation-menu__item-icon-placeholder">
+                                    {currency.base_currency.substring(0, 2)}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="chart-navigation-menu__item-info">
+                                <div className="chart-navigation-menu__item-name">{currency.symbol}</div>
+                              </div>
+                            </div>
+                            <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--price">
+                              {(() => {
+                                // Сначала проверяем данные напрямую из объекта currency (данные с сервера)
+                                const averagePrice = currency.average_price ?? currency.avg_price;
+                                if (averagePrice !== null && averagePrice !== undefined && averagePrice > 0) {
+                                  return formatPrice(averagePrice, currency.base_currency);
+                                }
+                                // Затем используем resolveCurrencyAveragePrice как fallback
+                                if (resolveCurrencyAveragePrice) {
+                                  const resolvedPrice = resolveCurrencyAveragePrice(currency.base_currency);
+                                  if (resolvedPrice !== null && resolvedPrice > 0) {
+                                    return formatPrice(resolvedPrice, currency.base_currency);
+                                  }
+                                }
+                                return '--';
+                              })()}
+                            </div>
+                            <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--profit">
+                              {(() => {
+                                // Сначала проверяем profit_1m (данные с сервера)
+                                if (currency.profit_1m !== null && currency.profit_1m !== undefined) {
+                                  return (
+                                    <div className={`chart-navigation-menu__item-profit ${
+                                      currency.profit_1m >= 0 ? 'positive' : 'negative'
+                                    }`}>
+                                      {formatPercent(currency.profit_1m)}
+                                    </div>
+                                  );
+                                }
+                                // Затем используем profit_percentage как fallback
+                                if (currency.profit_percentage !== null && currency.profit_percentage !== undefined) {
+                                  return (
+                                    <div className={`chart-navigation-menu__item-profit ${
+                                      currency.profit_percentage >= 0 ? 'positive' : 'negative'
+                                    }`}>
+                                      {formatPercent(currency.profit_percentage)}
+                                    </div>
+                                  );
+                                }
+                                return '—';
+                              })()}
+                            </div>
                           </div>
-                          <div className="chart-navigation-menu__item-info">
-                            <div className="chart-navigation-menu__item-name">{currency.symbol}</div>
-                          </div>
-                        </div>
-                        <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--price">
-                          {(() => {
-                            // Сначала проверяем данные напрямую из объекта currency (данные с сервера)
-                            const averagePrice = currency.average_price ?? currency.avg_price;
-                            if (averagePrice !== null && averagePrice !== undefined && averagePrice > 0) {
-                              return formatPrice(averagePrice, currency.base_currency);
-                            }
-                            // Затем используем resolveCurrencyAveragePrice как fallback
-                            if (resolveCurrencyAveragePrice) {
-                              const resolvedPrice = resolveCurrencyAveragePrice(currency.base_currency);
-                              if (resolvedPrice !== null && resolvedPrice > 0) {
-                                return formatPrice(resolvedPrice, currency.base_currency);
-                              }
-                            }
-                            return '---';
-                          })()}
-                        </div>
-                        <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--profit">
-                          {(() => {
-                            // Сначала проверяем profit_1m (данные с сервера)
-                            if (currency.profit_1m !== null && currency.profit_1m !== undefined) {
-                              return (
-                                <div className={`chart-navigation-menu__item-profit ${
-                                  currency.profit_1m >= 0 ? 'positive' : 'negative'
-                                }`}>
-                                  {formatPercent(currency.profit_1m)}
-                                </div>
-                              );
-                            }
-                            // Затем используем profit_percentage как fallback
-                            if (currency.profit_percentage !== null && currency.profit_percentage !== undefined) {
-                              return (
-                                <div className={`chart-navigation-menu__item-profit ${
-                                  currency.profit_percentage >= 0 ? 'positive' : 'negative'
-                                }`}>
-                                  {formatPercent(currency.profit_percentage)}
-                                </div>
-                              );
-                            }
-                            return '—';
-                          })()}
-                        </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })
+                    ))
+                  )
+                ) : (
+                  // Режим с выбранной категорией
+                  filteredCurrencies.length === 0 ? (
+                    <div className="chart-navigation-menu__empty">
+                      {searchQuery ? t('trading.currencyControls.currenciesNotFound') : t('trading.currencyControls.currenciesUnavailable')}
+                    </div>
+                  ) : (
+                    filteredCurrencies.map(currency => {
+                      // Проверяем активное состояние: если есть forcedCurrency, используем ID, иначе base_currency
+                      const isActive = forcedCurrency 
+                        ? currency.id === forcedCurrency
+                        : currency.base_currency === selectedBase;
+                      
+                      return (
+                        <div
+                          key={currency.id}
+                          className={`chart-navigation-menu__item ${
+                            isActive ? 'active' : ''
+                          }`}
+                          onClick={(e) => handleCurrencySelect(currency, e)}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--name">
+                            <div className="chart-navigation-menu__item-icon">
+                              {getCurrencyIcon(currency) ? (
+                                <img
+                                  src={getCurrencyIcon(currency)!}
+                                  alt={currency.base_currency}
+                                  className="chart-navigation-menu__item-icon-img"
+                                />
+                              ) : (
+                                <span className="chart-navigation-menu__item-icon-placeholder">
+                                  {currency.base_currency.substring(0, 2)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="chart-navigation-menu__item-info">
+                              <div className="chart-navigation-menu__item-name">{currency.symbol}</div>
+                            </div>
+                          </div>
+                          <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--price">
+                            {(() => {
+                              // Сначала проверяем данные напрямую из объекта currency (данные с сервера)
+                              const averagePrice = currency.average_price ?? currency.avg_price;
+                              if (averagePrice !== null && averagePrice !== undefined && averagePrice > 0) {
+                                return formatPrice(averagePrice, currency.base_currency);
+                              }
+                              // Затем используем resolveCurrencyAveragePrice как fallback
+                              if (resolveCurrencyAveragePrice) {
+                                const resolvedPrice = resolveCurrencyAveragePrice(currency.base_currency);
+                                if (resolvedPrice !== null && resolvedPrice > 0) {
+                                  return formatPrice(resolvedPrice, currency.base_currency);
+                                }
+                              }
+                              return '--';
+                            })()}
+                          </div>
+                          <div className="chart-navigation-menu__item-cell chart-navigation-menu__item-cell--profit">
+                            {(() => {
+                              // Сначала проверяем profit_1m (данные с сервера)
+                              if (currency.profit_1m !== null && currency.profit_1m !== undefined) {
+                                return (
+                                  <div className={`chart-navigation-menu__item-profit ${
+                                    currency.profit_1m >= 0 ? 'positive' : 'negative'
+                                  }`}>
+                                    {formatPercent(currency.profit_1m)}
+                                  </div>
+                                );
+                              }
+                              // Затем используем profit_percentage как fallback
+                              if (currency.profit_percentage !== null && currency.profit_percentage !== undefined) {
+                                return (
+                                  <div className={`chart-navigation-menu__item-profit ${
+                                    currency.profit_percentage >= 0 ? 'positive' : 'negative'
+                                  }`}>
+                                    {formatPercent(currency.profit_percentage)}
+                                  </div>
+                                );
+                              }
+                              return '—';
+                            })()}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )
                 )}
               </div>
             </div>

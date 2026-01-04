@@ -7,15 +7,20 @@
   display: flex;
   align-items: center;
   padding: 0 10px;
-  z-index: 100;
+  z-index: 2;
   overflow: visible;
+  background: transparent;
+  border-radius: 4px;
 }
 
 .chart-toolbar-buttons {
   display: flex;
   align-items: center;
-  gap: 8px;
   overflow: visible;
+  background: #1D1C30;
+  border-radius: 6px;
+  padding: 0x 16px;
+  box-sizing: borderrgba(230, 192, 192, 0.1)
 }
 
 .chart-toolbar-button-wrapper {
@@ -23,9 +28,8 @@
 }
 
 .chart-toolbar-button {
-  width: 60px;
-  height: 60px;
   display: flex;
+  height: 46px;
   align-items: center;
   justify-content: center;
   background: transparent;
@@ -34,10 +38,12 @@
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .chart-toolbar-button:hover {
   color: #868893;
+  background-color: rgba(230, 192, 192, 0.1);
 }
 
 .chart-toolbar-button:active {
@@ -50,13 +56,13 @@
   justify-content: center;
   gap: 4px;
   padding: 0;
-  width: 60px;
+  width: 46px;
 }
 
 .timeframe-label {
   font-size: 16.5px;
   font-weight: 500;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Manrope', sans-serif;
   color: #868893;
 }
 
@@ -64,7 +70,7 @@
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
-  z-index: 1000;
+  z-index: 100;
   background: #232737;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -111,7 +117,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  width: 60px;
+  width: 46px;
 }
 
 .chart-tools-button.active {
@@ -155,8 +161,7 @@
   position: absolute;
   bottom: 100%;
   left: 0;
-  margin-bottom: 4px;
-  z-index: 100;
+  z-index: 50;
 }
 
 .chart-toolbar .drawing-tools-wrapper .drawing-btn {
@@ -197,7 +202,7 @@
   border-radius: 4px;
   padding: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 100;
+  z-index: 50;
   min-width: 200px;
 }
 
@@ -247,6 +252,11 @@
   overflow: visible;
 }
 
+.chart-toolbar-button-wrapper.drawing-tools-wrapper {
+  position: relative;
+  overflow: visible;
+}
+
 .chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-row-container {
   display: flex;
   align-items: center;
@@ -260,17 +270,19 @@
   will-change: transform, opacity;
   position: absolute;
   left: calc(100% + 4px);
-  top: 0;
-  z-index: 100;
+  top: 50%;
+  transform: translateY(-50%) translateX(-20px);
   min-width: 0;
+  width: max-content;
   border-radius: 4px;
-  padding: 4px;
+  background: #1D1C30;
+  overflow: hidden;
 }
 
 .chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-row-container.drawing-tools-row-open {
   opacity: 1 !important;
   visibility: visible !important;
-  transform: translateX(0) !important;
+  transform: translateY(-50%) translateX(0) !important;
   pointer-events: auto !important;
   transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s 0s;
 }
@@ -285,6 +297,7 @@
   -ms-overflow-style: none;
   flex: 1 1 0;
   min-width: 0;
+  max-width: 100%;
   scroll-behavior: smooth;
 }
 
@@ -295,6 +308,7 @@
 .chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-scroll-button {
   width: 36px;
   height: 36px;
+  min-width: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,6 +321,8 @@
   transition: all 0.2s ease;
   flex-shrink: 0;
   padding: 0;
+  z-index: 50;
+  position: relative;
 }
 
 .chart-toolbar-button-wrapper.drawing-tools-wrapper .drawing-tools-scroll-button:hover {

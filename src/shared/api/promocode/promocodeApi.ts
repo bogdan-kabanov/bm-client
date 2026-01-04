@@ -5,6 +5,9 @@ export interface PromocodeValidation {
   discount?: number;
   finalAmount?: number;
   error?: string;
+  minAmount?: number | null;
+  discountValue?: number | null;
+  discountType?: 'percentage' | 'fixed' | null;
 }
 
 export interface ReferralPromocode {

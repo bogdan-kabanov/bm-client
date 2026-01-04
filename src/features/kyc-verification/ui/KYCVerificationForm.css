@@ -1,12 +1,12 @@
 /* KYCVerificationForm styles */
 
 .kyc-verification-form {
-    background: #1e222d;
-    border-radius: 12px;
-    padding: 32px;
-    border: 1px solid #2b2f3a;
+    background: #ffffff;
+    border-radius: 0;
+    padding: 0;
+    border: none;
     margin-top: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
 }
 
 @media (max-width: 768px) {
@@ -16,30 +16,30 @@
 }
 
 .kyc-verification-form .kyc-header {
-    margin-bottom: 24px
+    margin-bottom: 24px;
 }
 
 .kyc-verification-form .kyc-header h2 {
-    color: #fff;
+    color: #333;
     font-size: 24px;
     font-weight: 700;
-    margin-bottom: 8px
+    margin-bottom: 8px;
 }
 
 .kyc-verification-form .kyc-header p {
-    color: #ffffffb3;
+    color: #666;
     font-size: 14px;
-    line-height: 1.5
+    line-height: 1.5;
 }
 
 .kyc-verification-form .kyc-error {
-    background: #ff006e1a;
-    border: 1px solid rgba(255,0,110,.3);
-    color: #ff398a;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
     padding: 12px;
-    border-radius: 0;
+    border-radius: 6px;
     margin-bottom: 20px;
-    font-size: 14px
+    font-size: 14px;
 }
 
 .kyc-verification-form .kyc-form {
@@ -52,35 +52,42 @@
 .kyc-verification-form .kyc-form .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px
+    gap: 16px;
 }
 
-@media(max-width: 768px) {
+@media (max-width: 768px) {
     .kyc-verification-form .kyc-form .form-row {
-        grid-template-columns:1fr
+        grid-template-columns: 1fr;
     }
 }
 
 .kyc-verification-form .kyc-form .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px
+    gap: 8px;
+}
+
+.kyc-verification-form .kyc-step-content .form-group {
+    margin-top: 24px;
 }
 
 .kyc-verification-form .kyc-form .form-group label {
-    color: #ffffffe6;
-    font-size: 14px;
-    font-weight: 600
+    color: #666;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.kyc-verification-form .kyc-form .form-group input,.kyc-verification-form .kyc-form .form-group select {
-    padding: 10px 14px;
-    background: #ffffff0d;
-    border: 1px solid rgba(255,255,255,.15);
-    border-radius: 0;
-    color: #fff;
-    font-size: 14px;
-    transition: all .2s;
+.kyc-verification-form .kyc-form .form-group input,
+.kyc-verification-form .kyc-form .form-group select {
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    color: #333;
+    font-size: 16px;
+    transition: all 0.2s;
     height: auto;
     line-height: 1.4;
 }
@@ -91,7 +98,6 @@
 
 .kyc-verification-form .kyc-form .form-group input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
-    filter: invert(1);
     opacity: 1;
     width: 18px;
     height: 18px;
@@ -100,48 +106,49 @@
 
 .kyc-verification-form .kyc-form .form-group input[type="date"]::-webkit-inner-spin-button,
 .kyc-verification-form .kyc-form .form-group input[type="date"]::-webkit-clear-button {
-    filter: invert(1);
+    opacity: 1;
 }
 
 .kyc-verification-form .kyc-form .form-group input[type="date"]::-moz-calendar-picker-indicator {
     cursor: pointer;
-    filter: invert(1);
     opacity: 1;
 }
 
-.kyc-verification-form .kyc-form .form-group input:focus,.kyc-verification-form .kyc-form .form-group select:focus {
+.kyc-verification-form .kyc-form .form-group input:focus,
+.kyc-verification-form .kyc-form .form-group select:focus {
     outline: none;
-    border-color: #009af9;
-    background: #ffffff14
+    border-color: #37a1ff;
+    background: #ffffff;
 }
 
-.kyc-verification-form .kyc-form .form-group input::placeholder,.kyc-verification-form .kyc-form .form-group select::placeholder {
-    color: #fff6
+.kyc-verification-form .kyc-form .form-group input::placeholder,
+.kyc-verification-form .kyc-form .form-group select::placeholder {
+    color: #999;
 }
 
 .kyc-verification-form .kyc-form .form-group select {
-    cursor: pointer
+    cursor: pointer;
 }
 
 .kyc-verification-form .kyc-form .form-group .field-error {
-    color: #ff398a;
+    color: #dc2626;
     font-size: 12px;
-    margin-top: 4px
+    margin-top: 4px;
 }
 
 .kyc-verification-form .kyc-form .form-note {
-    background: #009af91a;
-    border: 1px solid rgba(0,154,249,.2);
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
     padding: 12px;
-    border-radius: 0;
-    margin-top: 8px
+    border-radius: 6px;
+    margin-top: 8px;
 }
 
 .kyc-verification-form .kyc-form .form-note p {
-    color: #fffc;
+    color: #1e40af;
     font-size: 13px;
     line-height: 1.5;
-    margin: 0
+    margin: 0;
 }
 
 /* Steps indicator */
@@ -173,12 +180,12 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: #f3f4f6;
+    border: 2px solid #e5e5e5;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ffffffb3;
+    color: #666;
     font-weight: 700;
     font-size: 16px;
     transition: all 0.3s ease;
@@ -189,17 +196,17 @@
 }
 
 .kyc-step.active .kyc-step-number {
-    background: linear-gradient(135deg, #00ff8c, #00d1ff);
-    border-color: transparent;
-    color: #0a0c12;
-    box-shadow: 0 4px 16px rgba(0, 255, 140, 0.4);
+    background: #37a1ff;
+    border-color: #37a1ff;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(55, 161, 255, 0.3);
     transform: scale(1.1);
 }
 
 .kyc-step.completed .kyc-step-number {
-    background: linear-gradient(135deg, #00ff8c, #00d1ff);
-    border-color: transparent;
-    color: #0a0c12;
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
 }
 
 .kyc-step.completed .kyc-step-number svg {
@@ -210,7 +217,7 @@
 
 .kyc-step-label {
     font-size: 13px;
-    color: #ffffffb3;
+    color: #666;
     font-weight: 500;
     text-align: center;
     transition: color 0.3s ease;
@@ -220,12 +227,12 @@
 }
 
 .kyc-step.active .kyc-step-label {
-    color: #fff;
+    color: #333;
     font-weight: 600;
 }
 
 .kyc-step.completed .kyc-step-label {
-    color: #ffffffb3;
+    color: #666;
 }
 
 @media (max-width: 768px) {
@@ -245,7 +252,6 @@
         font-size: 10px;
         line-height: 1.3;
     }
-    
 }
 
 /* Step content */
@@ -267,18 +273,18 @@
 .step-title {
     margin-bottom: 24px;
     padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #e5e5e5;
 }
 
 .step-title h3 {
-    color: #fff;
+    color: #333;
     font-size: 22px;
     font-weight: 700;
     margin: 0 0 8px 0;
 }
 
 .step-title p {
-    color: #ffffffb3;
+    color: #666;
     font-size: 14px;
     margin: 0;
     line-height: 1.5;
@@ -306,7 +312,7 @@
     gap: 16px;
     margin-top: 40px;
     padding-top: 32px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid #e5e5e5;
 }
 
 .kyc-form-actions-spacer {
@@ -325,13 +331,14 @@
 }
 
 .kyc-btn-primary {
-    background: linear-gradient(135deg, #00ff8c, #00d1ff);
-    color: #0a0c12;
+    background: #37a1ff;
+    color: #ffffff;
 }
 
 .kyc-btn-primary:hover:not(:disabled) {
+    background: #2a8ae6;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 255, 140, 0.4);
+    box-shadow: 0 4px 12px rgba(55, 161, 255, 0.3);
 }
 
 .kyc-btn-primary:disabled {
@@ -341,14 +348,14 @@
 }
 
 .kyc-btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
+    background: #f3f4f6;
+    border: 1px solid #e5e5e5;
+    color: #333;
 }
 
 .kyc-btn-secondary:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: #e5e7eb;
+    border-color: #d1d5db;
 }
 
 .kyc-btn-secondary:disabled {
@@ -375,51 +382,52 @@
 
 .kyc-verification-form .kyc-form .submit-btn {
     padding: 14px 32px;
-    background: linear-gradient(135deg,#00ff8c,#00d1ff);
+    background: #37a1ff;
     border: none;
     border-radius: 8px;
-    color: #0a0c12;
+    color: #ffffff;
     font-weight: 700;
     font-size: 15px;
     cursor: pointer;
-    transition: all .3s;
+    transition: all 0.3s;
     min-width: 120px;
 }
 
 .kyc-verification-form .kyc-form .submit-btn:hover:not(:disabled) {
+    background: #2a8ae6;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 255, 140, 0.4);
+    box-shadow: 0 4px 12px rgba(55, 161, 255, 0.3);
 }
 
 .kyc-verification-form .kyc-form .submit-btn:disabled {
-    opacity: .6;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
 }
 
 .kyc-status-card {
-    background: linear-gradient(135deg, rgba(0, 255, 140, 0.1), rgba(0, 209, 255, 0.1));
-    border-radius: 12px;
+    background: #eff6ff;
+    border-radius: 8px;
     padding: 32px;
-    border: 1px solid rgba(0, 255, 140, 0.2);
+    border: 1px solid #bfdbfe;
     margin-top: 20px;
     margin-bottom: 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: none;
 }
 
 .kyc-status-card.verified {
-    background: linear-gradient(135deg, rgba(69, 183, 52, 0.1), rgba(0, 255, 140, 0.1));
-    border-color: rgba(69, 183, 52, 0.3);
+    background: #d1fae5;
+    border-color: #6ee7b7;
 }
 
 .kyc-status-card.pending {
-    background: linear-gradient(135deg, rgba(255, 200, 0, 0.1), rgba(255, 200, 0, 0.05));
-    border-color: rgba(255, 200, 0, 0.3);
+    background: #fef3c7;
+    border-color: #fbbf24;
 }
 
 .kyc-status-card.success {
-    background: linear-gradient(135deg, rgba(0, 255, 140, 0.1), rgba(0, 209, 255, 0.1));
-    border-color: rgba(0, 255, 140, 0.3);
+    background: #d1fae5;
+    border-color: #6ee7b7;
 }
 
 .kyc-status-card .kyc-status-content {
@@ -439,7 +447,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.8);
     font-weight: 700;
 }
 
@@ -451,38 +459,38 @@
 }
 
 .kyc-status-card h3 {
-    color: #fff;
+    color: #333;
     font-size: 22px;
     font-weight: 700;
     margin: 0;
 }
 
 .kyc-status-card p {
-    color: #ffffffb3;
+    color: #666;
     font-size: 14px;
     line-height: 1.6;
     margin: 0;
 }
 
 .kyc-status-card .kyc-date {
-    color: #ffffff80;
+    color: #999;
     font-size: 13px;
     margin-top: 8px;
 }
 
 .kyc-status-card.verified .kyc-status-icon {
-    color: #45b734;
-    background: rgba(69, 183, 52, 0.2);
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
 }
 
 .kyc-status-card.pending .kyc-status-icon {
-    color: #ffc800;
-    background: rgba(255, 200, 0, 0.2);
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
 }
 
 .kyc-status-card.success .kyc-status-icon {
-    color: #00ff8c;
-    background: rgba(0, 255, 140, 0.2);
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -508,33 +516,33 @@
 .kyc-status-card .kyc-rejection {
     margin-top: 16px;
     padding-top: 16px;
-    border-top: 1px solid rgba(255,255,255,.1)
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .kyc-status-card .kyc-rejection .rejection-reason {
-    background: #ff006e1a;
-    border: 1px solid rgba(255,0,110,.3);
-    color: #ff398a;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
     padding: 12px;
-    border-radius: 0;
+    border-radius: 6px;
     margin-bottom: 16px;
-    font-size: 13px
+    font-size: 13px;
 }
 
 .kyc-status-card .kyc-rejection .retry-btn {
     padding: 10px 20px;
-    background: #ffffff1a;
-    border: 1px solid rgba(255,255,255,.2);
+    background: #37a1ff;
+    border: 1px solid #37a1ff;
     border-radius: 6px;
-    color: #fff;
+    color: #ffffff;
     font-weight: 600;
     cursor: pointer;
-    transition: all .2s
+    transition: all 0.2s;
 }
 
 .kyc-status-card .kyc-rejection .retry-btn:hover {
-    background: #ffffff26;
-    border-color: #ffffff4d
+    background: #2a8ae6;
+    border-color: #2a8ae6;
 }
 
 /* Photo upload styles */
@@ -560,8 +568,8 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px dashed rgba(255, 255, 255, 0.2);
+    background: #f9fafb;
+    border: 2px dashed #e5e5e5;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -570,29 +578,29 @@
 }
 
 .kyc-photo-upload-label:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 255, 140, 0.4);
+    background: #f3f4f6;
+    border-color: #37a1ff;
 }
 
 .kyc-photo-upload-icon {
-    color: rgba(255, 255, 255, 0.6);
+    color: #999;
     margin-bottom: 12px;
     transition: color 0.3s ease;
 }
 
 .kyc-photo-upload-label:hover .kyc-photo-upload-icon {
-    color: #00ff8c;
+    color: #37a1ff;
 }
 
 .kyc-photo-upload-text {
-    color: #fff;
+    color: #333;
     font-size: 14px;
     font-weight: 600;
     margin-bottom: 8px;
 }
 
 .kyc-photo-upload-hint {
-    color: rgba(255, 255, 255, 0.5);
+    color: #666;
     font-size: 12px;
 }
 
@@ -602,7 +610,7 @@
     height: 100%;
     border-radius: 8px;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.05);
+    background: #f9fafb;
 }
 
 .kyc-photo-preview img {
@@ -647,10 +655,10 @@
     left: 50%;
     transform: translateX(-50%);
     padding: 8px 16px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #37a1ff;
+    border: 1px solid #37a1ff;
     border-radius: 6px;
-    color: #fff;
+    color: #ffffff;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -660,8 +668,8 @@
 }
 
 .kyc-photo-replace:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(0, 255, 140, 0.5);
+    background: #2a8ae6;
+    border-color: #2a8ae6;
 }
 
 @media (max-width: 768px) {

@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@src/app/providers/useLanguage';
 import { copyTradingApi, type CopyTradingTopTrader } from '@src/shared/api';
 import { formatTraderCodeForDisplay } from '@src/shared/lib/traderCodeUtils';
 import { formatCurrency } from '@src/shared/lib/currency/currencyUtils';
-import top1Icon from '@src/assets/TOP1.svg';
-import top2Icon from '@src/assets/TOP2.svg';
-import top3Icon from '@src/assets/TOP3.svg';
+import top1Icon from '@src/assets/images/TOP1.svg';
+import top2Icon from '@src/assets/images/TOP2.svg';
+import top3Icon from '@src/assets/images/TOP3.svg';
 import { useAppSelector, useAppDispatch } from '@src/shared/lib/hooks';
 import { selectProfile } from '@src/entities/user/model/selectors';
+import { selectTradingMode } from '@src/entities/trading/model/selectors';
 import { 
   selectCopyTradingSubscriptions, 
   selectCopyTradingLoading, 
@@ -30,9 +32,11 @@ interface CopyTradingPanelProps {
   t: (key: string) => string;
 }
 
-export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onClose, t }) => {
+export const _CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onClose, t }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const profile = useAppSelector(selectProfile);
+  const tradingMode = useAppSelector(selectTradingMode);
   const userCurrency = profile?.currency || 'USD';
   
   const copySubscriptions = useAppSelector(selectCopyTradingSubscriptions);
@@ -42,7 +46,7 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
   
   const [copyCodeInput, setCopyCodeInput] = useState('');
   const [activeSubscriptionId, setActiveSubscriptionId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'leaderboard'>('leaderboard');
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'leaderboard' | 'myCard'>('leaderboard');
   const [topTraders, setTopTraders] = useState<CopyTradingTopTrader[]>([]);
   const [selectedTopTrader, setSelectedTopTrader] = useState<CopyTradingTopTrader | null>(null);
   const [isTopTradersLoading, setIsTopTradersLoading] = useState(false);
@@ -52,8 +56,42 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
     dailyLimitAmount: '',
     dailyLimitEnabled: false,
   });
+  const [traderCodeCopied, setTraderCodeCopied] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const hasFetchedCopyDataRef = useRef(false);
   const subscriptionsListRef = useRef<HTMLDivElement>(null);
+
+  // Проверки для отображения сообщений
+  const isDemoMode = tradingMode === 'demo';
+  const balance = Number(profile?.balance || 0);
+  const hasZeroBalance = balance === 0;
+
+  const handleCopyTraderCode = useCallback(async () => {
+    if (!profile?.id) return;
+    
+    const traderCode = formatTraderCodeForDisplay(profile.id);
+    try {
+      await navigator.clipboard.writeText(traderCode);
+      setTraderCodeCopied(true);
+      setTimeout(() => setTraderCodeCopied(false), 2000);
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = traderCode;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setTraderCodeCopied(true);
+        setTimeout(() => setTraderCodeCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+      document.body.removeChild(textArea);
+    }
+  }, [profile?.id]);
 
   const mapSubscriptionResponse = useCallback((raw: any): CopySubscriptionItem => {
     const subscription = raw?.subscription ?? {};
@@ -86,11 +124,13 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
     try {
       const response = await copyTradingApi.listSubscriptions();
       const mapped = Array.isArray(response) ? response.map(mapSubscriptionResponse) : [];
+      console.log('[CopyTradingPanel] 📋 Загружено подписок:', mapped.length, mapped);
       dispatch(setSubscriptions(mapped));
       if (mapped.length > 0 && !activeSubscriptionId) {
         setActiveSubscriptionId(mapped[0].id);
       }
     } catch (error) {
+      console.error('[CopyTradingPanel] ❌ Ошибка загрузки подписок:', error);
       if (error instanceof Error) {
         if (error.message === 'SESSION_EXPIRED') {
           return;
@@ -117,11 +157,16 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
     dispatch(setError(null));
     dispatch(setSuccess(null));
     try {
-      await copyTradingApi.createSubscription(copyCodeInput.trim());
+      const result = await copyTradingApi.createSubscription(copyCodeInput.trim());
+      console.log('[CopyTradingPanel] ✅ Подписка создана:', result);
       setCopyCodeInput('');
       dispatch(setSuccess(t('copyTrading.subscriptionActivated')));
+      // Небольшая задержка перед обновлением списка, чтобы сервер успел обработать запрос
+      await new Promise(resolve => setTimeout(resolve, 300));
       await fetchCopySubscriptions();
+      console.log('[CopyTradingPanel] ✅ Список подписок обновлен после создания');
     } catch (error) {
+      console.error('[CopyTradingPanel] ❌ Ошибка создания подписки:', error);
       if (error instanceof Error) {
         const errorMessage = error.message || t('copyTrading.failedToAddCode');
         dispatch(setError(errorMessage.includes('NOT_FOUND') ? t('copyTrading.traderIdNotFound') : errorMessage));
@@ -243,6 +288,13 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
     }
   }, [copySuccess, dispatch]);
 
+  // Переключаем на вкладку subscriptions, если myCard выбрана, но profile?.id отсутствует
+  useEffect(() => {
+    if (activeTab === 'myCard' && !profile?.id) {
+      setActiveTab('subscriptions');
+    }
+  }, [activeTab, profile?.id]);
+
   const formatCopyDate = (value: string | null | undefined) => {
     if (!value) {
       return null;
@@ -270,13 +322,10 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
       className={`chat-panel copy-trading-panel ${isOpen ? 'open' : ''}`}
       role="dialog"
       aria-label={t('copyTrading.tradingSignals')}
-      style={{
-        width: 'clamp(300px, 27.5vw, 450px)'
-      }}
     >
       <div className="chat-panel__header">
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="chat-panel__header-wrapper">
+          <div className="chat-panel__header-row">
             <div className="chat-panel__title">
               <h3>{t('copyTrading.tradingSignals')}</h3>
             </div>
@@ -302,67 +351,37 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
               </svg>
             </button>
           </div>
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div className="chat-panel__tabs">
             <button
               onClick={() => {
                 setActiveTab('leaderboard');
                 setActiveSubscriptionId(null);
               }}
-              style={{
-                padding: '6px 12px',
-                background: activeTab === 'leaderboard' ? '#2d3748' : 'rgba(255, 255, 255, 0.05)',
-                border: 'none',
-                color: activeTab === 'leaderboard' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                fontSize: '11px',
-                fontWeight: activeTab === 'leaderboard' ? 600 : 400,
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== 'leaderboard') {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== 'leaderboard') {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                }
-              }}
+              className={`chat-panel__tab-button ${activeTab === 'leaderboard' ? 'active' : ''}`}
             >
-              {t('copyTrading.tabLeaderboard')}
+              {t('copyTrading.tabTraders')}
             </button>
             <button
               onClick={() => {
                 setActiveTab('subscriptions');
                 setSelectedTopTrader(null);
               }}
-              style={{
-                padding: '6px 12px',
-                background: activeTab === 'subscriptions' ? '#2d3748' : 'rgba(255, 255, 255, 0.05)',
-                border: 'none',
-                color: activeTab === 'subscriptions' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
-                fontSize: '11px',
-                fontWeight: activeTab === 'subscriptions' ? 600 : 400,
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== 'subscriptions') {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== 'subscriptions') {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                }
-              }}
+              className={`chat-panel__tab-button ${activeTab === 'subscriptions' ? 'active' : ''}`}
             >
               {t('copyTrading.tabSubscriptions')}
             </button>
+            {profile?.id && (
+              <button
+                onClick={() => {
+                  setActiveTab('myCard');
+                  setSelectedTopTrader(null);
+                  setActiveSubscriptionId(null);
+                }}
+                className={`chat-panel__tab-button ${activeTab === 'myCard' ? 'active' : ''}`}
+              >
+                {t('copyTrading.tabMyCard')}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -370,115 +389,231 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
       <div className={`chat-panel__body ${isDetailViewVisible ? 'has-detail-view' : ''} ${isFullscreenDetailView ? 'has-fullscreen-detail' : ''}`}>
         {!isFullscreenDetailView && (
           <div className="chat-panel__tickets-sidebar">
-            <div className="chat-panel__tickets-header">
-              {activeTab === 'subscriptions' && (
-                <>
-                  <h4>{t('copyTrading.mySubscriptions')}</h4>
-                  <form onSubmit={handleCopyCodeSubmit} style={{ display: 'flex', gap: '8px', marginTop: '8px', width: '100%', boxSizing: 'border-box' }}>
-                    <input
-                      type="text"
-                      placeholder={t('copyTrading.enterTraderCode')}
-                      value={copyCodeInput}
-                      onChange={(e) => setCopyCodeInput(e.target.value)}
-                      disabled={isCopyLoading}
-                      className="chat-panel__message-input"
-                      style={{ flex: 1, margin: 0, minWidth: 0 }}
-                    />
-                    <button 
-                      type="submit" 
-                      disabled={isCopyLoading}
-                      className="chat-panel__send-btn"
-                      style={{ margin: 0, flexShrink: 0 }}
-                    >
-                      {isCopyLoading ? t('copyTrading.waitButton') : '+'}
-                    </button>
-                  </form>
-                </>
-              )}
-              {activeTab === 'leaderboard' && (
-                <h4>{t('copyTrading.leaderboardTitle')}</h4>
-              )}
-            </div>
+            {activeTab === 'subscriptions' && !isDemoMode && !hasZeroBalance && (
+              <form onSubmit={handleCopyCodeSubmit} className="chat-panel__subscription-form">
+                <input
+                  type="text"
+                  placeholder={t('copyTrading.enterTraderCode')}
+                  value={copyCodeInput}
+                  onChange={(e) => setCopyCodeInput(e.target.value)}
+                  disabled={isCopyLoading}
+                  className="chat-panel__message-input"
+                />
+                <button 
+                  type="submit" 
+                  disabled={isCopyLoading}
+                  className="chat-panel__send-btn"
+                >
+                  {isCopyLoading ? t('copyTrading.waitButton') : '+'}
+                </button>
+              </form>
+            )}
+            {/* Сообщение для демо счета в табе Трейдеры */}
+            {activeTab === 'leaderboard' && isDemoMode && (
+              <div className="chat-panel__info-message">
+                <div className="chat-panel__info-message-text">
+                  {t('copyTrading.unavailableOnDemo')}
+                </div>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const saved = localStorage.getItem('tradingMode');
+                    if (saved !== 'manual') {
+                      localStorage.setItem('tradingMode', 'manual');
+                      window.dispatchEvent(new CustomEvent<'manual' | 'demo'>('tradingModeChange', { detail: 'manual' }));
+                      window.location.reload();
+                    }
+                  }}
+                  className="chat-panel__info-message-link"
+                >
+                  {t('copyTrading.switchToReal')}
+                </a>
+              </div>
+            )}
+            {/* Сообщение для нулевого баланса в табе Трейдеры */}
+            {activeTab === 'leaderboard' && !isDemoMode && hasZeroBalance && (
+              <div className="chat-panel__info-message">
+                <div className="chat-panel__info-message-text">
+                  {t('copyTrading.zeroBalance')}
+                </div>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/deposit');
+                    onClose();
+                  }}
+                  className="chat-panel__info-message-link"
+                >
+                  {t('copyTrading.topUpBalance')}
+                </a>
+              </div>
+            )}
+            {/* Сообщение для демо счета в табе Подписки */}
+            {activeTab === 'subscriptions' && isDemoMode && (
+              <div className="chat-panel__info-message">
+                <div className="chat-panel__info-message-text">
+                  {t('copyTrading.unavailableOnDemo')}
+                </div>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const saved = localStorage.getItem('tradingMode');
+                    if (saved !== 'manual') {
+                      localStorage.setItem('tradingMode', 'manual');
+                      window.dispatchEvent(new CustomEvent<'manual' | 'demo'>('tradingModeChange', { detail: 'manual' }));
+                      window.location.reload();
+                    }
+                  }}
+                  className="chat-panel__info-message-link"
+                >
+                  {t('copyTrading.switchToReal')}
+                </a>
+              </div>
+            )}
+            {/* Сообщение для нулевого баланса в табе Подписки */}
+            {activeTab === 'subscriptions' && !isDemoMode && hasZeroBalance && (
+              <div className="chat-panel__info-message">
+                <div className="chat-panel__info-message-text">
+                  {t('copyTrading.zeroBalance')}
+                </div>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/deposit');
+                    onClose();
+                  }}
+                  className="chat-panel__info-message-link"
+                >
+                  {t('copyTrading.topUpBalance')}
+                </a>
+              </div>
+            )}
             {copyError && activeTab === 'subscriptions' && (
-              <div style={{ padding: '8px 12px', background: 'rgba(255, 0, 0, 0.1)', color: '#ff6b6b', fontSize: '12px', margin: '8px' }}>
+              <div className="chat-panel__error-message">
                 {copyError}
               </div>
             )}
             {copySuccess && activeTab === 'subscriptions' && (
-              <div style={{ padding: '8px 12px', background: 'rgba(0, 255, 0, 0.1)', color: '#51cf66', fontSize: '12px', margin: '8px' }}>
+              <div className="chat-panel__success-message">
                 {copySuccess}
               </div>
             )}
             <div className="chat-panel__tickets-list" ref={subscriptionsListRef}>
-            {activeTab === 'subscriptions' ? (
-              copySubscriptions.length > 0 ? (
-                copySubscriptions.map((item) => (
+            {activeTab === 'myCard' ? (
+              <div className="chat-panel__my-card-content">
+                {/* Блок с кодом трейдера */}
+                {profile?.id && (
+                  <div 
+                    onClick={handleCopyTraderCode}
+                    className={`chat-panel__trader-code-card ${traderCodeCopied ? 'copied' : ''}`}
+                    title={traderCodeCopied ? t('common.copied') : t('common.copy')}
+                  >
+                    <span className="chat-panel__trader-code-text">
+                      {formatTraderCodeForDisplay(profile.id)}
+                    </span>
+                    <span className={`chat-panel__trader-code-icon ${traderCodeCopied ? 'copied' : ''}`}>
+                      {traderCodeCopied ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M20 6L9 17L4 12"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M16 8V5C16 3.89543 15.1046 3 14 3H5C3.89543 3 3 3.89543 3 5V14C3 15.1046 3.89543 16 5 16H8M10 8H19C20.1046 8 21 8.89543 21 10V19C21 20.1046 20.1046 21 19 21H10C8.89543 21 8 20.1046 8 19V10C8 8.89543 8.89543 8 10 8Z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="chat-panel__description-card">
+                  <div className="chat-panel__description-text">
+                    {t('copyTrading.myCardDescription')}
+                  </div>
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowHowItWorks(!showHowItWorks);
+                    }}
+                    className="chat-panel__description-link"
+                  >
+                    {t('copyTrading.howItWorks')}
+                  </a>
+                </div>
+                
+                {/* Раскрывающаяся карточка "How it works" */}
+                <div className={`chat-panel__how-it-works-card ${showHowItWorks ? '' : 'hidden'}`}>
+                  <div className="chat-panel__how-it-works-text">
+                    {t('copyTrading.howItWorksDescription')}
+                  </div>
+                </div>
+                {isDemoMode && (
+                  <div className="chat-panel__info-message">
+                    <div className="chat-panel__info-message-text">
+                      {t('copyTrading.unavailableOnDemo')}
+                    </div>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const saved = localStorage.getItem('tradingMode');
+                        if (saved !== 'manual') {
+                          localStorage.setItem('tradingMode', 'manual');
+                          window.dispatchEvent(new CustomEvent<'manual' | 'demo'>('tradingModeChange', { detail: 'manual' }));
+                          window.location.reload();
+                        }
+                      }}
+                      className="chat-panel__info-message-link"
+                    >
+                      {t('copyTrading.switchToReal')}
+                    </a>
+                  </div>
+                )}
+              </div>
+            ) : activeTab === 'subscriptions' ? (
+              (!isDemoMode && !hasZeroBalance) ? (
+                copySubscriptions.length > 0 ? (
+                  copySubscriptions.map((item) => (
                   <div
                     key={item.id}
                     onClick={() => setActiveSubscriptionId(item.id)}
-                    className={`chat-panel__ticket-item ${item.id === activeSubscriptionId ? 'active' : ''} ${!item.isActive ? 'inactive' : ''}`}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '0',
-                      border: item.id === activeSubscriptionId 
-                        ? '1px solid rgba(108, 144, 255, 0.3)' 
-                        : !item.isActive 
-                          ? '1px solid rgba(255, 255, 255, 0.05)' 
-                          : '1px solid transparent',
-                      background: item.id === activeSubscriptionId 
-                        ? 'rgba(108, 144, 255, 0.1)' 
-                        : !item.isActive 
-                          ? 'rgba(255, 255, 255, 0.02)' 
-                          : 'transparent',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '12px',
-                      opacity: !item.isActive ? 0.6 : 1,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (item.id !== activeSubscriptionId) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (item.id !== activeSubscriptionId) {
-                        e.currentTarget.style.background = 'transparent';
-                      }
-                    }}
+                    className={`chat-panel__ticket-item subscription-item ${item.id === activeSubscriptionId ? 'active' : ''} ${!item.isActive ? 'inactive' : ''}`}
                   >
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                      <div className="chat-panel__ticket-subject" style={{ 
-                        marginBottom: '4px', 
-                        fontWeight: 600,
-                        color: !item.isActive ? 'rgba(255, 255, 255, 0.5)' : '#fff',
-                      }}>
+                    <div className="subscription-item-content">
+                      <div className={`chat-panel__ticket-subject ${!item.isActive ? 'inactive' : ''}`}>
                         {item.traderName}
                       </div>
-                      <div className="chat-panel__ticket-status" style={{ fontSize: '10px', marginBottom: '6px' }}>
+                      <div className="chat-panel__ticket-status">
                         {t('copyTrading.codeLabel')}{item.code} • {item.isActive ? (
-                          <span style={{ color: '#51cf66' }}>{t('copyTrading.on')}</span>
+                          <span className="subscription-item-status-on">{t('copyTrading.on')}</span>
                         ) : (
-                          <span style={{ color: '#ff6b6b' }}>{t('copyTrading.off')}</span>
+                          <span className="subscription-item-status-off">{t('copyTrading.off')}</span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', gap: '12px', fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                      <div className="subscription-item-stats">
                         <span>{t('copyTrading.tradesLabel')}{item.totalCopiedTrades}</span>
-                        <span style={{ color: item.totalProfit >= 0 ? '#51cf66' : '#ff6b6b' }}>
+                        <span className={`subscription-item-stats-profit ${item.totalProfit >= 0 ? '' : 'negative'}`}>
                           {t('copyTrading.profitLabel')}{item.totalProfit >= 0 ? '+' : ''}{formatCurrency(item.totalProfit, userCurrency)}
                         </span>
                       </div>
                     </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      gap: '4px', 
-                      alignItems: 'flex-end',
-                      flexShrink: 0,
-                      marginLeft: '12px',
-                    }}>
+                    <div className="subscription-item-actions">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -486,30 +621,7 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                           handleToggleSubscription(item.id, !item.isActive);
                         }}
                         disabled={isCopyLoading}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#ff6b6b',
-                          cursor: isCopyLoading ? 'not-allowed' : 'pointer',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          padding: '0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.3px',
-                          opacity: isCopyLoading ? 0.5 : 1,
-                          transition: 'opacity 0.2s',
-                          textAlign: 'right',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isCopyLoading) {
-                            e.currentTarget.style.opacity = '0.7';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isCopyLoading) {
-                            e.currentTarget.style.opacity = '1';
-                          }
-                        }}
+                        className="subscription-button"
                       >
                         {item.isActive ? t('copyTrading.disable') : t('copyTrading.enable')}
                       </button>
@@ -523,47 +635,26 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                           }
                         }}
                         disabled={isCopyLoading}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#ff6b6b',
-                          cursor: isCopyLoading ? 'not-allowed' : 'pointer',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          padding: '0',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.3px',
-                          opacity: isCopyLoading ? 0.5 : 1,
-                          transition: 'opacity 0.2s',
-                          textAlign: 'right',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isCopyLoading) {
-                            e.currentTarget.style.opacity = '0.7';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isCopyLoading) {
-                            e.currentTarget.style.opacity = '1';
-                          }
-                        }}
+                        className="subscription-button"
                       >
                         {t('copyTrading.remove')}
                       </button>
                     </div>
                   </div>
                 ))
-              ) : (
-                <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px' }}>
-                  {t('copyTrading.noActiveSubscriptions')}
-                </div>
-              )
+                ) : (
+                  <div className="chat-panel__empty-state">
+                    {t('copyTrading.noActiveSubscriptions')}
+                  </div>
+                )
+              ) : null
             ) : activeTab === 'leaderboard' ? (
-              isTopTradersLoading ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px' }}>
-                  {t('copyTrading.loading') || 'Loading...'}
-                </div>
-              ) : topTraders.length > 0 ? (
+              (!isDemoMode && !hasZeroBalance) ? (
+                isTopTradersLoading ? (
+                  <div className="chat-panel__loading-state">
+                    {t('copyTrading.loading') || 'Loading...'}
+                  </div>
+                ) : topTraders.length > 0 ? (
                 topTraders.map((trader, index) => (
                   <div
                     key={trader.traderUserId || trader.code}
@@ -575,50 +666,33 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                         setSelectedTopTrader(trader);
                       }
                     }}
-                    className={`chat-panel__ticket-item ${selectedTopTrader?.code === trader.code ? 'active' : ''}`}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '0',
-                      border: selectedTopTrader?.code === trader.code ? '1px solid rgba(108, 144, 255, 0.3)' : '1px solid transparent',
-                      background: selectedTopTrader?.code === trader.code ? 'rgba(108, 144, 255, 0.1)' : 'transparent',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedTopTrader?.code !== trader.code) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedTopTrader?.code !== trader.code) {
-                        e.currentTarget.style.background = 'transparent';
-                      }
-                    }}
+                    className={`chat-panel__ticket-item leaderboard-item ${selectedTopTrader?.code === trader.code ? 'active' : ''}`}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: index < 3 ? '#ffd700' : '#fff' }}>
+                    <div className="leaderboard-item-header">
+                      <span className={`leaderboard-item-rank ${index < 3 ? 'top-rank' : ''}`}>
                         #{index + 1}
                       </span>
-                      <div className="chat-panel__ticket-subject" style={{ marginBottom: 0, fontWeight: 600 }}>
+                      <div className="chat-panel__ticket-subject">
                         {trader.traderName}
                       </div>
                     </div>
-                    <div className="chat-panel__ticket-status" style={{ fontSize: '10px', marginBottom: '6px' }}>
+                    <div className="chat-panel__ticket-status">
                       {t('copyTrading.codeLabel')}{trader.code}
                     </div>
-                    <div style={{ display: 'flex', gap: '12px', fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                    <div className="leaderboard-item-stats">
                       <span>{t('copyTrading.subscribers') || 'Subscribers'}: {trader.subscribersCount}</span>
-                      <span style={{ color: trader.totalProfit >= 0 ? '#51cf66' : '#ff6b6b' }}>
+                      <span className={`leaderboard-item-stats-profit ${trader.totalProfit >= 0 ? '' : 'negative'}`}>
                         {t('copyTrading.profitLabel')}{trader.totalProfit >= 0 ? '+' : ''}{formatCurrency(trader.totalProfit, userCurrency)}
                       </span>
                     </div>
                   </div>
                 ))
-              ) : (
-                <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px' }}>
-                  {t('copyTrading.leaderboardEmpty')}
-                </div>
-              )
+                ) : (
+                  <div className="chat-panel__empty-state">
+                    {t('copyTrading.leaderboardEmpty')}
+                  </div>
+                )
+              ) : null
             ) : null}
           </div>
         </div>
@@ -645,13 +719,12 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                 >
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
-                <span>{t('common.back')}</span>
               </button>
               <h3>{selectedTopTrader.traderName}</h3>
-              <div style={{ width: '100px' }}></div>
+              <div className="chat-panel__fullscreen-header-spacer"></div>
             </div>
             <div className="chat-panel__fullscreen-content">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '100%', margin: '0 auto', width: '100%' }}>
+              <div className="chat-panel__fullscreen-content-wrapper">
                 <div className="info-card">
                   <div className="info-card-label">
                     {t('copyTrading.codeLabel')}
@@ -661,11 +734,7 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                   </div>
                 </div>
                 
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
-                  gap: '8px' 
-                }}>
+                <div className="chat-panel__fullscreen-grid">
                   <div className="info-card">
                     <div className="info-card-label">
                       {t('copyTrading.subscribers') || 'Subscribers'}
@@ -715,7 +784,7 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                     <div className="info-card-label">
                       {t('copyTrading.status') || 'Status'}
                     </div>
-                    <div className={`info-card-value ${selectedTopTrader.isProfileActive ? 'positive' : ''}`} style={!selectedTopTrader.isProfileActive ? { color: 'rgba(255, 255, 255, 0.4)' } : {}}>
+                    <div className={`info-card-value ${selectedTopTrader.isProfileActive ? 'positive' : 'inactive'}`}>
                       {selectedTopTrader.isProfileActive ? (t('copyTrading.on') || 'Active') : (t('copyTrading.off') || 'Inactive')}
                     </div>
                   </div>
@@ -726,7 +795,7 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                     <div className="info-card-label">
                       {t('copyTrading.lastCopied')}
                     </div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)', fontWeight: 500 }}>
+                    <div className="info-card-date">
                       {formatCopyDate(selectedTopTrader.lastCopiedAt)}
                     </div>
                   </div>
@@ -749,22 +818,7 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                   setShowSubscriptionForm(true);
                 }}
                 disabled={true}
-                style={{
-                  width: '100%',
-                  maxWidth: '200px',
-                  padding: '8px 16px',
-                  background: 'rgba(74, 144, 226, 0.2)',
-                  border: '1px solid rgba(74, 144, 226, 0.4)',
-                  borderRadius: '6px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  cursor: 'not-allowed',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  transition: 'all 0.2s ease',
-                  opacity: 0.5,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}
+                className="chat-panel__fullscreen-button-disabled"
               >
                 {t('copyTrading.connectButton') || 'Connect'}
               </button>
@@ -794,13 +848,12 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                 >
                   <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
-                <span>{t('common.back')}</span>
               </button>
               <h3>{t('copyTrading.subscriptionSettings') || 'Subscription Settings'}</h3>
-              <div style={{ width: '100px' }}></div>
+              <div className="chat-panel__fullscreen-header-spacer"></div>
             </div>
             <div className="chat-panel__fullscreen-content">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '500px', margin: '0 auto', width: '100%' }}>
+              <div className="chat-panel__fullscreen-form-wrapper">
                 <div className="info-card">
                   <div className="info-card-label">
                     {t('copyTrading.balancePercent') || 'Balance Percentage (%)'}
@@ -813,39 +866,20 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                     value={subscriptionSettings.balancePercent}
                     onChange={(e) => setSubscriptionSettings({ ...subscriptionSettings, balancePercent: e.target.value })}
                     placeholder="e.g. 10"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '6px',
-                      color: '#fff',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                      marginTop: '8px',
-                    }}
+                    className="info-card-input"
                   />
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '6px' }}>
+                  <div className="info-card-hint">
                     {t('copyTrading.balancePercentHint') || 'Percentage of your balance to use for copying trades (0-100%)'}
                   </div>
                 </div>
 
                 <div className="info-card">
-                  <label style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px',
-                    fontSize: '12px', 
-                    color: 'rgba(255, 255, 255, 0.7)', 
-                    marginBottom: '8px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}>
+                  <label className="info-card-checkbox-label">
                     <input
                       type="checkbox"
                       checked={subscriptionSettings.dailyLimitEnabled}
                       onChange={(e) => setSubscriptionSettings({ ...subscriptionSettings, dailyLimitEnabled: e.target.checked })}
-                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      className="info-card-checkbox"
                     />
                     {t('copyTrading.dailyLimit') || 'Set Daily Limit'}
                   </label>
@@ -858,19 +892,9 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                         value={subscriptionSettings.dailyLimitAmount}
                         onChange={(e) => setSubscriptionSettings({ ...subscriptionSettings, dailyLimitAmount: e.target.value })}
                         placeholder={`e.g. 100 ${userCurrency}`}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '6px',
-                          color: '#fff',
-                          fontSize: '14px',
-                          boxSizing: 'border-box',
-                          marginTop: '8px',
-                        }}
+                        className="info-card-input"
                       />
-                      <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '6px' }}>
+                      <div className="info-card-hint">
                         {t('copyTrading.dailyLimitHint') || 'Maximum amount per day (e.g., 10% up to $100 per day)'}
                       </div>
                     </>
@@ -891,22 +915,7 @@ export const CopyTradingPanel: React.FC<CopyTradingPanelProps> = ({ isOpen, onCl
                   }
                 }}
                 disabled={isCopyLoading}
-                style={{
-                  width: '100%',
-                  maxWidth: '200px',
-                  padding: '8px 16px',
-                  background: 'rgba(74, 144, 226, 0.2)',
-                  border: '1px solid rgba(74, 144, 226, 0.4)',
-                  borderRadius: '6px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  cursor: 'not-allowed',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  transition: 'all 0.2s ease',
-                  opacity: 0.5,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3px'
-                }}
+                className="chat-panel__fullscreen-button-disabled"
               >
                 {t('copyTrading.subscribe') || 'Subscribe'}
               </button>

@@ -41,6 +41,19 @@ export const SidebarProvider: React.FC<{ children: ReactNode }> = ({ children })
     setIsCenterPanelVisible(true);
   }, []);
 
+  // Слушаем глобальное событие для открытия центральной панели
+  React.useEffect(() => {
+    const handleShowCenterPanel = () => {
+      setIsCenterPanelVisible(true);
+    };
+    
+    window.addEventListener('showCenterPanel', handleShowCenterPanel);
+    
+    return () => {
+      window.removeEventListener('showCenterPanel', handleShowCenterPanel);
+    };
+  }, []);
+
   return (
     <SidebarContext.Provider value={{ 
       isLeftPanelVisible, 

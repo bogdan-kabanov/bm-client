@@ -125,19 +125,19 @@
 .header-wrapper .header-badge {
     position: absolute;
     top: 4px;
-    right: 4px;
-    background: #0099f981;
-    border: 1px solid rgb(0, 153, 249);
+    right: 8px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: #5187FC;
+    border: 1px solid #75A1FF;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 600;
     display: flex;
-    justify-content: center;
     align-items: center;
-    color: white;
-    font-size: 9px;
-    font-weight: 700;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    border-radius: 8px;
+    justify-content: center;
+    box-sizing: border-box;
     z-index: 10;
     line-height: 1;
 }

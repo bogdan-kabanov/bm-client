@@ -281,18 +281,20 @@ export class TradingWebSocketClient {
 
                 this.ws.onerror = (error) => {
                     try {
-                        
                         const wasConnecting = this.isConnecting;
                         this.isConnecting = false;
                         
                         const currentState = this.ws?.readyState;
                         const isClosed = currentState === WebSocket.CLOSED || currentState === WebSocket.CLOSING;
                         
+                        // Логируем ошибку только если это не обычное закрытие соединения
+                        // Ошибка "Invalid frame header" обычно означает, что сервер не отвечает корректным WebSocket handshake
+                        // Это может быть из-за того, что сервер не запущен или возвращает HTTP ошибку вместо WebSocket
+                        
                         if (wasConnecting && this.connectPromise && currentState !== WebSocket.OPEN) {
                             if (!isClosed) {
                                 setTimeout(() => {
                                     if (this.connectPromise && this.ws?.readyState !== WebSocket.OPEN) {
-                                        
                                         this.connectPromise.reject(new Error('WebSocket connection error'));
                                         this.connectPromise = null;
                                     }
@@ -319,6 +321,7 @@ export class TradingWebSocketClient {
                             }, 1000);
                         }
                     } catch (error) {
+                        // Игнорируем ошибки обработки ошибок
                     }
                 };
             } catch (error) {

@@ -22,10 +22,31 @@ export const selectTradeHistoryByMode = createSelector(
     (history, mode) => {
         const filtered = history.filter(t => {
             const isDemo = t.isDemo || t.is_demo;
-            if (mode === 'demo') return isDemo;
-            if (mode === 'manual') return !isDemo;
-            return false;
+            const matches = mode === 'demo' ? isDemo : (mode === 'manual' ? !isDemo : false);
+            
+            // Логирование для отладки (только если есть сделки)
+            if (history.length > 0 && import.meta.env.DEV) {
+                console.log('[selectTradeHistoryByMode] Фильтрация:', {
+                    tradeId: t.id,
+                    mode,
+                    isDemo,
+                    t_isDemo: t.isDemo,
+                    t_is_demo: t.is_demo,
+                    matches,
+                });
+            }
+            
+            return matches;
         });
+        
+        if (import.meta.env.DEV && history.length > 0) {
+            console.log('[selectTradeHistoryByMode] Результат:', {
+                totalHistory: history.length,
+                mode,
+                filtered: filtered.length,
+            });
+        }
+        
         return filtered;
     }
 );
@@ -52,9 +73,13 @@ export const selectActiveTradeById = (state: RootState, tradeId: string) =>
     state.trading.activeTrades.find(t => t.id === tradeId);
 
 // Метаданные
-export const selectSelectedBase = (state: RootState) => state.trading.selectedBase;
+export const selectSelectedBase = (state: RootState) => state.trading.selectedBase; // Только для отображения
+export const selectSelectedCurrencyId = (state: RootState) => state.trading.selectedCurrencyId; // Основной идентификатор
 export const selectQuoteCurrency = (state: RootState) => state.trading.quoteCurrency;
 export const selectTradingMode = (state: RootState) => state.trading.tradingMode;
+export const selectNewTradesCount = (state: RootState) => {
+  return state.trading.newTradesCount;
+};
 
 export const selectMarkerPrice = (state: RootState, tradeId: string): number | null => {
     const marker = selectTradeMarkerByTradeId(state, tradeId);

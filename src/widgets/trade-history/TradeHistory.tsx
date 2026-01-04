@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import './TradeHistory.css';
 import { useLanguage } from '@src/app/providers/useLanguage';
+import arrowUpIcon from '@src/assets/icons/arrow-up.svg';
+import arrowDownIcon from '@src/assets/icons/arrow-down.svg';
 import type { Currency } from '@src/shared/api';
 import { markIconUrlAsFailed, isIconUrlFailed } from '@src/features/trading-terminal/hooks/useCurrencyData';
 import { LOCAL_CURRENCY_ICONS, preloadCurrencyIcon } from '@src/features/trading-terminal/constants/currencyIcons';
@@ -20,10 +22,12 @@ interface TradeHistoryItem {
   profitPercent: number;
   isWin: boolean;
   createdAt: number;
-  completedAt: number;
+  completedAt: number | null;
+  expirationTime?: number | null; // Время экспирации сделки
   symbol?: string | null;
   baseCurrency?: string | null;
   quoteCurrency?: string | null;
+  isCopied?: boolean; // Флаг копированной сделки
 }
 
 interface TradeHistoryProps {
@@ -35,6 +39,7 @@ interface TradeHistoryProps {
   hasMore?: boolean;
   getCurrencyInfo?: (baseCurrency: string) => Currency | undefined;
   resolveCurrencyIconUrls?: (currency?: Currency | null) => string[];
+  onOpenTradeSidebar?: (trade: any) => void;
 }
 
 const KNOWN_QUOTES = ['USDT', 'USDC', 'USD', 'BTC', 'ETH', 'EUR', 'GBP', 'TRY', 'RUB', 'BNB', 'BUSD'];
@@ -80,7 +85,7 @@ const CurrencyIconView: React.FC<CurrencyIconViewProps> = React.memo(({
     return imagePriority === 'high' ? 'eager' : 'lazy';
   }, [imagePriority]);
 
-  const fetchPriority = useMemo(() => {
+  const fetchPriority = useMemo((): 'high' | undefined => {
     if (imagePriority === 'high') return 'high';
     return undefined;
   }, [imagePriority]);
@@ -167,7 +172,7 @@ const CurrencyIconView: React.FC<CurrencyIconViewProps> = React.memo(({
           height="20"
           loading={loadingStrategy}
           decoding="async"
-          fetchpriority={fetchPriority}
+          {...(fetchPriority && { fetchPriority })}
           onError={handleImageError}
           onLoad={handleImageLoad}
         />
@@ -230,6 +235,7 @@ interface TradeHistoryItemComponentProps {
   getTradeCurrency: (trade: TradeHistoryItem) => string;
   deriveBaseFromSymbol: (symbol?: string | null) => string | null;
   userCurrency: string;
+  onOpenTradeSidebar?: (trade: any) => void;
 }
 
 const TradeHistoryItemComponent: React.FC<TradeHistoryItemComponentProps> = ({
@@ -240,6 +246,7 @@ const TradeHistoryItemComponent: React.FC<TradeHistoryItemComponentProps> = ({
   getTradeCurrency,
   deriveBaseFromSymbol,
   userCurrency,
+  onOpenTradeSidebar,
 }) => {
   // profit может быть отрицательным при проигрыше
   // ВАЖНО: проверяем на undefined/null, но не на 0, так как 0 - это валидное значение
@@ -291,10 +298,86 @@ const TradeHistoryItemComponent: React.FC<TradeHistoryItemComponentProps> = ({
     loadIconUrls();
   }, [resolveCurrencyIconUrls, currencyInfo, tradeBaseCurrency]);
 
+  const handleOpenTradeDetails = () => {
+    // Нормализуем временные метки в миллисекунды
+    let createdAt = trade.createdAt;
+    let completedAt = trade.completedAt;
+    let expirationTime = trade.expirationTime;
+    
+    // Конвертируем в миллисекунды, если значение меньше 1e12 (это секунды)
+    if (createdAt < 1e12) {
+      createdAt = createdAt * 1000;
+    }
+    if (completedAt && completedAt < 1e12) {
+      completedAt = completedAt * 1000;
+    }
+    if (expirationTime && expirationTime < 1e12) {
+      expirationTime = expirationTime * 1000;
+    }
+    
+    // Для завершенных сделок completedAt должно быть >= createdAt
+    // Если это не так, проверяем expirationTime или используем разумное значение по умолчанию
+    if (completedAt && completedAt < createdAt) {
+      console.warn('[TradeHistory] completedAt < createdAt для сделки:', {
+        tradeId: trade.id,
+        createdAt: new Date(createdAt).toISOString(),
+        completedAt: new Date(completedAt).toISOString(),
+        createdAt_raw: trade.createdAt,
+        completedAt_raw: trade.completedAt,
+        expirationTime: expirationTime ? new Date(expirationTime).toISOString() : 'N/A',
+      });
+      
+      // Если есть expirationTime и он больше createdAt, используем его
+      if (expirationTime && expirationTime > createdAt) {
+        completedAt = expirationTime;
+      } else {
+        // Используем createdAt + 30 секунд по умолчанию (типичная длительность сделки)
+        completedAt = createdAt + 30 * 1000;
+      }
+    }
+    
+    // Если completedAt отсутствует или равен 0, используем expirationTime или вычисляем
+    if (!completedAt || completedAt === 0) {
+      if (expirationTime && expirationTime > createdAt) {
+        completedAt = expirationTime;
+      } else {
+        // Используем createdAt + 30 секунд по умолчанию
+        completedAt = createdAt + 30 * 1000;
+      }
+    }
+    
+    // Для expiration_time используем completedAt (фактическое время завершения) или expirationTime
+    const finalExpirationTime = expirationTime && expirationTime > createdAt ? expirationTime : completedAt;
+    
+    if (!onOpenTradeSidebar) return;
+    
+    // Преобразуем TradeHistoryItem в формат для сайдбара
+    // Для завершенных сделок передаем completed_at отдельно
+    const tradeForSidebar = {
+      id: trade.id,
+      price: trade.price,
+      direction: trade.direction,
+      amount: trade.amount,
+      expiration_time: finalExpirationTime, // Время экспирации или завершения
+      entry_price: trade.entryPrice,
+      current_price: trade.exitPrice, // Для истории сделок current_price = exitPrice
+      created_at: createdAt,
+      completed_at: completedAt, // Фактическое время завершения
+      symbol: trade.symbol,
+      base_currency: trade.baseCurrency,
+      quote_currency: trade.quoteCurrency,
+      profit_percentage: trade.profitPercent,
+    };
+    onOpenTradeSidebar(tradeForSidebar);
+  };
+
   return (
-    <div 
-      className={`trade-history-item ${trade.direction} ${trade.isWin ? 'win' : 'loss'}`}
-    >
+    <>
+      <div 
+        className={`trade-history-item ${trade.direction} ${trade.isWin ? 'win' : 'loss'}`}
+        onClick={handleOpenTradeDetails}
+        style={{ cursor: 'pointer' }}
+      >
       <div className="trade-history-row trade-history-row-top">
         <div className="trade-currency-wrapper">
           <div className="trade-currency-icon">
@@ -308,7 +391,7 @@ const TradeHistoryItemComponent: React.FC<TradeHistoryItemComponentProps> = ({
           </div>
           <div className="trade-currency">
             {currency}
-            {trade.is_copied && (
+            {trade.isCopied && (
               <span className="copied-trade-marker" title="Сделка через подписку на сигнал трейдера">
                 📋
               </span>
@@ -316,25 +399,45 @@ const TradeHistoryItemComponent: React.FC<TradeHistoryItemComponentProps> = ({
           </div>
         </div>
         <div className={`trade-profit ${trade.isWin ? 'win' : 'loss'}`}>
-          {trade.isWin 
-            ? `+${formatCurrency(profitAmount, userCurrency)}` 
-            : profitAmount < 0 
-              ? formatCurrency(profitAmount, userCurrency)
-              : `-${formatCurrency(trade.amount, userCurrency)}`}
+          {(() => {
+            // Определяем количество знаков после запятой в зависимости от величины прибыли
+            const absProfit = Math.abs(profitAmount);
+            let decimals = 2;
+            if (absProfit > 0 && absProfit < 0.01) {
+              decimals = 6; // Для очень маленьких значений показываем 6 знаков
+            } else if (absProfit >= 0.01 && absProfit < 0.1) {
+              decimals = 4; // Для маленьких значений показываем 4 знака
+            } else if (absProfit >= 0.1 && absProfit < 1) {
+              decimals = 3; // Для небольших значений показываем 3 знака
+            }
+            
+            if (profitAmount > 0) {
+              return `+${formatCurrency(profitAmount, userCurrency, { decimals })}`;
+            } else if (profitAmount < 0) {
+              return formatCurrency(profitAmount, userCurrency, { decimals });
+            } else {
+              return formatCurrency(0, userCurrency);
+            }
+          })()}
         </div>
       </div>
       <div className="trade-history-row trade-history-row-bottom">
         <div className="trade-time">
-          <div className={`trade-arrow ${trade.direction === 'buy' ? 'arrow-up' : 'arrow-down'}`}>
-            {trade.direction === 'buy' ? '⬆' : '⬇'}
-          </div>
-          {formatDate(trade.completedAt)}
+          <img 
+            src={trade.direction === 'buy' ? arrowUpIcon : arrowDownIcon}
+            alt={trade.direction === 'buy' ? 'up' : 'down'}
+            className={`trade-arrow ${trade.direction === 'buy' ? 'arrow-up' : 'arrow-down'}`}
+            width="16"
+            height="16"
+          />
+          {trade.completedAt ? formatDate(trade.completedAt) : '-'}
         </div>
         <div className="trade-middle">
           {trade.isWin ? formatCurrency(trade.amount + profitAmount, userCurrency) : formatCurrency(0, userCurrency)}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
@@ -345,7 +448,8 @@ export const TradeHistory: React.FC<TradeHistoryProps> = ({
   isLoadingMore = false,
   hasMore = false,
   getCurrencyInfo,
-  resolveCurrencyIconUrls
+  resolveCurrencyIconUrls,
+  onOpenTradeSidebar
 }) => {
 
   const { t } = useLanguage();
@@ -355,11 +459,17 @@ export const TradeHistory: React.FC<TradeHistoryProps> = ({
 
 
   const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
+    // Конвертируем в миллисекунды, если значение меньше 1e12 (это секунды)
+    let ts = timestamp;
+    if (ts < 1e12) {
+      ts = ts * 1000;
+    }
+    const date = new Date(ts);
     return date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
+      hour12: false
     });
   };
 
@@ -389,14 +499,17 @@ export const TradeHistory: React.FC<TradeHistoryProps> = ({
   const sortedTrades = useMemo(() => {
     return [...trades].sort((a, b) => {
       // Сортируем по completedAt в порядке убывания (новые сверху)
-      return b.completedAt - a.completedAt;
+      // Если completedAt равен null, используем createdAt для сортировки
+      const aTime = a.completedAt ?? a.createdAt;
+      const bTime = b.completedAt ?? b.createdAt;
+      return bTime - aTime;
     });
   }, [trades]);
 
   if (trades.length === 0) {
     return (
       <div className="trade-history">
-        <h3 className="trade-history-title">{t('trading.tradeHistory') || 'Trade History'}</h3>
+        <h3 className="trade-history-title">{t('trading.tradeHistory') || 'Trades'}</h3>
         <div className="no-trades">
           <p>{t('trading.noTradeHistory') || 'No completed trades yet'}</p>
         </div>
@@ -417,6 +530,7 @@ export const TradeHistory: React.FC<TradeHistoryProps> = ({
             getTradeCurrency={getTradeCurrency}
             deriveBaseFromSymbol={deriveBaseFromSymbol}
             userCurrency={userCurrency}
+            onOpenTradeSidebar={onOpenTradeSidebar}
           />
         ))}
       </div>

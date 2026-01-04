@@ -4,6 +4,7 @@ import type { AmpayMethodConfig, CreateAmpayMethodConfigRequest, UpdateAmpayMeth
 import { getAllMethods } from '@src/shared/api/ampay/configs';
 import { availableMethods, getAllMethodNames, getSubMethodsForMethod } from '@src/shared/api/ampay/configs/methodsList';
 import { apiClient } from '@src/shared/api/client/apiClient';
+import { useLanguage } from '@src/app/providers/useLanguage';
 import './AmpayMethodsAdminPage.css';
 
 interface MediaFile {
@@ -17,6 +18,7 @@ interface MediaFile {
 }
 
 export const AmpayMethodsAdminPage: React.FC = () => {
+    const { t } = useLanguage();
     const [methods, setMethods] = useState<AmpayMethodConfig[]>([]);
     const [selectedMethod, setSelectedMethod] = useState<AmpayMethodConfig | null>(null);
     const [showForm, setShowForm] = useState(false);
@@ -90,7 +92,7 @@ export const AmpayMethodsAdminPage: React.FC = () => {
             const data = Array.isArray(response) ? response : (response as any)?.data || [];
             setMethods(data);
         } catch (err: any) {
-            setError(err?.message || 'Ошибка загрузки методов');
+            setError(err?.message || t('admin.ampayMethods.loadError'));
         } finally {
             setLoading(false);
         }
@@ -234,7 +236,7 @@ export const AmpayMethodsAdminPage: React.FC = () => {
                     } else if (updateErr?.response?.data?.message) {
                         setError(updateErr.response.data.message);
                     } else {
-                        setError(updateErr?.message || 'Ошибка обновления метода');
+                        setError(updateErr?.message || t('admin.ampayMethods.updateError'));
                     }
                     throw updateErr;
                 }
@@ -268,7 +270,7 @@ export const AmpayMethodsAdminPage: React.FC = () => {
                     } else if (createErr?.response?.data?.message) {
                         setError(createErr.response.data.message);
                     } else {
-                        setError(createErr?.message || 'Ошибка создания метода');
+                        setError(createErr?.message || t('admin.ampayMethods.createError'));
                     }
                     throw createErr;
                 }
@@ -282,7 +284,7 @@ export const AmpayMethodsAdminPage: React.FC = () => {
         } catch (err: any) {
             // Ошибка уже обработана выше
             if (!err?.response) {
-                setError(err?.message || 'Ошибка сохранения метода');
+                setError(err?.message || t('admin.ampayMethods.saveError'));
             }
         } finally {
             setLoading(false);
@@ -290,7 +292,7 @@ export const AmpayMethodsAdminPage: React.FC = () => {
     };
 
     const handleDeleteMethod = async (id: number) => {
-        if (!confirm('Вы уверены, что хотите удалить этот метод?')) {
+        if (!confirm(t('admin.ampayMethods.deleteConfirm'))) {
             return;
         }
 
@@ -304,7 +306,7 @@ export const AmpayMethodsAdminPage: React.FC = () => {
             }
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
-            setError(err?.message || 'Ошибка удаления метода');
+            setError(err?.message || t('admin.ampayMethods.deleteError'));
         } finally {
             setLoading(false);
         }
@@ -333,7 +335,7 @@ export const AmpayMethodsAdminPage: React.FC = () => {
             setShowImportForm(false);
             setTimeout(() => setSuccess(null), 5000);
         } catch (err: any) {
-            setError(err?.message || 'Ошибка импорта методов');
+            setError(err?.message || t('admin.ampayMethods.importError'));
         } finally {
             setLoading(false);
         }

@@ -6,7 +6,6 @@
     gap: 16px;
     flex-wrap: nowrap;
     padding: 0 20px;                                                                                                                                                                                                                                                                                                                                                                                
-    border-bottom: 1.5px solid #333333;
     min-height: 56px;
     max-height: 72px;
     height: auto;
@@ -15,77 +14,88 @@
     margin-bottom: 0;
     position: relative;
     box-sizing: border-box;
-    overflow: hidden;
 }
 
 .trading-page__header-compact--trading {
     padding-right: 0;
-    background: rgba(28, 30, 44, 1);
+    background: #14172A;
 }
 
-.trading-page__header-compact--deposit {
+.trading-page__header-compact--deposit,
+.trading-page__header-compact--top-partners {
     padding-right: 20px;
     border-bottom: 2px solid #e5e5e5 !important;
     background: #ffffff !important;
     backdrop-filter: none !important;
 }
 
-/* Переопределение для белой шапки на странице депозита */
-.app-top-header.app-top-header--deposit .app-top-header__inner {
-    background: #ffffff !important;
-}
+/* Переопределение для белой шапки на странице депозита и топ партнеров */
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact {
+.app-top-header.app-top-header--deposit .trading-page__header-compact,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact {
     background: #ffffff !important;
     backdrop-filter: none !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left .trading-page__title {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left .trading-page__title,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .header-left .trading-page__title {
     color: #333 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-item {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-item,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .balance-item {
     color: #333 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-item .balance-label {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-item .balance-label,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .balance-item .balance-label {
     color: #666 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-item .balance-value {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-item .balance-value,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .balance-item .balance-value {
     color: #333 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left button {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left button,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .header-left button {
     color: #333 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left svg {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left svg,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .header-left svg {
     color: #333 !important;
     stroke: #333 !important;
     fill: #333 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__label {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__label,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__label {
     color: #333 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__value {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__value,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__value {
     color: #333 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__arrow {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__arrow,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__arrow {
     color: #666 !important;
 }
 
-.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__arrow svg {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__arrow svg,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__arrow svg {
     stroke: #666 !important;
 }
 
-/* Скрытие LanguageDropdown и FavoritePairs на странице платежей */
+/* Скрытие LanguageDropdown и FavoritePairs на странице платежей и топ партнеров */
 .app-top-header.app-top-header--deposit .trading-page__header-compact .header-left [class*="languageDropdown"],
 .app-top-header.app-top-header--deposit .trading-page__header-compact .header-left [class*="language-dropdown"],
-.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left .favorite-pairs {
+.app-top-header.app-top-header--deposit .trading-page__header-compact .header-left .favorite-pairs,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .header-left [class*="languageDropdown"],
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .header-left [class*="language-dropdown"],
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .header-left .favorite-pairs {
     display: none !important;
 }
 
@@ -99,7 +109,8 @@
     flex-shrink: 0;
     min-width: 0;
     height: 100%;
-    overflow: hidden;
+    overflow: visible;
+    align-self: stretch;
 }
 
 .trading-page__header-compact .header-left .trading-page__title {
@@ -112,12 +123,18 @@
     -moz-osx-font-smoothing: grayscale;
     color: #fff;
     margin: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 
 .trading-page__header-compact .header-left .trading-page__title .trading-page__logo {
     display: block;
-    height: var(--logo-height, 32px);
+    max-height: 33px;
     width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center;
 }
 
 .trading-page__header-compact .header-left .trading-page__title--clickable {
@@ -172,7 +189,6 @@
     flex-direction: row;
     align-items: stretch;
     justify-content: flex-start;
-    gap: 8px;
     flex-wrap: nowrap;
     flex-shrink: 1;
     min-width: 0;
@@ -283,6 +299,7 @@
 .trading-page__header-compact .balance-info-compact .deposit-button:hover {
     transform: translateY(-1px);
     box-shadow: none;
+    background: #5659F5 !important;
 }
 
 .trading-page__header-compact .balance-info-compact .deposit-button .deposit-icon,
@@ -290,55 +307,56 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
     font-size: 16px;
 }
 
-.trading-page__header-compact .balance-info-compact .deposit-button .deposit-icon svg,
-.trading-page__header-compact .balance-info-compact .trading-button .trading-icon svg {
-    width: 19px;
-    height: 19px;
+.trading-page__header-compact .balance-info-compact .deposit-button .deposit-icon img,
+.trading-page__header-compact .balance-info-compact .trading-button .trading-icon img {
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
 }
 
 .trading-page__header-compact .balance-info-compact .deposit-button .deposit-text,
 .trading-page__header-compact .balance-info-compact .trading-button .trading-text {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 400;
 }
 
-/* Кнопка Трейдинг должна оставаться синей на странице депозита */
-.app-top-header--deposit .trading-page__header-compact .balance-info-compact .trading-button {
+/* Кнопка Трейдинг должна оставаться синей на странице депозита и топ партнеров */
+.app-top-header--deposit .trading-page__header-compact .balance-info-compact .trading-button,
+.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .trading-button {
     background: #37a1ff;
     color: #ffffff;
     border: none;
 }
 
-.app-top-header--deposit .trading-page__header-compact .balance-info-compact .trading-button:hover {
+.app-top-header--deposit .trading-page__header-compact .balance-info-compact .trading-button:hover,
+.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .trading-button:hover {
     background: #2a8ae6;
 }
 
-.trading-page__header-compact .balance-info-compact .profile-button {
-    display: inline-flex;
-    align-items: center;
+.trading-page__header-compact .balance-info-compact .profile-wrapper {
+    width: 72px;
+    display: flex;
     justify-content: center;
+}
+
+.trading-page__header-compact .balance-info-compact .profile-button {
     width: 44px;
     height: 44px;
     aspect-ratio: 1;
     border-radius: 50%;
-    border: 2.5px solid rgba(255, 255, 255, .18);
+    border: 1px solid #484BD7;
     background: #ffffff14;
     cursor: pointer;
     padding: 0;
     transition: all .3s ease;
-    flex-shrink: 0;
-    overflow: visible;
-    margin-left: 12px;
     position: relative;
     min-width: 44px;
     min-height: 44px;
-    box-sizing: border-box;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button__avatar-wrapper {
@@ -371,50 +389,62 @@
     justify-content: center;
     min-width: 18px;
     height: 18px;
-    padding: 0 4px;
+    padding: 0;
     border-radius: 50%;
     font-size: 9px;
     font-weight: 700;
     line-height: 1;
-    border: 2px solid rgb(26.6, 30.0666666667, 47.4);
+    border: 2px solid #14172A;
     white-space: nowrap;
     z-index: 10;
 }
 
+.trading-page__header-compact .balance-info-compact .profile-button__level-badge svg {
+    display: block;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
 .trading-page__header-compact .balance-info-compact .profile-button__level-badge--green {
-    background: #00ff22;
-    color: #1b1e2f;
+    background: #484BD7;
+    color: #ffffff;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button__level-badge--yellow {
-    background: #ffbb00;
-    color: #1b1e2f;
+    background: #484BD7;
+    color: #ffffff;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button__level-badge--purple {
-    background: #8b16ff;
-    color: #1b1e2f;
+    background: #484BD7;
+    color: #ffffff;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button__level-badge--red {
-    background: #bd0918;
-    color: #fff;
+    background: #484BD7;
+    color: #ffffff;
+}
+
+.app-top-header.app-top-header--deposit .trading-page__header-compact .balance-info-compact .profile-button__level-badge,
+.app-top-header.app-top-header--top-partners .trading-page__header-compact .balance-info-compact .profile-button__level-badge {
+    border-color: #ffffff;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button--level-green {
-    border-color: #00ff22;
+    border-color: #484BD7;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button--level-yellow {
-    border-color: #ffbb00;
+    border-color: #484BD7;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button--level-purple {
-    border-color: #8b16ff;
+    border-color: #484BD7;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button--level-red {
-    border-color: #bd0918;
+    border-color: #484BD7;
 }
 
 .trading-page__header-compact .balance-info-compact .profile-button:hover {
@@ -547,24 +577,16 @@
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__label {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 1);
-    letter-spacing: 0.5px;
-    line-height: 1.1;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    color: #7D7C8C;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__value {
-    font-size: 17px;
+    font-size: 18px;
     color: #ffffff;
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-item--primary .balance-item__arrow {
@@ -606,11 +628,10 @@
     right: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 16px;
-    background: #1e222df2;
+    gap: 0;
+    padding: 0;
+    background: #191C32;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, .08);
     box-shadow: 0 16px 48px #00000073;
     opacity: 0;
     transform: translateY(-8px);
@@ -669,26 +690,27 @@
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__panel::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: #7D7C8C;
     border-radius: 2px;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__panel::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #484BD7;
 }
 
 
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__panel {
-    padding: 12px;
-    gap: 8px;
+    padding: 0;
+    gap: 0;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-selector {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 4px;
+    margin-bottom: 0;
+    padding: 12px;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-option {
@@ -697,22 +719,17 @@
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: #131722e6;
+    background: #14172A;
     border-radius: 8px;
-    border: 1px solid transparent;
+    border: none;
     cursor: pointer;
     transition: all .2s ease;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-option:hover {
-    background: #1a1f2ee6;
-    border-color: rgba(255, 255, 255, 0.1);
+    background: #292E41;
 }
 
-.trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-option--active {
-    background: #1a1f2ee6;
-    border-color: rgba(0, 154, 249, 0.3);
-}
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-radio {
     display: flex;
@@ -727,15 +744,27 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid #292E41;
     background: transparent;
     transition: all .2s ease;
     position: relative;
 }
 
+.trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__radio-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #292E41;
+}
+
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__radio-circle--checked {
-    border-color: #009af9;
-    background: #009af9;
+    border: none;
+    background: #484BD7;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__radio-circle--checked::after {
@@ -747,7 +776,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #fff;
+    background: #F9F9F9;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-info {
@@ -759,16 +788,16 @@
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: #fff;
+    color: #F9F9F9 !important;
     letter-spacing: 0;
     text-transform: none;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__account-balance {
     font-size: 12px;
-    color: #ffffffa6;
+    color: #7D7C8C !important;
     font-weight: 500;
 }
 
@@ -777,29 +806,30 @@
     flex-direction: row;
     align-items: center;
     gap: 10px;
-    padding: 10px 16px;
+    padding: 12px 16px;
     background: transparent;
     border: none;
-    border-radius: 8px;
+    border-radius: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     cursor: pointer;
     transition: all .2s ease;
-    margin-top: 4px;
+    margin-top: 0;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__hide-balance:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: #292E41;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__hide-icon {
     width: 16px;
     height: 16px;
-    color: #ffffffa6;
+    color: #7D7C8C !important;
     flex-shrink: 0;
 }
 
 .trading-page__header-compact .balance-info-compact .balance-dropdown .balance-dropdown__hide-label {
     font-size: 13px;
-    color: #ffffffa6;
+    color: #F9F9F9 !important;
     font-weight: 500;
     letter-spacing: 0;
     text-transform: none;
@@ -842,10 +872,14 @@
     z-index: 999;
     width: 100%;
     background: #121b2b;
+    display: flex;
+    align-items: center;
+    overflow: visible;
 }
 
 /* Переопределение для страницы депозита - должно быть после базового стиля */
-.app-top-header.app-top-header--deposit {
+.app-top-header.app-top-header--deposit,
+.app-top-header.app-top-header--top-partners {
     background: #ffffff !important;
     backdrop-filter: blur(24px);
     border-bottom: none;
@@ -856,22 +890,14 @@
     overflow: visible;
 }
 
-.app-top-header .app-top-header__inner {
-    display: flex;
-    justify-content: center;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    align-items: center;
-    overflow: visible;
-}
-
 .app-top-header .trading-page__header-compact {
     max-width: 100%;
     width: 100%;
-    padding: 10px 24px;
+    padding: 10px 0px 10px 12px;
     display: flex;
     align-items: center;
+    box-sizing: border-box;
+    height: 100%;
 }
 
 @keyframes subtlePulse {
@@ -961,8 +987,8 @@
     }
 
     .trading-page__header-compact .balance-info-compact .deposit-button .deposit-icon {
-        width: 22px;
-        height: 22px;
+        width: 28px;
+        height: 28px;
     }
 
     .trading-page__header-compact .balance-info-compact .profile-button {
@@ -1071,8 +1097,8 @@
     }
 
     .trading-page__header-compact .balance-info-compact .deposit-button .deposit-icon {
-        width: 19px;
-        height: 19px;
+        width: 24px;
+        height: 24px;
     }
 
     .trading-page__header-compact .balance-info-compact .profile-button {

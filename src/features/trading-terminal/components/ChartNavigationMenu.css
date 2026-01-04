@@ -4,20 +4,19 @@
   left: 0;
   width: 420px;
   height: 100%;
-  background: rgba(28, 30, 44, 1);
-  backdrop-filter: blur(20px);
+  background: #191C32;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
   z-index: 150;
   display: flex;
   flex-direction: column;
   transform: translateX(-100%);
-  opacity: 0;
-  visibility: hidden;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               visibility 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  padding: 16px;
+  gap: 16px;
 }
 
 .chart-navigation-menu.open {
@@ -30,17 +29,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-  background: rgba(28, 30, 44, 1);
 }
 
 .chart-navigation-menu__title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   color: #fff;
-  margin: 0;
 }
 
 .chart-navigation-menu__close {
@@ -67,6 +61,7 @@
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  gap: 16px;
 }
 
 .chart-navigation-menu__loading {
@@ -122,10 +117,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-  background: rgba(28, 30, 44, 1);
 }
 
 .chart-navigation-menu__search-wrapper {
@@ -138,18 +129,18 @@
 .chart-navigation-menu__search-icon {
   position: absolute;
   left: 10px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #292E41;
   pointer-events: none;
 }
 
 .chart-navigation-menu__search-input {
   width: 100%;
   padding: 8px 12px 8px 36px;
-  background: rgba(28, 30, 44, 1);
-  border: 1px solid #292d32;
+  border: 1px solid #292E41;
   border-radius: 6px;
-  color: #fff;
-  font-size: 13px;
+  color: #7D7C8C;
+  font-size: 16px;
+  font-weight: 400;
   outline: none;
   transition: all 0.2s ease;
 }
@@ -191,10 +182,6 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(28, 30, 44, 1);
-  flex-shrink: 0;
   position: relative;
 }
 
@@ -202,7 +189,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 14px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
@@ -235,10 +221,10 @@
 
 .chart-navigation-menu__filter-pill.active {
   padding: 6px 12px;
-  background: #fff;
-  border: 1px solid #fff;
-  border-radius: 16px;
-  color: #000;
+  background: #484BD7;
+  border-radius: 14px;
+  font-weight: 400;
+  color: white;
 }
 
 /* Список валют */
@@ -249,7 +235,24 @@
 }
 
 .chart-navigation-menu__list {
-  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chart-navigation-menu__category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chart-navigation-menu__category-header {
+  padding: 8px 8px 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Заголовки таблицы */
@@ -257,20 +260,12 @@
   display: grid;
   grid-template-columns: 1fr 140px 130px;
   gap: 16px;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(28, 30, 44, 1);
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 .chart-navigation-menu__header-cell {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #7D7C8C;
 }
 
 .chart-navigation-menu__header-cell--name {
@@ -288,12 +283,12 @@
 .chart-navigation-menu__item {
   display: grid;
   grid-template-columns: 1fr 140px 130px;
+  padding: 8px;
   gap: 16px;
   align-items: center;
-  padding: 6px 16px;
   cursor: pointer;
   transition: all 0.2s ease;
-  border-left: 3px solid transparent;
+  border-radius: 4px;
 }
 
 .chart-navigation-menu__item:hover {
@@ -301,9 +296,7 @@
 }
 
 .chart-navigation-menu__item.active {
-  background: #3c3e4d;
-  border-left: 3px solid #fff;
-  border-bottom: none;
+  background: #484BD71A;
 }
 
 .chart-navigation-menu__item-icon {
@@ -364,11 +357,9 @@
 }
 
 .chart-navigation-menu__item-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   color: #fff;
-  overflow: visible;
-  text-overflow: clip;
   white-space: normal;
 }
 
@@ -439,15 +430,11 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  padding: 0;
   background: #1b1e2f;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   color: rgba(255, 255, 255, 0.8);
-  flex-shrink: 0;
-  z-index: 1;
 }
 
 .chart-navigation-menu__filters-scroll-button:hover {

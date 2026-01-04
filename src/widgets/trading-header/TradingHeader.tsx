@@ -8,9 +8,11 @@ import { FavoritePairs } from "@src/widgets/favorite-pairs/FavoritePairs";
 import { getLevelInfo } from "@src/shared/ui/BalanceLevelBadge";
 import { Heading, Text } from "@src/shared/ui/typography";
 import { Button } from "@src/shared/ui/button";
-import logoImage from "@src/assets/full-logo.png";
-import arrowDownIcon from "@src/assets/arrow-down.svg";
-import userIcon from "@src/assets/avatar.svg";
+import fullLogoLight from "@src/assets/logos/full-logo-light.png";
+import fullLogoDark from "@src/assets/logos/full-logo-dark.png";
+import arrowDownIcon from "@src/assets/icons/arrow-down.svg";
+import userIcon from "@src/assets/icons/avatar.svg";
+import walletIcon from "@src/assets/icons/wallet-icon.svg";
 // Иконки удалены - теперь используем кастомные SVG компоненты
 import { useAnimatedNumber } from "@src/shared/hooks/useAnimatedNumber";
 import { ensureHttps } from "@src/shared/lib/ensureHttps";
@@ -45,7 +47,13 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
     const [isProfilePopupOpen, setIsProfilePopupOpen] = useState(false);
     const [tradingMode, setTradingModeState] = useState<'manual' | 'demo'>('manual');
     const [isDropdownAbove, setIsDropdownAbove] = useState(false);
-    const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+    const [isBalanceHidden, setIsBalanceHidden] = useState<boolean>(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+        const stored = localStorage.getItem('balance_hidden');
+        return stored === 'true';
+    });
     const balanceDropdownRef = useRef<HTMLDivElement>(null);
     const balancePanelRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +74,60 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
     };
     
     const levelNumber = useMemo(() => getLevelNumber(realBalance), [realBalance]);
+    
+    const getLevelIcon = (level: string): JSX.Element => {
+        const iconSize = 10;
+        const fillColor = '#ffffff';
+        
+        switch (level) {
+            case "1":
+                // Ромб
+                return (
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 1L8.5 5L5 9L1.5 5L5 1Z" fill={fillColor} />
+                    </svg>
+                );
+            case "2":
+                // Звезда
+                return (
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 0.5L6.12 3.46L9.5 3.7L7.25 5.8L7.88 9.05L5 7.55L2.12 9.05L2.75 5.8L0.5 3.7L3.88 3.46L5 0.5Z" fill={fillColor} />
+                    </svg>
+                );
+            case "3":
+                // Заполненная звезда
+                return (
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 0L6.12 3.45L10 3.45L7.44 5.59L8.56 9.05L5 6.91L1.44 9.05L2.56 5.59L0 3.45L3.88 3.45L5 0Z" fill={fillColor} />
+                    </svg>
+                );
+            case "4":
+                // Алмаз
+                return (
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 1L7.5 4.5L5 8L2.5 4.5L5 1Z" fill={fillColor} />
+                        <path d="M7.5 4.5L9.5 5.5L7.5 6.5L5 8L7.5 4.5Z" fill={fillColor} />
+                        <path d="M2.5 4.5L0.5 5.5L2.5 6.5L5 8L2.5 4.5Z" fill={fillColor} />
+                    </svg>
+                );
+            case "5":
+                // Корона
+                return (
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 1.5L3.5 4L1.5 3.5L2 6.5H8L8.5 3.5L6.5 4L5 1.5Z" fill={fillColor} />
+                        <rect x="1" y="6.5" width="8" height="2.5" fill={fillColor} />
+                    </svg>
+                );
+            default:
+                return (
+                    <svg width={iconSize} height={iconSize} viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 1L8.5 5L5 9L1.5 5L5 1Z" fill={fillColor} />
+                    </svg>
+                );
+        }
+    };
+    
+    const levelIcon = useMemo(() => getLevelIcon(levelNumber), [levelNumber]);
     
     // Используем userCurrency как ключ для принудительного обновления при смене валюты
     const balanceDisplay = useAnimatedNumber(displayBalance, 1000, false);
@@ -123,6 +185,54 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
         };
     }, []);
 
+    // Сохранение и синхронизация состояния скрытия баланса
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const updateFromLocalStorage = () => {
+            try {
+                const stored = localStorage.getItem('balance_hidden');
+                setIsBalanceHidden(stored === 'true');
+            } catch {
+                setIsBalanceHidden(false);
+            }
+        };
+
+        // Слушаем изменения localStorage для синхронизации между вкладками
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key === 'balance_hidden') {
+                updateFromLocalStorage();
+            }
+        };
+
+        // Слушаем кастомные события для синхронизации в той же вкладке
+        const handleBalanceHiddenChange = () => {
+            updateFromLocalStorage();
+        };
+
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener('balanceHiddenChange', handleBalanceHiddenChange as EventListener);
+
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('balanceHiddenChange', handleBalanceHiddenChange as EventListener);
+        };
+    }, []);
+
+    // Сохранение состояния скрытия баланса в localStorage при изменении
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        try {
+            localStorage.setItem('balance_hidden', isBalanceHidden.toString());
+            window.dispatchEvent(new CustomEvent('balanceHiddenChange'));
+        } catch (error) {
+            console.error('Failed to save balance_hidden to localStorage:', error);
+        }
+    }, [isBalanceHidden]);
 
     useEffect(() => {
         if (tradingMode === 'demo') {
@@ -390,17 +500,6 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
         ? (t('menu.trading', { defaultValue: 'Trading' }) || 'Trading')
         : (depositLabel || 'Top up');
     
-    const tradingButtonIcon = (isDepositPage || isProfilePage) ? (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 2H14V14H2V2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M6 6H10M6 10H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-    ) : (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2V14M2 8H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-    );
-    
     const handleTradingButtonClick = () => {
         if (isDepositPage || isProfilePage) {
             navigate('/trading');
@@ -417,49 +516,48 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
 
     return (
         <header className={`app-top-header ${isLightThemePage ? 'app-top-header--deposit' : ''}`}>
-            <div className="app-top-header__inner">
-                <div className={`trading-page__header-compact ${isLightThemePage ? 'trading-page__header-compact--deposit' : 'trading-page__header-compact--trading'}`}>
-                    <div className="header-left">
-                        {isMobile && (
-                            <button
-                                className="mobile-menu-toggle"
-                                onClick={toggleMobileMenu}
-                                aria-label={isMobileMenuOpen ? t('menu.closeMenu') : t('menu.openMenu')}
-                                aria-expanded={isMobileMenuOpen}
-                            >
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    {isMobileMenuOpen ? (
-                                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    ) : (
-                                        <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    )}
-                                </svg>
-                            </button>
-                        )}
-                        <Heading 
-                            as={'h1' as any} 
-                            level={1} 
-                            className={`trading-page__title ${!isTradingPage ? 'trading-page__title--clickable' : ''}`}
-                            aria-label="BlockMind"
-                            onClick={handleLogoClick}
-                            style={!isTradingPage ? { cursor: 'pointer' } : undefined}
+            <div className={`trading-page__header-compact ${isLightThemePage ? 'trading-page__header-compact--deposit' : 'trading-page__header-compact--trading'}`}>
+                <div className="header-left">
+                    {isMobile && (
+                        <button
+                            className="mobile-menu-toggle"
+                            onClick={toggleMobileMenu}
+                            aria-label={isMobileMenuOpen ? t('menu.closeMenu') : t('menu.openMenu')}
+                            aria-expanded={isMobileMenuOpen}
                         >
-                            <img 
-                                src={logoImage} 
-                                alt="BlockMind" 
-                                className="trading-page__logo" 
-                                width="120"
-                                height="32"
-                                loading="eager"
-                                decoding="sync"
-                            />
-                        </Heading>
-                        {!hideLanguageDropdown && (
-                            <FavoritePairs />
-                        )}
-                    </div>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                {isMobileMenuOpen ? (
+                                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                ) : (
+                                    <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                )}
+                            </svg>
+                        </button>
+                    )}
+                    <Heading 
+                        as={'h1' as any} 
+                        level={1} 
+                        className={`trading-page__title ${!isTradingPage ? 'trading-page__title--clickable' : ''}`}
+                        aria-label="BlockMind"
+                        onClick={handleLogoClick}
+                        style={!isTradingPage ? { cursor: 'pointer' } : undefined}
+                    >
+                        <img 
+                            src={isLightThemePage ? fullLogoDark : fullLogoLight} 
+                            alt="BlockMind" 
+                            className="trading-page__logo" 
+                            width="120"
+                            height="32"
+                            loading="eager"
+                            decoding="sync"
+                        />
+                    </Heading>
+                    {!hideLanguageDropdown && (
+                        <FavoritePairs />
+                    )}
+                </div>
 
-                    <div className="balance-info-compact">
+                <div className="balance-info-compact">
                         {/* ИЗБРАННЫЕ ТЕЛЕГРАММ ТАМ ИЩИ */}
 
                         <div
@@ -538,7 +636,7 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
                                                 tone="muted"
                                                 className="balance-dropdown__account-balance"
                                             >
-                                                {formatCurrency(realBalance, userCurrency, { convertFromUSD: true })}
+                                                {isBalanceHidden ? '••••••' : formatCurrency(realBalance, userCurrency, { convertFromUSD: true })}
                                             </Text>
                                         </div>
                                     </div>
@@ -571,7 +669,7 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
                                                 tone="muted"
                                                 className="balance-dropdown__account-balance"
                                             >
-                                                {formatCurrency(demoBalance, userCurrency, { convertFromUSD: true })}
+                                                {isBalanceHidden ? '••••••' : formatCurrency(demoBalance, userCurrency, { convertFromUSD: true })}
                                             </Text>
                                         </div>
                                     </div>
@@ -630,40 +728,41 @@ export const TradingHeader = memo(({ onStartTutorial }: TradingHeaderProps = {})
                             aria-label={tradingButtonLabel}
                         >
                             <span className="deposit-icon trading-icon">
-                                {tradingButtonIcon}
+                                <img src={walletIcon} alt="" />
                             </span>
                             <span className="deposit-text trading-text">
                                 {tradingButtonLabel}
                             </span>
                         </Button>
 
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className={`profile-button profile-button--level-${levelInfo.variant}`}
-                            aria-label={t("profile.title") || "Profile"}
-                            onClick={handleProfileClick}
-                            data-level={levelInfo.variant}
-                        >
-                            <div className="profile-button__avatar-wrapper">
-                                <img 
-                                    src={profileImageSrc} 
-                                    alt={t("profile.title") || "Profile"} 
-                                    width="32"
-                                    height="32"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
-                            </div>
-                            {!isDemoMode && (
-                                <span className={`profile-button__level-badge profile-button__level-badge--${levelInfo.variant}`}>
-                                    {levelNumber}
-                                </span>
-                            )}
-                        </Button>
+                        <div className="profile-wrapper">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                className={`profile-button profile-button--level-${levelInfo.variant}`}
+                                aria-label={t("profile.title") || "Profile"}
+                                onClick={handleProfileClick}
+                                data-level={levelInfo.variant}
+                            >
+                                <div className="profile-button__avatar-wrapper">
+                                    <img 
+                                        src={profileImageSrc} 
+                                        alt={t("profile.title") || "Profile"} 
+                                        width="32"
+                                        height="32"
+                                        loading="lazy"
+                                        decoding="async"
+                                    />
+                                </div>
+                                {!isDemoMode && (
+                                    <span className={`profile-button__level-badge profile-button__level-badge--${levelInfo.variant}`}>
+                                        {levelIcon}
+                                    </span>
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
             <ProfilePopup 
                 isOpen={isProfilePopupOpen} 
                 onClose={() => setIsProfilePopupOpen(false)} 

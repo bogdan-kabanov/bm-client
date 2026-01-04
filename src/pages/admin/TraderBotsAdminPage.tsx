@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { traderBotApi, TraderBot } from '@src/shared/api';
+import { useLanguage } from '@src/app/providers/useLanguage';
 import './TraderBotsAdminPage.css';
 
 export const TraderBotsAdminPage: React.FC = () => {
+  const { t } = useLanguage();
   const [bots, setBots] = useState<TraderBot[]>([]);
   const [selectedBot, setSelectedBot] = useState<TraderBot | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -44,7 +46,7 @@ export const TraderBotsAdminPage: React.FC = () => {
       const data = await traderBotApi.getAll();
       setBots(data);
     } catch (err: any) {
-      setError(err?.message || 'Ошибка загрузки ботов');
+      setError(err?.message || t('admin.traderBots.loadError'));
     } finally {
       setLoading(false);
     }
@@ -96,24 +98,24 @@ export const TraderBotsAdminPage: React.FC = () => {
       setError(null);
       if (editingBot) {
         await traderBotApi.update(editingBot.id, formData);
-        setSuccess('Бот успешно обновлен');
+        setSuccess(t('admin.traderBots.updateSuccess'));
       } else {
         await traderBotApi.create(formData);
-        setSuccess('Бот успешно создан');
+        setSuccess(t('admin.traderBots.createSuccess'));
       }
       await loadBots();
       setShowForm(false);
       setEditingBot(null);
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err?.message || 'Ошибка сохранения бота');
+      setError(err?.message || t('admin.traderBots.saveError'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteBot = async (id: number) => {
-    if (!confirm('Вы уверены, что хотите удалить этого бота?')) {
+    if (!confirm(t('admin.traderBots.deleteConfirm'))) {
       return;
     }
 
@@ -127,7 +129,7 @@ export const TraderBotsAdminPage: React.FC = () => {
       }
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err?.message || 'Ошибка удаления бота');
+      setError(err?.message || t('admin.traderBots.deleteError'));
     } finally {
       setLoading(false);
     }
@@ -141,7 +143,7 @@ export const TraderBotsAdminPage: React.FC = () => {
       setSuccess(id ? 'Сделки для бота успешно сгенерированы' : 'Сделки для всех ботов успешно сгенерированы');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err?.message || 'Ошибка генерации сделок');
+      setError(err?.message || t('admin.traderBots.generateTradesError'));
     } finally {
       setLoading(false);
     }

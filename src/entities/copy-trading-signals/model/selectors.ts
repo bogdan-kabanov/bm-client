@@ -3,6 +3,12 @@ import { RootState } from '@src/app/store';
 export const selectCopyTradingSignalsMenuOpen = (state: RootState) => 
   state.copyTradingSignals.isMenuOpen;
 
+export const selectTopPartnersMenuOpen = (state: RootState) => 
+  state.copyTradingSignals.isTopPartnersMenuOpen;
+
+export const selectSubscriptionsMenuOpen = (state: RootState) => 
+  state.copyTradingSignals.isSubscriptionsMenuOpen;
+
 export const selectCopyTradingSubscriptions = (state: RootState) => 
   state.copyTradingSignals.subscriptions;
 

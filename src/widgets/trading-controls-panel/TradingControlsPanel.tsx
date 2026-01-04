@@ -37,7 +37,9 @@ const TradeButtons = ({
 }) => {
   const isZeroBalance = balance === 0 && tradingMode !== 'demo';
   // Если баланс нулевой, кнопки должны быть активными для показа модального окна
-  const buttonsDisabled = isZeroBalance ? false : (isProcessing || isDisabled || currentPrice === null);
+  // Не блокируем кнопки из-за currentPrice === null, т.к. handleManualTrade сам получит цену из графика
+  const buttonsDisabled = isZeroBalance ? false : (isProcessing || isDisabled);
+  
   
   const handleClick = (direction: 'buy' | 'sell') => {
     if (isZeroBalance && onZeroBalanceClick) {
@@ -298,6 +300,7 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
   const userCurrency = profile?.currency || 'USD';
   
   const balanceUSD = balance || 0;
+  
   const balanceInUserCurrency = userCurrency === 'USD' 
     ? balanceUSD 
     : convertFromUSDSync(balanceUSD, userCurrency);
@@ -317,8 +320,6 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
   const amountWrapperRef = useRef<HTMLDivElement>(null);
   const timeDisplayRef = useRef<HTMLDivElement>(null);
   const timeWrapperRef = useRef<HTMLDivElement>(null);
-  const currencyPairNameRef = useRef<HTMLDivElement>(null);
-  const profitRowRef = useRef<HTMLDivElement>(null);
 
   const [fallbackCurrencyInfo, setFallbackCurrencyInfo] = useState<Currency | null>(null);
   
@@ -472,6 +473,7 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
   }, [selectedBase, currentQuoteCurrency, currenciesLoading, currencyCategories.length, fallbackCurrencyInfo]);
 
   const [iconUrls, setIconUrls] = useState<string[]>([]);
+  const [userCurrencyIconUrls, setUserCurrencyIconUrls] = useState<string[]>([]);
 
   useEffect(() => {
     const loadIconUrls = async () => {
@@ -498,6 +500,24 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
 
     loadIconUrls();
   }, [resolveCurrencyIconUrls, currencyInfo, selectedBase]);
+
+  useEffect(() => {
+    const loadUserCurrencyIconUrls = async () => {
+      const localIcon = LOCAL_CURRENCY_ICONS[userCurrency];
+      if (localIcon) {
+        setUserCurrencyIconUrls([localIcon]);
+      } else {
+        const loadedIcon = await preloadCurrencyIcon(userCurrency);
+        if (loadedIcon) {
+          setUserCurrencyIconUrls([loadedIcon]);
+        } else {
+          setUserCurrencyIconUrls([]);
+        }
+      }
+    };
+
+    loadUserCurrencyIconUrls();
+  }, [userCurrency]);
 
   const profitPercentage = useMemo(() => {
     
@@ -564,51 +584,6 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
     setLocalExpiration(parsedExpiration);
   }, [parsedExpiration]);
 
-  useEffect(() => {
-    const adjustFontSize = () => {
-      if (currencyPairNameRef.current) {
-        const element = currencyPairNameRef.current;
-        const container = element.parentElement;
-        if (!container) return;
-        
-        const containerWidth = container.offsetWidth - 42;
-        const text = element.textContent || '';
-        const baseFontSize = 18;
-        
-        let fontSize = baseFontSize;
-        element.style.fontSize = `${fontSize}px`;
-        
-        while (element.scrollWidth > containerWidth && fontSize > 13) {
-          fontSize -= 0.5;
-          element.style.fontSize = `${fontSize}px`;
-        }
-      }
-      
-      if (profitRowRef.current) {
-        const element = profitRowRef.current;
-        const container = element.parentElement;
-        if (!container) return;
-        
-        const containerWidth = container.offsetWidth - 42;
-        const baseFontSize = 18;
-        
-        let fontSize = baseFontSize;
-        element.style.fontSize = `${fontSize}px`;
-        
-        while (element.scrollWidth > containerWidth && fontSize > 13) {
-          fontSize -= 0.5;
-          element.style.fontSize = `${fontSize}px`;
-        }
-      }
-    };
-    
-    adjustFontSize();
-    // }
-    // 
-    // return () => {
-    //   resizeObserver.disconnect();
-    // };
-  }, [currencyPairName, profitPercentage, profitAmountInUserCurrency, userCurrency, currencyInfo, localManualAmount]);
 
   const handleAmountInputClick = (e: React.MouseEvent<HTMLInputElement>) => {
     
@@ -706,14 +681,18 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
   // Проверяем, должна ли быть отключена кнопка на основе суммы инвестиции
   const isAmountDisabled = useMemo(() => {
     const amount = parseFloat(localManualAmount || manualTradeAmount || '0');
-    if (isNaN(amount) || amount <= 0) return true;
+    if (isNaN(amount) || amount <= 0) {
+      return true;
+    }
     
     // Проверяем минимальную сумму ($1 в USD)
     const amountInUSD = userCurrency === 'USD' 
       ? amount 
       : convertToUSDSync(amount, userCurrency);
     
-    return amountInUSD < minAmountUSD;
+    const disabled = amountInUSD < minAmountUSD;
+    
+    return disabled;
   }, [localManualAmount, manualTradeAmount, userCurrency, minAmountUSD]);
 
   const [showZeroBalanceModal, setShowZeroBalanceModal] = useState(false);
@@ -734,16 +713,14 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
   return (
     <div className={`trading-controls-panel ${isOverlay ? 'chart-overlay-panel' : ''} ${isDisabled ? 'trading-controls-panel--disabled' : ''}`}>
       <div className={`manual-trading-controls ${isDisabled ? 'manual-trading-controls--disabled' : ''}`}>
-        {/* Ряд 1: Инвестиция и Время */}
+        {/* Ряд 1: Инвестиция, Время и Выплата */}
         <div className="mobile-controls-top">
-          <div className="manual-trade-amount">
+          <div className="control-field manual-trade-amount">
             <label>{t('trading.tradeAmount')}</label>
             <div 
               className="trade-amount-input-wrapper" 
               ref={amountWrapperRef}
               onClick={(e) => {
-                // На десктопе открываем калькулятор только при клике на обертку (не на input)
-                // На мобильных устройствах всегда открываем калькулятор
                 if (isMobile || (e.target !== amountInputRef.current && !amountInputRef.current?.contains(e.target as Node))) {
                   handleAmountInputClick(e as any);
                 }
@@ -850,7 +827,7 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
             </div>
           </div>
           
-          <div className="manual-trade-expiration">
+          <div className="control-field manual-trade-expiration">
             <label>{t('trading.expirationTime')}</label>
             <div 
               className="expiration-time-advanced" 
@@ -866,8 +843,8 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
                 <div className="time-with-icon">
                   <span className="time-prefix">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3.5" />
-                      <path d="M12 7V12L15 14" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.0" />
+                      <path d="M12 7V12L15 14" stroke="currentColor" strokeWidth="1.0" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
                   <div 
@@ -885,43 +862,36 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Блок с профитом - новая структура с иконкой валюты */}
-        {!isOverlay ? (
-          <div className="profit-info-block">
-            <div className="profit-info-content">
-              <div className="profit-currency-icon-view">
-                {iconUrls.length > 0 ? (
+
+          <div className="control-field manual-trade-payout">
+            <label>{t('trading.payout')}</label>
+            <div className="payout-display-wrapper">
+              <div className="payout-display">
+                <span className="payout-currency-icon">
                   <CurrencyIconView
                     iconUrls={iconUrls}
                     label={currencyPairName}
                     fallback={selectedBase}
-                    imageClassName="profit-currency-icon-img"
+                    className="payout-currency-icon-view"
+                    imageClassName="payout-currency-icon-img"
                     priority="high"
                     isImportant={true}
                   />
-                ) : (
-                  <span className="currency-icon__initials">{selectedBase.slice(0, 2).toUpperCase()}</span>
-                )}
-              </div>
-              <div className="profit-info-text">
-                <div className="currency-pair-name" ref={currencyPairNameRef}>
-                  {currencyPairName}
-                </div>
-                <div className="profit-row" ref={profitRowRef}>
-                  <span className="profit-percent">+{Math.round(profitPercentage || 0)}%</span>
-                  <span className="profit-separator">|</span>
-                  <span className="profit-amount">+{formatCurrency(profitAmountInUserCurrency || 0, userCurrency, { noSpace: true })}</span>
-                </div>
+                </span>
+                <span className="payout-value-text">
+                  {formatCurrency(payoutAmountInUserCurrency, userCurrency, { noSpace: true })}
+                </span>
               </div>
             </div>
           </div>
-        ) : (
-          /* Ряд 2: Выплата, Процент и Прибыль в одну строку для мобильной версии */
-          <div className="profit-payout-row">
+        </div>
+        
+        {isOverlay && (
+          <>
+            {/* Ряд 2: Выплата, Процент и Прибыль в одну строку для мобильной версии */}
+            <div className="profit-payout-row">
             <div className="payout-info-item">
-              <div className="payout-label">{t('trading.payout') || 'Выплата'}</div>
+              <div className="payout-label">{t('trading.payout')}</div>
               <div className="payout-value">
                 {formatCurrency(payoutAmountInUserCurrency, userCurrency)}
               </div>
@@ -930,40 +900,45 @@ export const TradingControlsPanel: React.FC<TradingControlsPanelProps> = ({
               <div className="payout-percent-label">+{Math.round(profitPercentage || 0)}%</div>
             </div>
             <div className="profit-info-item">
-              <div className="profit-label">{t('trading.profit') || 'Прибыль'}</div>
+              <div className="profit-label">{t('trading.profit')}</div>
               <div className="profit-value">+{formatCurrency(profitAmountInUserCurrency || 0, userCurrency)}</div>
             </div>
           </div>
+          </>
         )}
         
         {/* Кнопки Бай и Селл снизу */}
-        {!isOverlay ? (
-          /* Кнопки BUY/SELL снизу на ПК версии */
-          <TradeButtons
-            currentPrice={currentPrice}
-            isProcessing={isProcessing}
-            handleManualTrade={handleManualTrade}
-            setHoveredButton={setHoveredButton}
-            isDisabled={isDisabled || isAmountDisabled}
-            balance={balanceUSD}
-            tradingMode={tradingMode}
-            onZeroBalanceClick={handleZeroBalanceClick}
-            t={t}
-          />
-        ) : (
-          /* Кнопки Бай и Селл снизу для мобильной версии */
-          <TradeButtons
-            currentPrice={currentPrice}
-            isProcessing={isProcessing}
-            handleManualTrade={handleManualTrade}
-            setHoveredButton={setHoveredButton}
-            isDisabled={isDisabled || isAmountDisabled}
-            balance={balanceUSD}
-            tradingMode={tradingMode}
-            onZeroBalanceClick={handleZeroBalanceClick}
-            t={t}
-          />
-        )}
+        {(() => {
+          const finalIsDisabled = isDisabled || isAmountDisabled;
+          
+          return !isOverlay ? (
+            /* Кнопки BUY/SELL снизу на ПК версии */
+            <TradeButtons
+              currentPrice={currentPrice}
+              isProcessing={isProcessing}
+              handleManualTrade={handleManualTrade}
+              setHoveredButton={setHoveredButton}
+              isDisabled={finalIsDisabled}
+              balance={balanceUSD}
+              tradingMode={tradingMode}
+              onZeroBalanceClick={handleZeroBalanceClick}
+              t={t}
+            />
+          ) : (
+            /* Кнопки Бай и Селл снизу для мобильной версии */
+            <TradeButtons
+              currentPrice={currentPrice}
+              isProcessing={isProcessing}
+              handleManualTrade={handleManualTrade}
+              setHoveredButton={setHoveredButton}
+              isDisabled={finalIsDisabled}
+              balance={balanceUSD}
+              tradingMode={tradingMode}
+              onZeroBalanceClick={handleZeroBalanceClick}
+              t={t}
+            />
+          );
+        })()}
       </div>
 
       {/* Модальное окно о нулевом балансе - рендерим через Portal поверх всего */}

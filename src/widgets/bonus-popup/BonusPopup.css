@@ -1,8 +1,7 @@
 .bonus-popup-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.35);
   z-index: 10002;
   display: flex;
   align-items: center;
@@ -22,16 +21,11 @@
 
 .bonus-popup {
   position: relative;
-  background: linear-gradient(135deg, #161a25 0%, #1e222d 50%, #232737 100%);
-  border: 2px solid rgba(124, 58, 237, 0.4);
+  background: #14172A;
   border-radius: 20px;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(124, 58, 237, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  overflow: hidden;
+  max-width: 480px;
+ 
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -65,9 +59,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
   color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -76,9 +67,8 @@
 }
 
 .bonus-popup-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
+  transform: rotate(10deg);
 }
 
 .bonus-popup-close svg {
@@ -136,10 +126,8 @@
 
 .bonus-popup-subtitle {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.7);
-  max-width: 340px;
+  font-size: 14px;
+  color: #7D7C8C;
   font-weight: 400;
 }
 
@@ -150,28 +138,21 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 20px;
-  background: rgba(124, 58, 237, 0.15);
-  border: 1px solid rgba(124, 58, 237, 0.3);
+  background: #484BD71A;
   border-radius: 10px;
   width: 100%;
   max-width: 240px;
 }
 
 .bonus-popup-promocode-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 14px;
+  color: #7D7C8C;
 }
 
 .bonus-popup-promocode-value {
   font-size: 18px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: #C4B5FD;
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  letter-spacing: 2px;
+  font-weight: 500;
+  color: #484BD7;
 }
 
 .bonus-popup-timer {
@@ -180,8 +161,7 @@
   align-items: center;
   justify-content: center;
   padding: 14px 20px;
-  background: rgba(124, 58, 237, 0.1);
-  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: #484BD71A;
   border-radius: 12px;
   width: 100%;
   max-width: 240px;
@@ -190,18 +170,15 @@
 
 .bonus-popup-timer-value {
   font-size: 24px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: #ffffff;
-  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  letter-spacing: 1.5px;
+  font-weight: 400;
+  color: #F9F9F9;
 }
 
 .bonus-popup-button {
   width: 100%;
   max-width: 240px;
   padding: 14px 28px;
-  background: linear-gradient(135deg, #7C3AED 0%, #9F7AEA 100%);
+  background: #484BD7;
   border: none;
   border-radius: 10px;
   color: #ffffff;
@@ -210,13 +187,11 @@
   letter-spacing: 0.2px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.3);
 }
 
 .bonus-popup-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
-  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  background: #484ad7c0;
 }
 
 .bonus-popup-button:active {

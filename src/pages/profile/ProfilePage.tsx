@@ -10,7 +10,7 @@ import { useAnimatedNumber } from "@src/shared/hooks/useAnimatedNumber";
 import { KYCVerificationForm } from "@src/features/kyc-verification/ui/KYCVerificationForm";
 import { LanguageDropdown } from "@src/shared/ui/LanguageDropdown";
 import { authApi, userApi } from "@src/shared/api";
-import userIcon from "@src/assets/avatar.svg";
+import userIcon from "@src/assets/icons/avatar.svg";
 import { ensureHttps } from "@src/shared/lib/ensureHttps";
 import { generateReferralHash } from "@src/shared/lib/referralHashUtils";
 import { formatTraderCodeForDisplay } from "@src/shared/lib/traderCodeUtils";
@@ -18,6 +18,7 @@ import { formatCurrency, CURRENCY_INFO, SupportedCurrency, getCurrencyInfo } fro
 import { getLevelInfo } from "@src/shared/ui/BalanceLevelBadge/BalanceLevelBadge";
 import { EditableField } from "./components/EditableField";
 import { CurrencyField } from "./components/CurrencyField";
+import { CountryField } from "./components/CountryField";
 import { InfoCard } from "./components/InfoCard";
 import { SidebarProvider, useSidebar } from '@src/shared/contexts/SidebarContext';
 import { MobileMenuProvider } from '@src/shared/contexts/MobileMenuContext';
@@ -46,6 +47,7 @@ export function ProfilePage() {
         phone: "",
         login: "",
         currency: "USD" as SupportedCurrency,
+        country: "",
         wallets: {
             usdt: "",
             btc: "",
@@ -260,6 +262,8 @@ export function ProfilePage() {
                 prevUser.phone !== user.phone ||
                 prevUser.login !== user.login ||
                 prevUser.currency !== user.currency ||
+                (user as any)?.country !== (prevUser as any)?.country ||
+                (user as any)?.kyc_country !== (prevUser as any)?.kyc_country ||
                 JSON.stringify(prevUser.wallets) !== JSON.stringify(user.wallets);
             
             const newCurrency = (user.currency as SupportedCurrency) || "USD";
@@ -269,6 +273,7 @@ export function ProfilePage() {
                 // Обновляем только другие поля, но не валюту, если она не изменилась в user
                 if (userChanged && (!prevUser || prevUser.currency === newCurrency)) {
                     const wallets = typeof user.wallets === 'string' ? JSON.parse(user.wallets) : user.wallets;
+                    const userCountry = (user as any)?.country || (user as any)?.kyc_country || "";
                     setEditData(prev => ({
                         ...prev,
                         firstname: user.firstname || "",
@@ -276,6 +281,7 @@ export function ProfilePage() {
                         email: user.email || "",
                         phone: user.phone || "",
                         login: user.login || "",
+                        country: userCountry,
                         wallets: wallets || { usdt: "", btc: "", ltc: "", eth: "" }
                     }));
                 }
@@ -289,6 +295,7 @@ export function ProfilePage() {
                 if (lastCurrencyUpdateRef.current === newCurrency && editData.currency === newCurrency) {
                     // Обновляем только другие поля, но не валюту
                     const wallets = typeof user.wallets === 'string' ? JSON.parse(user.wallets) : user.wallets;
+                    const userCountry = (user as any)?.country || (user as any)?.kyc_country || "";
                     setEditData(prev => ({
                         ...prev,
                         firstname: user.firstname || "",
@@ -296,6 +303,7 @@ export function ProfilePage() {
                         email: user.email || "",
                         phone: user.phone || "",
                         login: user.login || "",
+                        country: userCountry,
                         wallets: wallets || { usdt: "", btc: "", ltc: "", eth: "" }
                     }));
                     prevUserRef.current = user;
@@ -306,6 +314,7 @@ export function ProfilePage() {
             if (userChanged) {
                 const wallets = typeof user.wallets === 'string' ? JSON.parse(user.wallets) : user.wallets;
                 const oldCurrency = editData.currency;
+                const userCountry = (user as any)?.country || (user as any)?.kyc_country || "";
                 
                 setEditData({
                     firstname: user.firstname || "",
@@ -314,6 +323,7 @@ export function ProfilePage() {
                     phone: user.phone || "",
                     login: user.login || "",
                     currency: newCurrency,
+                    country: userCountry,
                     wallets: wallets || { usdt: "", btc: "", ltc: "", eth: "" }
                 });
                 
@@ -389,14 +399,14 @@ export function ProfilePage() {
 
         const maxSize = 5 * 1024 * 1024;
         if (file.size > maxSize) {
-            setAvatarError(t('profile.avatarTooLarge', { defaultValue: 'Максимальный размер 5 МБ' }));
+            setAvatarError(t('profile.avatarTooLarge'));
             event.target.value = '';
             return;
         }
 
         const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
         if (!allowedTypes.includes(file.type)) {
-            setAvatarError(t('profile.avatarInvalidType', { defaultValue: 'Допустимы PNG, JPG, WEBP или GIF' }));
+            setAvatarError(t('profile.avatarInvalidType'));
             event.target.value = '';
             return;
         }
@@ -412,10 +422,10 @@ export function ProfilePage() {
             const errorMessage = error instanceof Error ? error.message || '' : '';
             const normalized = errorMessage.toLowerCase();
 
-            if (normalized.includes('формат') || normalized.includes('format')) {
-                setAvatarError(t('profile.avatarInvalidType', { defaultValue: 'Допустимы PNG, JPG, WEBP или GIF' }));
-            } else if (normalized.includes('5mb') || normalized.includes('5 мб')) {
-                setAvatarError(t('profile.avatarTooLarge', { defaultValue: 'Максимальный размер 5 МБ' }));
+            if (normalized.includes('format') || normalized.includes('формат') || normalized.includes('type') || normalized.includes('тип')) {
+                setAvatarError(t('profile.avatarInvalidType'));
+            } else if (normalized.includes('5mb') || normalized.includes('5 мб') || normalized.includes('size') || normalized.includes('размер')) {
+                setAvatarError(t('profile.avatarTooLarge'));
             } else {
                 setAvatarError(errorMessage || t('profile.updateError'));
             }
@@ -431,7 +441,7 @@ export function ProfilePage() {
         if (!user?.email) {
             setNotification({
                 type: 'error',
-                message: t('profile.emailAddHint', { defaultValue: 'Сначала укажите email в профиле' })
+                message: t('profile.emailAddHint')
             });
             return;
         }
@@ -441,17 +451,18 @@ export function ProfilePage() {
             const response = await authApi.requestEmailVerification();
             setNotification({
                 type: 'success',
-                message: response?.message || t('profile.verificationEmailSent', { defaultValue: 'Письмо с подтверждением отправлено' })
+                message: response?.message || t('profile.verificationEmailSent')
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : '';
-            let translated = message || t('profile.verificationEmailError', { defaultValue: 'Не удалось отправить письмо для подтверждения' });
+            let translated = message || t('profile.verificationEmailError');
 
-            if (message.includes('указан')) {
-                translated = t('profile.emailAddHint', { defaultValue: 'Сначала укажите email в профиле' });
+            const lowerMessage = message.toLowerCase();
+            if (lowerMessage.includes('указан') || lowerMessage.includes('specified') || lowerMessage.includes('add') || lowerMessage.includes('добав')) {
+                translated = t('profile.emailAddHint');
             }
-            if (message.includes('уже подтвержден')) {
-                translated = t('profile.emailAlreadyVerified', { defaultValue: 'Email уже подтвержден' });
+            if (lowerMessage.includes('уже подтвержден') || lowerMessage.includes('already verified') || lowerMessage.includes('already confirmed')) {
+                translated = t('profile.emailAlreadyVerified');
             }
 
             setNotification({
@@ -467,7 +478,7 @@ export function ProfilePage() {
         if (!passwordRecoveryEmail) {
             setNotification({
                 type: 'error',
-                message: t('profile.enterEmail', { defaultValue: 'Введите email адрес' })
+                message: t('profile.enterEmail')
             });
             return;
         }
@@ -477,13 +488,13 @@ export function ProfilePage() {
             await authApi.requestPasswordReset(passwordRecoveryEmail);
             setNotification({
                 type: 'success',
-                message: t('profile.passwordRecoverySent', { defaultValue: 'Письмо с инструкциями по восстановлению пароля отправлено на указанный email' })
+                message: t('profile.passwordRecoverySent')
             });
             setPasswordRecoveryEmail('');
         } catch (error: any) {
             setNotification({
                 type: 'error',
-                message: error?.message || t('profile.passwordRecoveryError', { defaultValue: 'Не удалось отправить письмо для восстановления пароля' })
+                message: error?.message || t('profile.passwordRecoveryError')
             });
         } finally {
             setPasswordRecoveryLoading(false);
@@ -494,22 +505,22 @@ export function ProfilePage() {
         setPasswordErrors({});
 
         if (!passwordChangeData.oldPassword) {
-            setPasswordErrors({ oldPassword: t('profile.enterOldPassword', { defaultValue: 'Введите старый пароль' }) });
+            setPasswordErrors({ oldPassword: t('profile.enterOldPassword') });
             return;
         }
 
         if (!passwordChangeData.newPassword) {
-            setPasswordErrors({ newPassword: t('profile.enterNewPassword', { defaultValue: 'Введите новый пароль' }) });
+            setPasswordErrors({ newPassword: t('profile.enterNewPassword') });
             return;
         }
 
         if (passwordChangeData.newPassword.length < 6) {
-            setPasswordErrors({ newPassword: t('profile.passwordTooShort', { defaultValue: 'Пароль должен быть не менее 6 символов' }) });
+            setPasswordErrors({ newPassword: t('profile.passwordTooShort') });
             return;
         }
 
         if (passwordChangeData.newPassword !== passwordChangeData.confirmPassword) {
-            setPasswordErrors({ confirmPassword: t('profile.passwordsDoNotMatch', { defaultValue: 'Пароли не совпадают' }) });
+            setPasswordErrors({ confirmPassword: t('profile.passwordsDoNotMatch') });
             return;
         }
 
@@ -519,7 +530,7 @@ export function ProfilePage() {
             await new Promise(resolve => setTimeout(resolve, 1500));
             setNotification({
                 type: 'success',
-                message: t('profile.passwordChanged', { defaultValue: 'Пароль успешно изменён' })
+                message: t('profile.passwordChanged')
             });
             setPasswordChangeData({
                 oldPassword: '',
@@ -528,12 +539,13 @@ export function ProfilePage() {
             });
         } catch (error) {
             const message = error instanceof Error ? error.message : '';
-            if (message.includes('неверный') || message.includes('invalid')) {
-                setPasswordErrors({ oldPassword: t('profile.invalidOldPassword', { defaultValue: 'Неверный старый пароль' }) });
+            const lowerMessage = message.toLowerCase();
+            if (lowerMessage.includes('неверный') || lowerMessage.includes('invalid') || lowerMessage.includes('incorrect') || lowerMessage.includes('wrong')) {
+                setPasswordErrors({ oldPassword: t('profile.invalidOldPassword') });
             } else {
                 setNotification({
                     type: 'error',
-                    message: t('profile.passwordChangeError', { defaultValue: 'Не удалось изменить пароль' })
+                    message: t('profile.passwordChangeError')
                 });
             }
         } finally {
@@ -572,6 +584,13 @@ export function ProfilePage() {
                 return {
                     ...prev,
                     [fieldKey]: (user as any)?.[fieldKey] || "USD"
+                };
+            }
+            if (fieldKey === 'country') {
+                const userCountry = (user as any)?.country || (user as any)?.kyc_country || "";
+                return {
+                    ...prev,
+                    [fieldKey]: userCountry
                 };
             }
             return {
@@ -635,7 +654,7 @@ export function ProfilePage() {
             };
         }
 
-        if (['firstname', 'lastname', 'phone', 'login', 'currency'].includes(fieldKey)) {
+        if (['firstname', 'lastname', 'phone', 'login', 'currency', 'country'].includes(fieldKey)) {
             // Используем переданное значение или текущее из editData
             const fieldValue = value !== undefined ? value : (editData as any)[fieldKey];
             return {
@@ -704,15 +723,16 @@ export function ProfilePage() {
                     const errorMessage = typeof e === 'string' ? e : e?.message || '';
                     const normalized = errorMessage.toLowerCase();
 
-                    if (typeof e === 'string' && e.includes('Email уже занят')) {
+                    const lowerError = typeof e === 'string' ? e.toLowerCase() : '';
+                    if (typeof e === 'string' && (e.includes('Email уже занят') || lowerError.includes('email already taken') || lowerError.includes('email занят'))) {
                         setNotification({ type: 'error', message: t('profile.emailTaken') });
-                    } else if (normalized.includes('phone') || errorMessage.includes('телефон')) {
+                    } else if (normalized.includes('phone') || errorMessage.includes('телефон') || errorMessage.includes('phone')) {
                         errorsMap.phone = errorMessage;
-                    } else if (normalized.includes('login') || errorMessage.includes('логин')) {
+                    } else if (normalized.includes('login') || errorMessage.includes('логин') || errorMessage.includes('username')) {
                         errorsMap.login = errorMessage;
-                    } else if (normalized.includes('first') || errorMessage.includes('имя')) {
+                    } else if (normalized.includes('first') || errorMessage.includes('имя') || errorMessage.includes('firstname') || errorMessage.includes('first name')) {
                         errorsMap.firstname = errorMessage;
-                    } else if (normalized.includes('last') || errorMessage.includes('фам')) {
+                    } else if (normalized.includes('last') || errorMessage.includes('фам') || errorMessage.includes('lastname') || errorMessage.includes('last name')) {
                         errorsMap.lastname = errorMessage;
                     } else if (normalized.includes('wallet') || normalized.includes('address')) {
                         const coin = fieldKey.split('.')[1];
@@ -748,6 +768,13 @@ export function ProfilePage() {
             const currency = (user as any)?.currency || 'USD';
             const currencyInfo = getCurrencyInfo(currency);
             return `${currencyInfo.symbol} ${currencyInfo.name} (${currencyInfo.code})`;
+        }
+        if (fieldKey === 'country') {
+            const userCountry = (user as any)?.country || (user as any)?.kyc_country || "";
+            if (!userCountry) return t('profile.notSet');
+            // Если это код страны (2 символа), нужно найти название
+            // Пока просто возвращаем код, название будет отображаться в CountryField
+            return userCountry;
         }
         return (user as any)?.[fieldKey] || t('profile.notSet');
     };
@@ -998,12 +1025,12 @@ export function ProfilePage() {
             }
             setNotification({
                 type: 'success',
-                message: t('profile.islamicHalalUpdated', { defaultValue: 'Настройка Islamic halal account обновлена' })
+                message: t('profile.islamicHalalUpdated')
             });
         } catch (error) {
             setNotification({
                 type: 'error',
-                message: t('profile.islamicHalalUpdateError', { defaultValue: 'Не удалось обновить настройку' })
+                message: t('profile.islamicHalalUpdateError')
             });
         } finally {
             setIslamicHalalLoading(false);
@@ -1014,7 +1041,7 @@ export function ProfilePage() {
         if (deleteAccountConfirm !== 'DELETE') {
             setNotification({
                 type: 'error',
-                message: t('profile.deleteAccountInvalidConfirm', { defaultValue: 'Для удаления аккаунта введите "DELETE"' })
+                message: t('profile.deleteAccountInvalidConfirm')
             });
             return;
         }
@@ -1033,7 +1060,7 @@ export function ProfilePage() {
             // Показываем уведомление об успешном удалении
             setNotification({
                 type: 'success',
-                message: t('profile.deleteAccountSuccess', { defaultValue: 'Аккаунт успешно удалён' })
+                message: t('profile.deleteAccountSuccess')
             });
             
             // Редирект на лендинг
@@ -1042,7 +1069,7 @@ export function ProfilePage() {
             }, 500);
         } catch (error) {
             const message = error instanceof Error ? error.message : '';
-            const errorMessage = message || t('profile.deleteAccountError', { defaultValue: 'Не удалось удалить аккаунт' });
+            const errorMessage = message || t('profile.deleteAccountError');
             
             // Если получили ошибку ACCOUNT_DELETED_OR_ERROR, считаем что аккаунт удален
             // (возможно, произошла ошибка при удалении связанных записей, но пользователь уже удален)
@@ -1057,7 +1084,7 @@ export function ProfilePage() {
                 // Показываем уведомление об успешном удалении
                 setNotification({
                     type: 'success',
-                    message: t('profile.deleteAccountSuccess', { defaultValue: 'Аккаунт успешно удалён' })
+                    message: t('profile.deleteAccountSuccess')
                 });
                 
                 // Редирект на лендинг
@@ -1165,7 +1192,7 @@ export function ProfilePage() {
                                                     />
                                                     {avatarError && <span className="avatar-error-message">{avatarError}</span>}
                                                     <span className="avatar-hint-text">
-                                                        {t('profile.avatarHint', { defaultValue: 'PNG, JPG, WEBP или GIF до 5 МБ' })}
+                                                        {t('profile.avatarHint')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1188,12 +1215,12 @@ export function ProfilePage() {
                                                         {user?.email ? (
                                                             user.email_verified ? (
                                                                 <span className="email-status-badge email-status-badge--verified">
-                                                                    {t('profile.emailVerified', { defaultValue: 'Подтверждён' })}
+                                                                    {t('profile.emailVerified')}
                                                                 </span>
                                                             ) : (
                                                                 <div className="email-actions">
                                                                     <span className="email-status-badge email-status-badge--pending">
-                                                                        {t('profile.emailNotVerified', { defaultValue: 'Не подтверждён' })}
+                                                                        {t('profile.emailNotVerified')}
                                                                     </span>
                                                                     <button
                                                                         type="button"
@@ -1203,20 +1230,20 @@ export function ProfilePage() {
                                                                     >
                                                                         {emailVerificationLoading
                                                                             ? t('common.processing')
-                                                                            : t('profile.verifyEmailAction', { defaultValue: 'Отправить письмо' })}
+                                                                            : t('profile.verifyEmailAction')}
                                                                     </button>
                                                                 </div>
                                                             )
                                                         ) : (
                                                             <span className="email-status-badge email-status-badge--empty">
-                                                                {t('profile.emailAddHint', { defaultValue: 'Добавьте email, чтобы подтвердить его' })}
+                                                                {t('profile.emailAddHint')}
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
                                                 <div className="profile-field">
-                                                    <span className="profile-field-label">{t('profile.ipAddress', { defaultValue: 'IP адрес' })}</span>
+                                                    <span className="profile-field-label">{t('profile.ipAddress')}</span>
                                                     <span className="profile-field-value">
                                                         {user?.ip_address || currentIpAddress || t('profile.notSet')}
                                                     </span>
@@ -1243,40 +1270,33 @@ export function ProfilePage() {
                                                 {renderCurrencyField()}
 
                                                 <div className="profile-field profile-field--verification">
-                                                    <span className="profile-field-label">{t('profile.verification', { defaultValue: 'Верификация' })}</span>
+                                                    <span className="profile-field-label">{t('profile.verification')}</span>
                                                     <div className="profile-field-value">
                                                         {user?.kyc_verified ? (
                                                             <div className="verification-status">
                                                                 <span className="verification-status-badge verification-status-badge--verified">
-                                                                    {t('profile.verified', { defaultValue: 'Верифицирован' })}
+                                                                    {t('profile.verified')}
                                                                 </span>
                                                             </div>
                                                         ) : user?.kyc_submitted_at ? (
                                                             <div className="verification-status">
                                                                 <span className="verification-status-badge verification-status-badge--pending">
-                                                                    {t('profile.pendingVerification', { defaultValue: 'На проверке' })}
+                                                                    {t('profile.pendingVerification')}
                                                                 </span>
                                                             </div>
                                                         ) : (
                                                             <div className="verification-status">
                                                                 <span className="verification-status-badge verification-status-badge--not-verified">
-                                                                    {t('profile.notVerified', { defaultValue: 'Не верифицирован' })}
+                                                                    {t('profile.notVerified')}
                                                                 </span>
                                                             </div>
                                                         )}
-                                                        <button
-                                                            type="button"
-                                                            className="verification-button"
-                                                            onClick={() => handleTabChange('kyc')}
-                                                        >
-                                                            {t('profile.goToVerification', { defaultValue: 'Перейти к верификации' })}
-                                                        </button>
                                                     </div>
                                                 </div>
 
                                                 {isMobile && (
                                                     <div className="profile-field">
-                                                        <span className="profile-field-label">{t('profile.language', { defaultValue: 'Язык' })}</span>
+                                                        <span className="profile-field-label">{t('profile.language')}</span>
                                                         <div className="profile-field-value">
                                                             <LanguageDropdown variant="trading" />
                                                         </div>
@@ -1312,8 +1332,8 @@ export function ProfilePage() {
                                                             </label>
                                                             <span className="toggle-text">
                                                                 {islamicHalalEnabled 
-                                                                    ? t('profile.islamicHalalEnabled', { defaultValue: 'Включено' })
-                                                                    : t('profile.islamicHalalDisabled', { defaultValue: 'Выключено' })
+                                                                    ? t('profile.islamicHalalEnabled')
+                                                                    : t('profile.islamicHalalDisabled')
                                                                 }
                                                             </span>
                                                             {islamicHalalLoading && (
@@ -1331,9 +1351,28 @@ export function ProfilePage() {
                                         </div>
                                     </div>
 
+                                    {/* Верификация KYC */}
+                                    {!user?.kyc_verified && (
+                                        <div className="profile-verification-section">
+                                            <h2 className="profile-section-title">{t('profile.kycVerification')}</h2>
+                                            <div className="verification-warning">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M12 9v4M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <p>{t('profile.verificationWarning')}</p>
+                                            </div>
+                                            <KYCVerificationForm
+                                                user={user}
+                                                onSuccess={() => {
+                                                    dispatch(fetchProfile());
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
                                     {/* Смена пароля */}
                                     <div className="profile-password-section">
-                                            <h2 className="profile-section-title">{t('profile.changePassword', { defaultValue: 'Смена пароля' })}</h2>
+                                            <h2 className="profile-section-title">{t('profile.changePassword')}</h2>
                                             <form 
                                                 className="password-form"
                                                 onSubmit={(e) => {
@@ -1352,12 +1391,12 @@ export function ProfilePage() {
                                                     aria-hidden="true"
                                                 />
                                                 <div className="form-field">
-                                                    <label className="form-label">{t('profile.oldPassword', { defaultValue: 'Старый пароль' })}</label>
+                                                    <label className="form-label">{t('profile.oldPassword')}</label>
                                                     <input
                                                         type="password"
                                                         value={passwordChangeData.oldPassword}
                                                         onChange={(e) => setPasswordChangeData(prev => ({ ...prev, oldPassword: e.target.value }))}
-                                                        placeholder={t('profile.enterOldPassword', { defaultValue: 'Введите старый пароль' })}
+                                                        placeholder={t('profile.enterOldPassword')}
                                                         className="form-input"
                                                         autoComplete="current-password"
                                                     />
@@ -1366,12 +1405,12 @@ export function ProfilePage() {
                                                     )}
                                                 </div>
                                                 <div className="form-field">
-                                                    <label className="form-label">{t('profile.newPassword', { defaultValue: 'Новый пароль' })}</label>
+                                                    <label className="form-label">{t('profile.newPassword')}</label>
                                                     <input
                                                         type="password"
                                                         value={passwordChangeData.newPassword}
                                                         onChange={(e) => setPasswordChangeData(prev => ({ ...prev, newPassword: e.target.value }))}
-                                                        placeholder={t('profile.enterNewPassword', { defaultValue: 'Введите новый пароль' })}
+                                                        placeholder={t('profile.enterNewPassword')}
                                                         className="form-input"
                                                         autoComplete="new-password"
                                                     />
@@ -1380,12 +1419,12 @@ export function ProfilePage() {
                                                     )}
                                                 </div>
                                                 <div className="form-field">
-                                                    <label className="form-label">{t('profile.confirmPassword', { defaultValue: 'Подтвердите пароль' })}</label>
+                                                    <label className="form-label">{t('profile.confirmPassword')}</label>
                                                     <input
                                                         type="password"
                                                         value={passwordChangeData.confirmPassword}
                                                         onChange={(e) => setPasswordChangeData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                                                        placeholder={t('profile.confirmPassword', { defaultValue: 'Подтвердите новый пароль' })}
+                                                        placeholder={t('profile.confirmPassword')}
                                                         className="form-input"
                                                         autoComplete="new-password"
                                                     />
@@ -1400,14 +1439,14 @@ export function ProfilePage() {
                                                 >
                                                     {passwordChangeLoading
                                                         ? t('common.processing')
-                                                        : t('profile.changePasswordBtn', { defaultValue: 'Изменить пароль' })}
+                                                        : t('profile.changePasswordBtn')}
                                                 </button>
                                             </form>
                                     </div>
 
                                     {/* Удаление аккаунта - внизу */}
                                     <div className="profile-delete-section">
-                                            <h2 className="profile-section-title">{t('profile.deleteAccount', { defaultValue: 'Удаление аккаунта' })}</h2>
+                                            <h2 className="profile-section-title">{t('profile.deleteAccount')}</h2>
                                             <div className="delete-account-content">
                                                 {!showDeleteConfirm ? (
                                                     <button
@@ -1415,12 +1454,12 @@ export function ProfilePage() {
                                                         className="delete-account-button"
                                                         onClick={() => setShowDeleteConfirm(true)}
                                                     >
-                                                        {t('profile.deleteAccountButton', { defaultValue: 'Удалить аккаунт' })}
+                                                        {t('profile.deleteAccountButton')}
                                                     </button>
                                                 ) : (
                                                     <div className="delete-confirm-wrapper">
                                                         <div className="form-field">
-                                                            <label className="form-label">{t('profile.deleteAccountConfirmLabel', { defaultValue: 'Введите "DELETE" для подтверждения' })}</label>
+                                                            <label className="form-label">{t('profile.deleteAccountConfirmLabel')}</label>
                                                             <input
                                                                 type="text"
                                                                 value={deleteAccountConfirm}
@@ -1438,7 +1477,7 @@ export function ProfilePage() {
                                                             >
                                                                 {deleteAccountLoading
                                                                     ? t('common.processing')
-                                                                    : t('profile.deleteAccountConfirmButton', { defaultValue: 'Подтвердить удаление' })}
+                                                                    : t('profile.deleteAccountConfirmButton')}
                                                             </button>
                                                             <button
                                                                 type="button"
@@ -1449,7 +1488,7 @@ export function ProfilePage() {
                                                                 }}
                                                                 disabled={deleteAccountLoading}
                                                             >
-                                                                {t('common.cancel', { defaultValue: 'Отмена' })}
+                                                                {t('common.cancel')}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1499,10 +1538,10 @@ export function ProfilePage() {
                                 <div className="referral-program-card">
                                     <div className="referral-hero">
                                         <h2 className="referral-title">
-                                            {t('profile.referralProgramTitle', { defaultValue: 'Реферальная программа' })}
+                                            {t('profile.referralProgramTitle')}
                                         </h2>
                                         <p className="referral-slogan">
-                                            {t('profile.referralSlogan', { defaultValue: 'Привлекай трейдеров и зарабатывай % от их торговли' })}
+                                            {t('profile.referralSlogan')}
                                         </p>
                                     </div>
 
@@ -1543,7 +1582,7 @@ export function ProfilePage() {
 
                                     <div className="referral-benefits">
                                         <h3 className="benefits-title">
-                                            {t('profile.referralBenefitsTitle', { defaultValue: 'Условия программы' })}
+                                            {t('profile.referralBenefitsTitle')}
                                         </h3>
                                         <div className="benefits-list">
                                             <div className="benefit-item">
@@ -1556,7 +1595,7 @@ export function ProfilePage() {
                                                 <div className="benefit-content">
                                                     <div className="benefit-percent">20%</div>
                                                     <div className="benefit-text">
-                                                        {t('profile.referralFirstDeposit', { defaultValue: 'от первого депозита' })}
+                                                        {t('profile.referralFirstDeposit')}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1570,7 +1609,7 @@ export function ProfilePage() {
                                                 <div className="benefit-content">
                                                     <div className="benefit-percent">2%</div>
                                                     <div className="benefit-text">
-                                                        {t('profile.referralTradingVolume', { defaultValue: 'от торгового оборота' })}
+                                                        {t('profile.referralTradingVolume')}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1579,7 +1618,7 @@ export function ProfilePage() {
 
                                     <div className="referral-link-section">
                                         <h3 className="link-section-title">
-                                            {t('profile.yourReferralLink', { defaultValue: 'Ваша реферальная ссылка' })}
+                                            {t('profile.yourReferralLink')}
                                         </h3>
                                         <div className="referral-link-container">
                                             <input
@@ -1598,20 +1637,20 @@ export function ProfilePage() {
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                                             <path d="M5 13L9 17L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>
-                                                        {t('profile.copied', { defaultValue: 'Скопировано' })}
+                                                        {t('profile.copied')}
                                                     </>
                                                 ) : (
                                                     <>
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                                             <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor" />
                                                         </svg>
-                                                        {t('profile.copyLink', { defaultValue: 'Копировать' })}
+                                                        {t('profile.copyLink')}
                                                     </>
                                                 )}
                                             </button>
                                         </div>
                                         <p className="referral-link-hint">
-                                            {t('profile.referralLinkHint', { defaultValue: 'Поделитесь этой ссылкой с трейдерами и начните зарабатывать' })}
+                                            {t('profile.referralLinkHint')}
                                         </p>
                                     </div>
                                 </div>

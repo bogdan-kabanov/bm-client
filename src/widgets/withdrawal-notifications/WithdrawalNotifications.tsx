@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import './WithdrawalNotifications.css';
-import usdt from "../../assets/usdt.png";
+import usdt from "@src/assets/currency/usdt.png";
 
 interface WithdrawalNotification {
   id: number;

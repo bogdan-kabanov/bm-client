@@ -10,9 +10,7 @@
 .new-deposit-content--form {
     display: flex;
     flex-direction: column;
-    height: 100%;
-    max-height: 100%;
-    overflow: hidden;
+    overflow: visible;
     padding: 20px;
     margin: 0 auto;
     box-sizing: border-box;
@@ -48,7 +46,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin: 0 0 16px 0;
+    margin: 0 0 24px 0;
     padding: 0;
     flex-shrink: 0;
 }
@@ -170,7 +168,7 @@
 /* Выбор страны */
 .new-deposit-content .country-selector {
     margin-bottom: 32px;
-    max-width: 300px;
+    width: 100%;
 }
 
 .new-deposit-content .country-selector__label {
@@ -229,13 +227,7 @@
     margin: 0;
 }
 
-/* Сетка методов оплаты */
-.deposit-methods-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-}
-
+/* Сетка методов оплаты - теперь используется система сетки из @src/shared/ui/grid */
 .deposit-method-card {
     display: flex;
     flex-direction: column;
@@ -250,6 +242,8 @@
     transition: all 0.2s ease;
     text-align: center;
     min-height: 140px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .deposit-method-card:hover {
@@ -299,32 +293,31 @@
     font-weight: 600;
 }
 
-/* Информация о безопасности */
-.security-info {
-    display: flex;
-    gap: 32px;
-    margin-top: 60px;
-    padding-top: 40px;
-    border-top: 1px solid #e5e5e5;
-    flex-wrap: wrap;
-}
-
-/* Стили для security-info внутри формы депозита */
-.deposit-form-right .security-info {
-    margin-top: 0;
-    padding-top: 16px;
-    border-top: 1px solid #e5e5e5;
-    gap: 16px;
-    flex-direction: column;
-    flex-shrink: 0;
-}
-
-.security-info__item {
+/* Информация о безопасности - теперь используется система сетки */
+.new-deposit-content .security-info__item {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    flex: 1;
-    min-width: 200px;
+    width: 100%;
+}
+
+/* Border-top для Row с security-info - используем класс для совместимости */
+.new-deposit-content .security-info-row {
+    margin-top: 60px;
+    padding-bottom: 40px;
+    padding-top: 40px;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* Стили для security-info внутри формы депозита */
+.page-content-grid-right .security-info__item {
+    width: 100%;
+}
+
+.page-content-grid-right .security-info-row {
+    margin-top: 0;
+    padding-top: 16px;
+    border-top: 1px solid #e5e5e5;
 }
 
 .security-info__icon {
@@ -409,43 +402,7 @@
     background: #f0f7ff;
 }
 
-.deposit-form-container {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    gap: 24px;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-    align-content: start;
-}
-
-.deposit-form-left {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 8px;
-}
-
-/* Стилизация скроллбара только для левой колонки */
-.deposit-form-left::-webkit-scrollbar {
-    width: 6px;
-}
-
-.deposit-form-left::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.deposit-form-left::-webkit-scrollbar-thumb {
-    background: #d0d0d0;
-    border-radius: 3px;
-}
-
-.deposit-form-left::-webkit-scrollbar-thumb:hover {
-    background: #a0a0a0;
-}
+/* Using Bootstrap-like grid system from @src/shared/ui/grid */
 
 .deposit-amounts-grid {
     display: grid;
@@ -753,11 +710,19 @@
 /* Поле ввода промокода */
 .deposit-promocode-field {
     margin-bottom: 12px;
+    position: relative;
+}
+
+.deposit-promocode-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .deposit-promocode-input {
     width: 100%;
     padding: 12px 16px;
+    padding-right: 48px;
     border: 2px solid #e5e5e5;
     border-radius: 8px;
     font-size: 14px;
@@ -777,6 +742,134 @@
 .deposit-promocode-input::placeholder {
     text-transform: none;
     color: #999;
+}
+
+.deposit-promocode-select-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: color 0.2s ease;
+    z-index: 1;
+}
+
+.deposit-promocode-select-btn:hover {
+    color: #37a1ff;
+}
+
+.deposit-promocode-select-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.deposit-promocode-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.deposit-promocode-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.deposit-promocode-dropdown-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    color: #666;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.deposit-promocode-dropdown-close:hover {
+    color: #dc3545;
+}
+
+.deposit-promocode-dropdown-list {
+    padding: 8px;
+}
+
+.deposit-promocode-dropdown-item {
+    width: 100%;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    margin-bottom: 8px;
+}
+
+.deposit-promocode-dropdown-item:last-child {
+    margin-bottom: 0;
+}
+
+.deposit-promocode-dropdown-item:hover {
+    background: #f5f5f5;
+    border-color: #37a1ff;
+}
+
+.deposit-promocode-dropdown-item.active {
+    background: #e3f2fd;
+    border-color: #37a1ff;
+}
+
+.deposit-promocode-dropdown-item-code {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.deposit-promocode-dropdown-item-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.deposit-promocode-dropdown-item-status.valid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.deposit-promocode-dropdown-item-discount {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
 }
 
 .deposit-promocode-validating {
@@ -884,7 +977,7 @@
     border-radius: 4px;
     font-size: 13px;
     font-weight: 600;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Manrope', sans-serif;
     margin-bottom: 8px;
 }
 
@@ -943,59 +1036,8 @@
     font-weight: 500;
 }
 
-.deposit-account-status {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-top: 1px solid #e5e5e5;
-}
 
-.deposit-account-status span {
-    font-size: 14px;
-    color: #333;
-}
-
-.deposit-account-status__select {
-    padding: 8px 12px;
-    border: 1px solid #e5e5e5;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #333;
-    cursor: pointer;
-    outline: none;
-    background: #ffffff;
-}
-
-.deposit-form-right {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 8px;
-    align-content: start;
-}
-
-/* Стилизация скроллбара для правой колонки */
-.deposit-form-right::-webkit-scrollbar {
-    width: 6px;
-}
-
-.deposit-form-right::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.deposit-form-right::-webkit-scrollbar-thumb {
-    background: #d0d0d0;
-    border-radius: 3px;
-}
-
-.deposit-form-right::-webkit-scrollbar-thumb:hover {
-    background: #a0a0a0;
-}
-
+/* Specific styles for elements inside the right column */
 .deposit-details {
     padding: 20px;
     background: #ffffff;
@@ -1235,17 +1277,13 @@
         flex-direction: column;
         gap: 16px;
     }
-    .deposit-methods-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 12px;
-    }
 
     .security-info {
         flex-direction: column;
         gap: 20px;
     }
 
-    .deposit-form-container {
+    .page-content-grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
@@ -1254,10 +1292,6 @@
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .deposit-form-left,
-    .deposit-form-right {
-        gap: 16px;
-    }
 
     .deposit-custom-amount,
     .deposit-bonuses,
@@ -1998,7 +2032,7 @@
     background: #f5f5f5;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Manrope', sans-serif;
     font-size: 14px;
     word-break: break-all;
     cursor: pointer;
@@ -2036,7 +2070,7 @@
     font-size: 24px;
     font-weight: 700;
     color: #856404;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Manrope', sans-serif;
 }
 
 .crypto-payment-info__checks {

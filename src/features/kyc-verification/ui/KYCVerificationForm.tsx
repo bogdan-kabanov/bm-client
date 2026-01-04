@@ -23,6 +23,7 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
     const [error, setError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
     const [success, setSuccess] = useState(false);
+    const [forceShowForm, setForceShowForm] = useState(false);
     
     // Получаем имя и фамилию из профиля пользователя
     const getUserFirstName = () => {
@@ -48,9 +49,28 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
     const userFirstName = getUserFirstName() || parsedName.first;
     const userLastName = getUserLastName() || parsedName.last;
     
+    // Форматируем дату рождения для input type="date" (YYYY-MM-DD)
+    const formatBirthDate = (date: string | Date | null | undefined): string => {
+        if (!date) return '';
+        try {
+            const dateObj = typeof date === 'string' ? new Date(date) : date;
+            if (isNaN(dateObj.getTime())) return '';
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } catch {
+            return '';
+        }
+    };
+    
     const [formData, setFormData] = useState({
         first_name: userFirstName,
         last_name: userLastName,
+        birth_date: formatBirthDate(user?.kyc_birth_date),
+        street_address: user?.kyc_street_address || '',
+        city: user?.kyc_city || '',
+        postal_code: user?.kyc_postal_code || '',
         country: '', // Будет установлена в useEffect после загрузки стран
         id_document_type: (user?.kyc_id_document_type || 'passport') as 'passport' | 'drivers_license' | 'national_id' | 'residence_permit',
         id_document_number: user?.kyc_id_document_number || '',
@@ -148,6 +168,25 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
                 errors.last_name = t('kyc.lastNameError', { defaultValue: 'Фамилия обязательна и должна быть от 1 до 50 символов' });
             }
             
+            if (!formData.birth_date) {
+                errors.birth_date = t('kyc.birthDateError', { defaultValue: 'Укажите дату рождения' });
+            }
+            
+            const trimmedStreetAddress = formData.street_address.trim();
+            if (!trimmedStreetAddress || trimmedStreetAddress.length < 5 || trimmedStreetAddress.length > 200) {
+                errors.street_address = t('kyc.streetAddressError', { defaultValue: 'Адрес должен быть от 5 до 200 символов' });
+            }
+            
+            const trimmedCity = formData.city.trim();
+            if (!trimmedCity || trimmedCity.length < 1 || trimmedCity.length > 100) {
+                errors.city = t('kyc.cityError', { defaultValue: 'Город обязателен и должен быть от 1 до 100 символов' });
+            }
+            
+            const trimmedPostalCode = formData.postal_code.trim();
+            if (!trimmedPostalCode || trimmedPostalCode.length < 4 || trimmedPostalCode.length > 20) {
+                errors.postal_code = t('kyc.postalCodeError', { defaultValue: 'Почтовый индекс должен быть от 4 до 20 символов' });
+            }
+            
             if (!formData.country) {
                 errors.country = t('kyc.countryError', { defaultValue: 'Выберите страну' });
             }
@@ -158,10 +197,7 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
             
             const trimmedDocumentNumber = formData.id_document_number.trim();
             if (!trimmedDocumentNumber || trimmedDocumentNumber.length < 5 || trimmedDocumentNumber.length > 50) {
-                const errorMsg = t('kyc.documentNumberError');
-                errors.id_document_number = errorMsg && errorMsg !== 'kyc.documentNumberError' 
-                    ? errorMsg 
-                    : 'Номер документа должен быть от 5 до 50 символов';
+                errors.id_document_number = t('kyc.documentNumberError', { defaultValue: 'Номер документа должен быть от 5 до 50 символов' });
             }
         } else if (step === 3) {
             if (photos.length === 0) {
@@ -229,6 +265,10 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
             // Объединяем имя и фамилию в full_name для бэкенда
             const fullName = `${formData.first_name.trim()} ${formData.last_name.trim()}`.trim();
             formDataToSend.append('full_name', fullName);
+            formDataToSend.append('birth_date', formData.birth_date);
+            formDataToSend.append('street_address', formData.street_address.trim());
+            formDataToSend.append('city', formData.city.trim());
+            formDataToSend.append('postal_code', formData.postal_code.trim());
             
             // Получаем название страны из списка стран (бэкенд ожидает название, а не код)
             const selectedCountryObj = countries.find(c => c.code === formData.country);
@@ -259,11 +299,16 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
                         if (errorData.errors && Array.isArray(errorData.errors)) {
                             const errors: { [key: string]: string } = {};
                             errorData.errors.forEach((errMsg: string) => {
-                                if (errMsg.includes('Адрес') || errMsg.includes('адрес')) {
+                                const lowerMsg = errMsg.toLowerCase();
+                                if (lowerMsg.includes('address') || lowerMsg.includes('адрес') || lowerMsg.includes('street')) {
                                     errors.street_address = errMsg;
-                                } else if (errMsg.includes('Почтовый индекс') || errMsg.includes('почтовый')) {
+                                } else if (lowerMsg.includes('postal') || lowerMsg.includes('почтовый') || lowerMsg.includes('zip') || lowerMsg.includes('индекс')) {
                                     errors.postal_code = errMsg;
-                                } else if (errMsg.includes('Номер документа') || errMsg.includes('номер')) {
+                                } else if (lowerMsg.includes('birth') || lowerMsg.includes('рождени') || lowerMsg.includes('дата')) {
+                                    errors.birth_date = errMsg;
+                                } else if (lowerMsg.includes('city') || lowerMsg.includes('город')) {
+                                    errors.city = errMsg;
+                                } else if (lowerMsg.includes('document') || lowerMsg.includes('номер') || lowerMsg.includes('number')) {
                                     errors.id_document_number = errMsg;
                                 }
                             });
@@ -379,7 +424,7 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
     }
 
     // Если отправлено на проверку
-    if (user?.kyc_submitted_at && !user?.kyc_verified) {
+    if (user?.kyc_submitted_at && !user?.kyc_verified && !forceShowForm) {
         return (
             <div className="kyc-status-card pending">
                 <div className="kyc-status-content">
@@ -394,7 +439,13 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
                     <div className="kyc-rejection">
                         <p className="rejection-reason">{t('kyc.rejectionReason')}: {user.kyc_rejection_reason}</p>
                         <button 
-                            onClick={() => setSuccess(false)}
+                            onClick={() => {
+                                setForceShowForm(true);
+                                setSuccess(false);
+                                setCurrentStep(1);
+                                setError(null);
+                                setFieldErrors({});
+                            }}
                             className="retry-btn"
                         >
                             {t('kyc.retry')}
@@ -483,6 +534,69 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
                     </div>
 
                     <div className="form-group">
+                        <label>{t('kyc.birthDate', { defaultValue: 'Дата рождения' })} *</label>
+                        <input
+                            type="date"
+                            value={formData.birth_date}
+                            onChange={(e) => handleChange('birth_date', e.target.value)}
+                            required
+                            max={new Date().toISOString().split('T')[0]}
+                        />
+                        {fieldErrors.birth_date && (
+                            <span className="field-error">{fieldErrors.birth_date}</span>
+                        )}
+                    </div>
+
+                    <div className="form-group">
+                        <label>{t('kyc.streetAddress', { defaultValue: 'Адрес' })} *!</label>
+                        <input
+                            type="text"
+                            value={formData.street_address}
+                            onChange={(e) => handleChange('street_address', e.target.value)}
+                            required
+                            placeholder={t('kyc.streetAddressPlaceholder', { defaultValue: 'Ваш адрес проживания' })}
+                            minLength={5}
+                            maxLength={200}
+                        />
+                        {fieldErrors.street_address && (
+                            <span className="field-error">{fieldErrors.street_address}</span>
+                        )}
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>{t('kyc.city', { defaultValue: 'Город' })} *</label>
+                            <input
+                                type="text"
+                                value={formData.city}
+                                onChange={(e) => handleChange('city', e.target.value)}
+                                required
+                                placeholder={t('kyc.cityPlaceholder', { defaultValue: 'Название города' })}
+                                maxLength={100}
+                            />
+                            {fieldErrors.city && (
+                                <span className="field-error">{fieldErrors.city}</span>
+                            )}
+                        </div>
+
+                        <div className="form-group">
+                            <label>{t('kyc.postalCode', { defaultValue: 'Почтовый индекс' })} *</label>
+                            <input
+                                type="text"
+                                value={formData.postal_code}
+                                onChange={(e) => handleChange('postal_code', e.target.value)}
+                                required
+                                placeholder={t('kyc.postalCodePlaceholder', { defaultValue: 'Почтовый индекс' })}
+                                minLength={4}
+                                maxLength={20}
+                            />
+                            {fieldErrors.postal_code && (
+                                <span className="field-error">{fieldErrors.postal_code}</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="form-group">
                         <label>{t('kyc.country')} *</label>
                         <CountrySelect
                             value={formData.country}
@@ -564,54 +678,54 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
                         {[0, 1, 2, 3].map((index) => {
                             const hasPhoto = index < photos.length && photoPreview[index];
                             return (
-                            <div key={index} className="kyc-photo-upload-item">
-                                {hasPhoto ? (
-                                    <div className="kyc-photo-preview">
-                                        <img src={photoPreview[index]} alt={`Preview ${index + 1}`} />
-                                        <button
-                                            type="button"
-                                            className="kyc-photo-remove"
-                                            onClick={() => handlePhotoRemove(index)}
-                                            aria-label={t('kyc.removePhoto', { defaultValue: 'Удалить фото' })}
-                                        >
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                                            </svg>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="kyc-photo-replace"
-                                            onClick={() => document.getElementById(`kyc-photo-input-${index}`)?.click()}
-                                        >
-                                            {t('kyc.replacePhoto', { defaultValue: 'Заменить' })}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <label className="kyc-photo-upload-label" htmlFor={`kyc-photo-input-${index}`}>
-                                        <div className="kyc-photo-upload-icon">
-                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                                <polyline points="17 8 12 3 7 8"></polyline>
-                                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                                            </svg>
+                                <div key={index} className="kyc-photo-upload-item">
+                                    {hasPhoto ? (
+                                        <div className="kyc-photo-preview">
+                                            <img src={photoPreview[index]} alt={`Preview ${index + 1}`} />
+                                            <button
+                                                type="button"
+                                                className="kyc-photo-remove"
+                                                onClick={() => handlePhotoRemove(index)}
+                                                aria-label={t('kyc.removePhoto', { defaultValue: 'Удалить фото' })}
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                </svg>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="kyc-photo-replace"
+                                                onClick={() => document.getElementById(`kyc-photo-input-${index}`)?.click()}
+                                            >
+                                                {t('kyc.replacePhoto', { defaultValue: 'Заменить' })}
+                                            </button>
                                         </div>
-                                        <span className="kyc-photo-upload-text">
-                                            {t('kyc.uploadPhoto', { defaultValue: 'Загрузить фото' })}
-                                        </span>
-                                        <span className="kyc-photo-upload-hint">
-                                            {t('kyc.photoHint', { defaultValue: 'JPG, PNG, WEBP до 10 МБ' })}
-                                        </span>
-                                    </label>
-                                )}
-                                <input
-                                    id={`kyc-photo-input-${index}`}
-                                    type="file"
-                                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                                    onChange={(e) => handlePhotoUpload(e, index)}
-                                    style={{ display: 'none' }}
-                                />
-                            </div>
+                                    ) : (
+                                        <label className="kyc-photo-upload-label" htmlFor={`kyc-photo-input-${index}`}>
+                                            <div className="kyc-photo-upload-icon">
+                                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                                </svg>
+                                            </div>
+                                            <span className="kyc-photo-upload-text">
+                                                {t('kyc.uploadPhoto', { defaultValue: 'Загрузить фото' })}
+                                            </span>
+                                            <span className="kyc-photo-upload-hint">
+                                                {t('kyc.photoHint', { defaultValue: 'JPG, PNG, WEBP до 10 МБ' })}
+                                            </span>
+                                        </label>
+                                    )}
+                                    <input
+                                        id={`kyc-photo-input-${index}`}
+                                        type="file"
+                                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                                        onChange={(e) => handlePhotoUpload(e, index)}
+                                        style={{ display: 'none' }}
+                                    />
+                                </div>
                             );
                         })}
                     </div>
@@ -628,11 +742,6 @@ export function KYCVerificationForm({ user, onSuccess }: KYCVerificationFormProp
 
     return (
         <div className="kyc-verification-form">
-            <div className="kyc-header">
-                <h2>{t('kyc.title')}</h2>
-                <p>{t('kyc.description')}</p>
-            </div>
-
             {renderStepIndicator()}
 
             {error && (

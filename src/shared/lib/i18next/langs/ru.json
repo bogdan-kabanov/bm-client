@@ -115,7 +115,7 @@
     "enterNewPassword": "Введите новый пароль",
     "confirmPassword": "Подтвердите пароль",
     "changePasswordBtn": "Изменить пароль",
-    "passwordRecoverySent": "Письмо с паролем отправлено на указанный email",
+    "passwordRecoverySent": "Письмо с инструкциями по восстановлению пароля отправлено на указанный email",
     "passwordRecoveryError": "Не удалось отправить письмо для восстановления пароля",
     "passwordChanged": "Пароль успешно изменён",
     "passwordChangeError": "Не удалось изменить пароль",
@@ -145,7 +145,10 @@
     "deleteAccountConfirmButton": "Подтвердить удаление",
     "deleteAccountInvalidConfirm": "Для удаления аккаунта введите \"DELETE\"",
     "deleteAccountSuccess": "Аккаунт успешно удалён",
-    "deleteAccountError": "Не удалось удалить аккаунт"
+    "deleteAccountError": "Не удалось удалить аккаунт",
+    "kycVerification": "Верификация личности",
+    "verificationWarning": "Чтобы начать процедуру верификации, выберите страну, которая указана в вашем документе, удостоверяющем личность.",
+    "emailTaken": "Email уже занят"
   },
   "bots": {
     "title": "Trading Bots",
@@ -265,6 +268,12 @@
     "tradeAmountMustBeAtLeastOneDollar": "Сумма сделки должна быть не менее {{amount}}",
     "expirationTimeMustBeAtLeast30Seconds": "Время экспирации должно быть не менее 30 секунд",
     "errorCreatingTrade": "Ошибка при создании сделки",
+    "currencyInfoUnavailable": "Информация о валюте недоступна",
+    "currencyInfoError": "Не удалось получить информацию о валюте",
+    "currencyNotFound": "Валюта \"{{currency}}\" не найдена. Пожалуйста, выберите другую валюту.",
+    "invalidCurrencyId": "Неверный ID валюты. Пожалуйста, выберите другую валюту.",
+    "currencyInfoUnavailable": "Информация о валюте недоступна",
+    "tradeCreationError": "Ошибка создания ставки",
     "disableTimelineAttachment": "Отключить прикрепление к временной шкале",
     "enableTimelineAttachment": "Прикрепить к временной шкале",
     "indicators": {
@@ -329,11 +338,11 @@
       "search": "Искать",
       "clearSearch": "Очистить поиск",
       "name": "Имя",
-      "asset": "АКТИВ",
+      "asset": "Актив",
       "averagePrice": "Средняя цена",
-      "averagePrice24h": "СРЕДНЯЯ ЦЕНА (24ч)",
+      "averagePrice24h": "Средняя цена (24ч)",
       "profit1min": "Прибыль 1+ мин",
-      "profit30s": "ПРИБЫЛЬ 30с+",
+      "profit30s": "Прибыль 30с+",
       "addToFavorites": "Добавить в избранное",
       "removeFromFavorites": "Убрать из избранного",
       "currenciesNotFound": "Валютные пары не найдены",
@@ -428,8 +437,15 @@
       "tradeId": "ID сделки",
       "amount": "Сумма",
       "tradeEndTime": "Время окончания сделки",
-      "creationDate": "Дата создания"
-    }
+      "creationDate": "Дата создания",
+      "startAmount": "Цена входа",
+      "endAmount": "Цена выхода"
+    },
+    "deleteDrawing": "Удалить",
+    "deleteDrawings": "Удалить ({{count}})",
+    "priceLevel": "Уровень цены",
+    "reached": "достигнут",
+    "priceLevelLabel": "Уровень цены"
   },
   "withdrawal": {
     "title": "Вывод средств",
@@ -445,7 +461,7 @@
     "enterAddress": "Enter wallet address",
     "enterAddressPlaceholder": "Enter {currency} wallet address",
     "edit": "Edit",
-    "cancel": "Cancel",
+    "cancel": "Отмена",
     "savedInProfile": "Saved in profile",
     "withdrawButton": "Withdraw Funds",
     "withdrawalHistory": "История выводов",
@@ -511,7 +527,13 @@
   },
   "payments": {
     "depositTab": "Пополнение",
-    "withdrawTab": "Вывод"
+    "withdrawTab": "Вывод",
+    "paymentsHistory": "История платежей",
+    "noHistory": "Пока нет транзакций",
+    "noHistorySubtext": "Здесь будут отображаться все ваши депозиты и выводы",
+    "filterAll": "Все",
+    "filterAllStatuses": "Все статусы",
+    "noFilteredTransactions": "Нет транзакций, соответствующих выбранным фильтрам"
   },
   "deposit": {
     "copyAdress": "Скопировать адрес",
@@ -706,19 +728,47 @@
     "dataFromProfile": "Данные из вашего профиля",
     "goToProfile": "Перейти в профиль для заполнения данных",
     "minimumAmountIs": "Минимальная сумма равна: {{amount}}",
-    "minAmountRequired": "Минимальная сумма депозита: {{amount}}"
+    "minAmountRequired": "Минимальная сумма депозита: {{amount}}",
+    "promocodeValidationError": "Ошибка при проверке промокода",
+    "promocodeEnterAmountError": "Введите сумму депозита для проверки промокода"
+  },
+  "promocodes": {
+    "title": "Промокоды",
+    "description": "Добавляйте и управляйте промокодами. Проверяйте их, чтобы увидеть информацию о скидке.",
+    "addPromocode": "Добавить промокод",
+    "promocodeLabel": "Промокод",
+    "enterCode": "Введите промокод",
+    "testAmountLabel": "Тестовая сумма (USD)",
+    "validating": "Проверка...",
+    "validate": "Проверить",
+    "validMessage": "Промокод действителен!",
+    "invalidMessage": "Промокод недействителен",
+    "discount": "Скидка",
+    "finalAmount": "Итоговая сумма",
+    "myPromocodes": "Мои промокоды",
+    "noPromocodes": "Промокодов пока нет",
+    "noPromocodesDescription": "Добавьте промокод выше, чтобы начать",
+    "remove": "Удалить",
+    "statusValid": "Действителен",
+    "validatedAt": "Проверен",
+    "validationError": "Ошибка при проверке промокода",
+    "enterAmount": "Пожалуйста, введите действительную сумму",
+    "notificationTitle": "Промокод получен",
+    "notificationMessage": "Вам начислен промокод: {{promocode}}. Вы можете использовать его на странице оплаты во вкладке промокодов.",
+    "goToPromocodes": "Перейти на страницу промокодов"
   },
   "common": {
     "notAvailable": "N/A",
     "user": "User",
     "tryAgain": "Try Again",
-    "cancel": "Cancel",
+    "cancel": "Отмена",
     "saveChanges": "Save Changes",
     "retry": "Retry",
     "ok": "Ok",
     "close": "Close",
     "optional": "optional",
-    "search": "Search",
+    "search": "Поиск",
+    "back": "Назад",
     "language": "Язык",
     "sessionExpired": "Session expired. Please log in again.",
     "show": "Show",
@@ -842,11 +892,14 @@
     "noNotifications": "Нет уведомлений",
     "markAllRead": "Отметить все как прочитанные",
     "notificationNoReply": "На это уведомление нельзя ответить",
+    "hasActiveTicket": "У вас есть активный тикет",
     "welcomeMessage": "Здравствуйте! Чат поддержки доступен круглосуточно. Опишите ваш вопрос, и мы поможем вам в ближайшее время.",
     "selectFile": "Прикрепить фото",
     "selectedFiles": "Выбрано файлов",
     "removeFile": "Удалить",
-    "selectTicket": "Выберите тикет для просмотра сообщений"
+    "selectTicket": "Выберите тикет для просмотра сообщений",
+    "fileTooLarge": "Размер файла превышает 5MB. Пожалуйста, выберите файлы меньшего размера.",
+    "imageAttached": "[Изображение прикреплено]"
   },
   "menu": {
     "trading": "Торговля",
@@ -867,7 +920,7 @@
     "withdrawal": "Вывод",
     "withdrawalTitle": "Вывод",
     "copyTrading": "Копи-трейдинг",
-    "copyTradingShort": "Копи-трейд",
+    "copyTradingShort": "TOP",
     "copyTradingTitle": "Копи-трейдинг",
     "chat": "Чат",
     "chatTitle": "Чат поддержки",
@@ -899,8 +952,10 @@
     "subscriptionsTitle": "Мои подписки",
     "tabSubscriptions": "Подписки",
     "tabLeaderboard": "Топ партнёров",
+    "tabTraders": "Трейдеры",
+    "tabMyCard": "Мой Trader ID",
     "emptySubscriptions": "Подписки не найдены. Добавьте код трейдера, чтобы начать копирование.",
-    "codeLabel": "Код: ",
+    "codeLabel": "Trader ID: ",
     "disable": "Отключить",
     "enable": "Включить",
     "remove": "Удалить",
@@ -948,10 +1003,17 @@
     "activeFromTotal": "{active} активных из {total}",
     "addTradersToCopy": "Добавьте трейдеров для копирования",
     "tradesLabel": "Сделок: ",
-    "profitLabel": "Прибыль: ",
+    "profitLabel": "Прибыль",
     "on": "Вкл",
     "off": "Выкл",
     "mySubscriptions": "Мои подписки",
+    "unavailableOnDemo": "Недоступно на демо-счете",
+    "switchToReal": "Переключиться на реальный",
+    "zeroBalance": "Для использования копи-трейдинга необходимо пополнить баланс",
+    "topUpBalance": "Пополнить баланс",
+    "myCardDescription": "Это вы. Другие могут подписываться на вас и копировать ваши сделки. Вы будете получать комиссию 2% от каждой сделки ваших подписчиков",
+    "howItWorks": "Как это работает?",
+    "howItWorksDescription": "Делитесь своим кодом трейдера с другими пользователями. Когда они подписываются на вас, система автоматически копирует ваши сделки на их счета. За каждую скопированную сделку вы получаете комиссию 2% от суммы сделки. Чем больше у вас подписчиков, тем больше вы зарабатываете.",
     "selectSubscription": "Выберите подписку",
     "selectSubscriptionToView": "Выберите подписку для просмотра деталей",
     "lastCopied": "Последнее копирование",
@@ -1007,6 +1069,8 @@
     "logoutConfirm": "Вы уверены, что хотите выйти?",
     "logoutConfirmYes": "Выйти",
     "logoutConfirmCancel": "Отмена",
+    "googleAuthError": "Ошибка авторизации через Google",
+    "missingAuthCode": "Отсутствует код авторизации",
     "errors": {
       "invalidCredentials": "Invalid email or password. Please check your credentials and try again.",
       "emailAlreadyExists": "This email address is already registered. Please use a different email or try logging in.",
@@ -1512,7 +1576,40 @@
     "transactionCreationError": "Ошибка при создании транзакции",
     "paymentMethodUnavailable": "Способ оплаты временно недоступен. Пожалуйста, попробуйте позже или выберите другой способ оплаты.",
     "noFreeRequisites": "В данный момент нет свободных платёжных реквизитов. Пожалуйста, попробуйте позже или выберите другой способ оплаты.",
-    "paymentGatewayUnavailable": "Платёжный шлюз временно недоступен. Пожалуйста, попробуйте позже или выберите другой способ оплаты."
+    "paymentGatewayUnavailable": "Платёжный шлюз временно недоступен. Пожалуйста, попробуйте позже или выберите другой способ оплаты.",
+    "promocodeValidationError": "Ошибка при проверке промокода",
+    "promocodeEnterAmountError": "Введите сумму депозита для проверки промокода",
+    "promocodeInvalid": "Промокод недействителен",
+    "tradingCurrencyInfoUnavailable": "Информация о валюте недоступна",
+    "tradingCurrencyInfoError": "Не удалось получить информацию о валюте",
+    "authGoogleError": "Ошибка авторизации через Google",
+    "websocketTradeCreationError": "Ошибка при создании сделки"
+  },
+  "admin": {
+    "ampayMethods": {
+      "loadError": "Ошибка загрузки методов",
+      "deleteConfirm": "Вы уверены, что хотите удалить этот метод?",
+      "updateError": "Ошибка обновления метода",
+      "createError": "Ошибка создания метода",
+      "saveError": "Ошибка сохранения метода",
+      "deleteError": "Ошибка удаления метода",
+      "importError": "Ошибка импорта методов"
+    },
+    "traderBots": {
+      "loadError": "Ошибка загрузки ботов",
+      "saveError": "Ошибка сохранения бота",
+      "deleteConfirm": "Вы уверены, что хотите удалить этого бота?",
+      "updateSuccess": "Бот успешно обновлен",
+      "createSuccess": "Бот успешно создан",
+      "deleteError": "Ошибка удаления бота",
+      "generateTradesError": "Ошибка генерации сделок"
+    },
+    "winLoss": {
+      "loadConfigError": "Ошибка загрузки конфигурации",
+      "loadStatsError": "Ошибка загрузки статистики",
+      "validationError": "Ошибка валидации",
+      "saveConfigError": "Ошибка сохранения конфигурации"
+    }
   },
   "bonus": {
     "title": "+100% к депозиту",
@@ -1520,5 +1617,47 @@
     "timeLeft": "Осталось времени",
     "depositButton": "Пополнить баланс",
     "promoCodeLabel": "Промокод"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Добро пожаловать!",
+      "description": "Добро пожаловать в платформу трейдинга! Давайте пройдем краткое обучение, чтобы вы могли максимально эффективно использовать все возможности."
+    },
+    "balance": {
+      "title": "Баланс",
+      "description": "Здесь отображается ваш текущий баланс. Вы можете переключаться между реальным и демо-счетом, нажав на этот элемент."
+    },
+    "trading": {
+      "title": "Терминал трейдинга",
+      "description": "Это основной терминал, где вы можете видеть графики цен, выбирать валютные пары и управлять торговлей."
+    },
+    "tradingControls": {
+      "title": "Панель управления",
+      "description": "Здесь вы можете настроить параметры торговли: сумму сделки, время экспирации и другие настройки для ручной торговли."
+    },
+    "tradeButtons": {
+      "title": "Кнопки торговли",
+      "description": "Используйте кнопки \"Купить\" и \"Продать\" для совершения сделок в ручном режиме. Выберите направление и нажмите соответствующую кнопку."
+    },
+    "pricePanel": {
+      "title": "Панель цен",
+      "description": "Здесь отображается текущая цена, разница между биржами, история сделок и активные позиции."
+    },
+    "next": "Далее",
+    "finish": "Завершить",
+    "skip": "Пропустить"
+  },
+  "trades": {
+    "newCompletedTrades": "Новые завершенные сделки",
+    "noTickets": "Нет тикетов",
+    "nothingFound": "Ничего не найдено"
+  },
+  "chart": {
+    "drawingTools": {
+      "line": "Линия",
+      "freehand": "От руки",
+      "rectangle": "Прямоугольник",
+      "circle": "Круг"
+    }
   }
 }

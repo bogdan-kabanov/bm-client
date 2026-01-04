@@ -50,7 +50,7 @@ export const TradesHistoryModal: React.FC<TradesHistoryModalProps> = React.memo(
     <div className="trades-history-modal-overlay" onClick={closeTradesHistoryModal}>
       <div className="trades-history-modal" onClick={(e) => e.stopPropagation()}>
         <div className="trades-history-modal-header">
-          <h2 className="trades-history-modal-title">{t('trading.tradeHistory') || 'Trade History'}</h2>
+          <h2 className="trades-history-modal-title">{t('trading.tradeHistory') || 'Trades'}</h2>
           <button 
             className="trades-history-modal-close"
             onClick={closeTradesHistoryModal}
@@ -72,6 +72,11 @@ export const TradesHistoryModal: React.FC<TradesHistoryModalProps> = React.memo(
             hasMoreHistory={hasMoreHistory}
             getCurrencyInfo={getCurrencyInfo}
             resolveCurrencyIconUrls={resolveCurrencyIconUrls}
+            onOpenTradeSidebar={(trade: any) => {
+              if ((window as any).__tradingTerminalOpenTradeSidebar) {
+                (window as any).__tradingTerminalOpenTradeSidebar(trade);
+              }
+            }}
             onRequestActiveTrades={onRequestActiveTrades}
             onRequestTradeHistory={onRequestTradeHistory}
           />

@@ -1,10 +1,10 @@
 /* CSS Variables for Typography - converted from SCSS */
 
 :root {
-  --font-family-base: "Roboto", sans-serif;
-  --font-family-alt: "Roboto", sans-serif;
-  --font-family-heading: "Roboto", sans-serif;
-  --font-family-mono: "Roboto", sans-serif;
+  --font-family-base: 'Manrope', sans-serif;
+  --font-family-alt: 'Manrope', sans-serif;
+  --font-family-heading: 'Manrope', sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Consolas', 'Courier New', monospace;
 
   --font-size-root: 16px;
   --font-size-xs: 12px;

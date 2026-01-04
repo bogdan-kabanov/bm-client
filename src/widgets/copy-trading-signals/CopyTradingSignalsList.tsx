@@ -15,6 +15,8 @@ import { validateTrade } from '@src/shared/lib/utils/tradeValidation';
 import { tradePlacementService } from '@src/features/trading-terminal/services/tradePlacementService';
 import { addActiveTrade } from '@src/entities/trading/model/slice';
 import { useCurrencyData } from '@src/features/trading-terminal/hooks/useCurrencyData';
+import arrowUpIcon from '@src/assets/icons/arrow-up.svg';
+import arrowDownIcon from '@src/assets/icons/arrow-down.svg';
 import './CopyTradingSignalsList.css';
 
 interface Signal {
@@ -106,15 +108,12 @@ const SignalItem = React.memo<{
         className={`signal-item ${!canCopy ? 'signal-item-disabled' : ''} ${!isActive ? 'signal-item-inactive' : ''}`}
       >
       <div className="signal-left">
-        <div className="signal-pair-row">
-          <div className="signal-pair">{signal.pair}</div>
-          <div className="signal-value">${investmentAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-        </div>
+        <div className="signal-pair">{signal.pair}</div>
+        <div className="signal-timer">{timer}</div>
         <div className="signal-progress-wrapper">
           <div className="signal-progress">
             <div className="signal-progress-bar" style={{ width: `${progress}%` }}></div>
           </div>
-          <div className="signal-timer">{timer}</div>
           {signal.user_id && onSubscribe && (
             <button
               className={`signal-subscribe-btn ${signal.is_subscribed ? 'subscribed' : ''}`}
@@ -129,6 +128,10 @@ const SignalItem = React.memo<{
               {signal.is_subscribed ? t('copyTrading.subscribed') : t('copyTrading.subscribe')}
             </button>
           )}
+        </div>
+      </div>
+      <div className="signal-right">
+        <div className="signal-right-top">
           <button
             className="signal-copy-btn"
             onClick={(e) => {
@@ -140,17 +143,22 @@ const SignalItem = React.memo<{
             }}
             type="button"
           >
-            {t('copyTrading.copySignal')}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.66653 3.99998V1.99998C4.66653 1.63179 4.96501 1.33331 5.3332 1.33331H13.3332C13.7014 1.33331 13.9999 1.63179 13.9999 1.99998V11.3333C13.9999 11.7015 13.7014 12 13.3332 12H11.3332V13.9994C11.3332 14.3679 11.0333 14.6666 10.662 14.6666H2.67111C2.30039 14.6666 2 14.3702 2 13.9994L2.00173 4.66723C2.0018 4.29872 2.30176 3.99998 2.67295 3.99998H4.66653ZM3.33495 5.33331L3.33346 13.3333H9.99987V5.33331H3.33495ZM5.99987 3.99998H11.3332V10.6666H12.6665V2.66665H5.99987V3.99998Z" fill="#F9F9F9"/>
+            </svg>
+            <span>{t('copyTrading.copySignal')}</span>
           </button>
         </div>
-      </div>
-      <div className="signal-right">
-        <div className="signal-right-top">
-          <div className="signal-copied">{t('copyTrading.copiedTimes', { count: Math.floor(animatedCopied) })}</div>
-        </div>
         <div className="signal-right-bottom">
+          <div className="signal-copied">{t('copyTrading.copiedTimes', { count: Math.floor(animatedCopied) })}</div>
           <div className={`signal-direction ${signal.direction}`}>
-            {signal.direction === 'up' ? '⬆' : '⬇'}
+            <img 
+              src={signal.direction === 'up' ? arrowUpIcon : arrowDownIcon}
+              alt={signal.direction === 'up' ? 'up' : 'down'}
+              className={`signal-arrow ${signal.direction === 'up' ? 'arrow-up' : 'arrow-down'}`}
+              width="16"
+              height="16"
+            />
           </div>
           <div className="signal-profit positive">
             +${profitFromInvestment.toFixed(2)}
@@ -278,7 +286,25 @@ export const CopyTradingSignalsList: React.FC<CopyTradingSignalsListProps> = ({
         if (Array.isArray(response)) {
           // Используем сигналы в том порядке, в котором они приходят с сервера
           // Это гарантирует одинаковый порядок у всех пользователей
-          setSignals(response);
+          // Обновляем список, сохраняя существующие элементы для плавного обновления прогресс-баров
+          setSignals(prevSignals => {
+            // Создаем карту существующих сигналов для быстрого поиска
+            const existingSignalsMap = new Map(prevSignals.map(s => [s.id, s]));
+            // Обновляем только данные существующих сигналов, новые добавляем как есть
+            return response.map(newSignal => {
+              const existingSignal = existingSignalsMap.get(newSignal.id);
+              // Если сигнал уже существует, сохраняем его данные для плавного обновления
+              // Это помогает избежать "сброса" прогресс-баров
+              if (existingSignal) {
+                return {
+                  ...newSignal,
+                  // Сохраняем timestamp если он не изменился значительно
+                  timestamp: existingSignal.timestamp || newSignal.timestamp,
+                };
+              }
+              return newSignal;
+            });
+          });
           retryCount = 0;
           hasLoadedOnce = true;
         } else {
@@ -459,11 +485,11 @@ export const CopyTradingSignalsList: React.FC<CopyTradingSignalsListProps> = ({
     }
     
     // Вычисляем, сколько времени прошло с момента создания
-    const elapsed = totalDuration - remainingSeconds;
+    const elapsed = total_duration - remainingSeconds;
     
     // Вычисляем прогресс от 0 до момента, когда останется 30 секунд
-    // То есть прогресс от 0% до момента (totalDuration - 30) секунд
-    const maxElapsedForAnimation = Math.max(1, totalDuration - 30);
+    // То есть прогресс от 0% до момента (total_duration - 30) секунд
+    const maxElapsedForAnimation = Math.max(1, total_duration - 30);
     const linearProgress = Math.min(1, Math.max(0, elapsed / maxElapsedForAnimation));
     
     // Используем квадратичную функцию для более медленного роста
@@ -841,7 +867,20 @@ export const CopyTradingSignalsList: React.FC<CopyTradingSignalsListProps> = ({
       
       const response = await apiClient<Signal[]>(url);
       if (Array.isArray(response)) {
-        setSignals(response);
+        // Используем ту же логику плавного обновления для сохранения прогресс-баров
+        setSignals(prevSignals => {
+          const existingSignalsMap = new Map(prevSignals.map(s => [s.id, s]));
+          return response.map(newSignal => {
+            const existingSignal = existingSignalsMap.get(newSignal.id);
+            if (existingSignal) {
+              return {
+                ...newSignal,
+                timestamp: existingSignal.timestamp || newSignal.timestamp,
+              };
+            }
+            return newSignal;
+          });
+        });
       }
     } catch (error: any) {
       console.error('Failed to subscribe to user signals:', error);
@@ -898,6 +937,8 @@ export const CopyTradingSignalsList: React.FC<CopyTradingSignalsListProps> = ({
       <div className="signals-content">
         {isLoading ? (
           <div className="signals-loading">{t('copyTrading.loadingSignals')}</div>
+        ) : sortedSignals.length === 0 ? (
+          <div className="signals-empty">{t('copyTrading.noActiveSignals')}</div>
         ) : (
           <Flipper 
             flipKey={flipKey}
@@ -911,34 +952,30 @@ export const CopyTradingSignalsList: React.FC<CopyTradingSignalsListProps> = ({
             decisionData={flipKey}
           >
             <div className="signals-items">
-              {sortedSignals.length === 0 ? (
-                <div className="signals-empty">{t('copyTrading.noActiveSignals')}</div>
-              ) : (
-                sortedSignals.map((signal) => {
-                  // Проверяем, можно ли копировать сигнал (должно быть >= 30 секунд осталось)
-                  const isActive = isSignalActive(signal);
-                  const canCopy = signal.can_copy !== false && isActive;
-                  const progress = calculateProgress(signal);
-                  const currentCopied = getCurrentCopied(signal);
-                  const timer = getTimer(signal);
-                  return (
-                    <SignalItemWithAnimation
-                      key={signal.id}
-                      signal={signal}
-                      canCopy={canCopy}
-                      investmentAmount={investmentAmount}
-                      progress={progress}
-                      onCopy={handleCopySignal}
-                      onSubscribe={handleSubscribeToUser}
-                      currentCopied={currentCopied}
-                      isActive={isActive}
-                      timer={timer}
-                      getCurrencyInfo={getCurrencyInfo}
-                      t={t}
-                    />
-                  );
-                })
-              )}
+              {sortedSignals.map((signal) => {
+                // Проверяем, можно ли копировать сигнал (должно быть >= 30 секунд осталось)
+                const isActive = isSignalActive(signal);
+                const canCopy = signal.can_copy !== false && isActive;
+                const progress = calculateProgress(signal);
+                const currentCopied = getCurrentCopied(signal);
+                const timer = getTimer(signal);
+                return (
+                  <SignalItemWithAnimation
+                    key={signal.id}
+                    signal={signal}
+                    canCopy={canCopy}
+                    investmentAmount={investmentAmount}
+                    progress={progress}
+                    onCopy={handleCopySignal}
+                    onSubscribe={handleSubscribeToUser}
+                    currentCopied={currentCopied}
+                    isActive={isActive}
+                    timer={timer}
+                    getCurrencyInfo={getCurrencyInfo}
+                    t={t}
+                  />
+                );
+              })}
             </div>
           </Flipper>
         )}

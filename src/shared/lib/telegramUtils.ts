@@ -155,7 +155,7 @@ export const getReferralId = (): string | null => {
     }
   }
 
-  // Проверяем URL параметры для веб-версии
+  // Проверяем URL параметры для веб-версии (приоритет)
   const urlParams = new URLSearchParams(window.location.search);
   // Проверяем новый параметр invite (приоритет) и старый ref (для обратной совместимости)
   const inviteParam = urlParams.get('invite');
@@ -171,6 +171,19 @@ export const getReferralId = (): string | null => {
   
   if (refParam) {
     return refParam.startsWith('ref_') ? refParam : `ref_${refParam}`;
+  }
+
+  // Проверяем localStorage (если реферальный код был сохранен ранее)
+  try {
+    const savedRefId = localStorage.getItem('referral_id');
+    if (savedRefId) {
+      const refIdNum = parseInt(savedRefId, 10);
+      if (!isNaN(refIdNum) && refIdNum > 0) {
+        return `ref_${refIdNum}`;
+      }
+    }
+  } catch (error) {
+    // Игнорируем ошибки доступа к localStorage
   }
 
   return null;

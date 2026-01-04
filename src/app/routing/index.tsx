@@ -8,11 +8,17 @@ import { useAppSelector } from '@src/shared/lib/hooks';
 import { selectProfile } from '@src/entities/user/model/selectors';
 import { PublicRoutes } from './publicRoutes';
 import { PrivateRoutes } from './privateRoutes';
+import { saveReferralCodeFromUrl } from '@src/shared/lib/referralStorageUtils';
 
 export const AppRouter = () => {
     const user = useAppSelector(selectProfile);
     const navigate = useNavigate();
     const location = useLocation();
+    
+    // Сохраняем реферальный код из URL при каждом изменении location
+    useEffect(() => {
+        saveReferralCodeFromUrl();
+    }, [location.search, location.pathname]);
     
     // Список защищенных маршрутов, которые требуют авторизации
     const protectedRoutes = [

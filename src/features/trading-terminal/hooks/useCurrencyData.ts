@@ -36,11 +36,11 @@ type UseCurrencyDataResult = {
   setSelectedCategoryId: (id: number | null) => void;
   favoriteCurrencies: string[];
   setFavoriteCurrencies: Dispatch<SetStateAction<string[]>>;
-  getCurrencyInfo: (baseCurrency: string) => Currency | undefined;
-  updateSelectedCurrencyInfo: (baseCurrency: string) => void;
-  setForcedCurrency: (base: string, quote: string) => void;
+  getCurrencyById: (currencyId: number | null) => Currency | undefined;
+  setForcedCurrency: (currencyId: number) => void;
+  forcedCurrency: number | null;
   resolveCurrencyIconUrls: (currency?: Currency | null) => string[];
-  resolveCurrencyAveragePrice: (baseCurrency: string) => number | null;
+  resolveCurrencyAveragePrice: (currencyId: number | null) => number | null;
 };
 
 export const MAX_FAVORITE_CURRENCIES = 6;
@@ -67,14 +67,16 @@ const readFavoriteCurrencies = (): string[] => {
   return [];
 };
 
-export const useCurrencyData = (selectedBase: string): UseCurrencyDataResult => {
+export const useCurrencyData = (): UseCurrencyDataResult => {
   // Получаем данные из Redux
   const currencyCategories = useSelector(selectCurrencyCategories);
   const currenciesLoading = useSelector(selectCurrencyCategoriesLoading);
   
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  // Храним принудительно выбранную валюту (base_currency + quote_currency)
-  const [forcedCurrency, setForcedCurrency] = useState<{ base: string; quote: string } | null>(null);
+  // Храним принудительно выбранную валюту по ID (самый надежный способ)
+  const [forcedCurrency, setForcedCurrency] = useState<number | null>(null);
+  // Используем ref для синхронного доступа к forcedCurrency
+  const forcedCurrencyRef = useRef<number | null>(null);
   const [favoriteCurrencies, setFavoriteCurrencies] = useState<string[]>(readFavoriteCurrencies);
   // Флаг для отслеживания, была ли выполнена начальная установка категории
   const hasInitializedCategoryRef = useRef(false);
@@ -123,75 +125,44 @@ export const useCurrencyData = (selectedBase: string): UseCurrencyDataResult => 
     }
   }, [favoriteCurrencies]);
 
-  const allCurrenciesMap = useMemo(() => {
-    const map = new Map<string, Currency>();
-    for (const category of currencyCategories) {
-      const list = category.currencies ?? [];
-      for (const currency of list) {
-        if (currency?.base_currency) {
-          const existing = map.get(currency.base_currency);
-          // Если уже есть валюта с таким base_currency, выбираем ту, у которой больше profit_percentage (приоритет)
-          if (!existing || (currency.profit_percentage ?? 0) > (existing.profit_percentage ?? 0)) {
-            map.set(currency.base_currency, currency);
-          }
+  // Получение валюты ТОЛЬКО по ID
+  const getCurrencyById = useCallback(
+    (currencyId: number | null): Currency | undefined => {
+      if (!currencyId) {
+        return undefined;
+      }
+      
+      // Ищем валюту напрямую по ID
+      for (const category of currencyCategories) {
+        const list = category.currencies ?? [];
+        const found = list.find(
+          (c) => c.id === currencyId && c.is_active
+        );
+        if (found) {
+          return found;
         }
       }
-    }
-    return map;
-  }, [currencyCategories]);
-
-  const getCurrencyInfo = useCallback(
-    (baseCurrency: string): Currency | undefined => {
-      // Если есть принудительно выбранная валюта для этого base_currency, используем её
-      if (forcedCurrency && forcedCurrency.base === baseCurrency) {
-        // Ищем валюту с нужным quote_currency
-        for (const category of currencyCategories) {
-          const list = category.currencies ?? [];
-          const found = list.find(
-            (c) => c.base_currency === baseCurrency && c.quote_currency === forcedCurrency.quote
-          );
-          if (found) {
-            return found;
-          }
-        }
-      }
-      // Иначе используем стандартную логику (выбор по profit_percentage)
-      const currency = allCurrenciesMap.get(baseCurrency);
-      // Если валюты уже загружены, возвращаем найденную валюту или undefined (не используем fallback)
-      // Fallback используется только если валюты еще не загружены
-      if (currenciesLoading) {
-        return currency ?? getFallbackCurrency(baseCurrency);
-      }
-      // После загрузки валют используем только реальные данные с положительными ID
-      return currency;
+      
+      return undefined;
     },
-    [allCurrenciesMap, forcedCurrency, currencyCategories, currenciesLoading],
+    [currencyCategories],
   );
 
-  // Сбрасываем forcedCurrency при изменении selectedBase (если базовая валюта изменилась)
-  useEffect(() => {
-    if (forcedCurrency && forcedCurrency.base !== selectedBase) {
-      setForcedCurrency(null);
-    }
-  }, [selectedBase]); // Убираем forcedCurrency из зависимостей, чтобы избежать бесконечного цикла
-
-  const updateSelectedCurrencyInfo = useCallback(
-    (baseCurrency: string) => {
-      if (typeof window === 'undefined') {
-        return;
-      }
-      // Удаляем сохраненную информацию о валюте, так как больше не используем bybit
-      localStorage.removeItem('selectedCurrencyInfo');
-    },
-    [],
-  );
 
   const setForcedCurrencyHandler = useCallback(
-    (base: string, quote: string) => {
-      setForcedCurrency({ base, quote });
+    (currencyId: number) => {
+      // Обновляем ref синхронно для немедленного доступа
+      forcedCurrencyRef.current = currencyId;
+      // Обновляем state для реактивности
+      setForcedCurrency(currencyId);
     },
-    [],
+    [forcedCurrency],
   );
+  
+  // Синхронизируем ref с state при изменении forcedCurrency
+  useEffect(() => {
+    forcedCurrencyRef.current = forcedCurrency;
+  }, [forcedCurrency]);
 
 
   const resolveCurrencyIconUrls = useCallback((currency?: Currency | null): string[] => {
@@ -315,12 +286,12 @@ export const useCurrencyData = (selectedBase: string): UseCurrencyDataResult => 
   }, []);
 
   const resolveCurrencyAveragePrice = useCallback(
-    (baseCurrency: string): number | null => {
-      if (!baseCurrency) {
+    (currencyId: number | null): number | null => {
+      if (!currencyId) {
         return null;
       }
       // Возвращаем цену из данных валюты, если она есть
-      const currency = getCurrencyInfo(baseCurrency);
+      const currency = getCurrencyById(currencyId);
       if (currency) {
         const rawAverage = currency.average_price ?? currency.avg_price;
         if (rawAverage !== null && rawAverage !== undefined) {
@@ -332,7 +303,7 @@ export const useCurrencyData = (selectedBase: string): UseCurrencyDataResult => 
       }
       return null;
     },
-    [getCurrencyInfo],
+    [getCurrencyById],
   );
 
   // Предзагрузка иконок избранных валют
@@ -344,8 +315,42 @@ export const useCurrencyData = (selectedBase: string): UseCurrencyDataResult => 
     const preloadFavoriteIcons = async () => {
       const iconUrlsToPreload: string[] = [];
       
-      for (const baseCurrency of favoriteCurrencies) {
-        const currency = getCurrencyInfo(baseCurrency);
+      for (const favoriteKey of favoriteCurrencies) {
+        // Парсим формат BASE_QUOTE или BASE/QUOTE, или просто BASE (для обратной совместимости)
+        let baseCurrency: string;
+        let quoteCurrency: string | undefined;
+        
+        if (favoriteKey.includes('_')) {
+          const parts = favoriteKey.split('_');
+          baseCurrency = parts[0] || '';
+          quoteCurrency = parts[1];
+        } else if (favoriteKey.includes('/')) {
+          const parts = favoriteKey.split('/');
+          baseCurrency = parts[0] || '';
+          quoteCurrency = parts[1];
+        } else {
+          // Старый формат - только base_currency (для обратной совместимости)
+          baseCurrency = favoriteKey;
+          quoteCurrency = undefined;
+        }
+        
+        // Если есть quote, ищем конкретную валютную пару
+        let currency: Currency | undefined;
+        if (quoteCurrency) {
+          for (const category of currencyCategories) {
+            const found = category.currencies?.find(
+              (c) => c.base_currency === baseCurrency && c.quote_currency === quoteCurrency && c.is_active
+            );
+            if (found) {
+              currency = found;
+              break;
+            }
+          }
+        }
+        
+        // Если не нашли по quote или quote не указан, пропускаем (работаем только по ID)
+        // currency остается undefined, если не найдена по base+quote
+        
         if (currency) {
           const urls = resolveCurrencyIconUrls(currency);
           iconUrlsToPreload.push(...urls.slice(0, 2)); // Берем первые 2 URL для предзагрузки
@@ -363,7 +368,7 @@ export const useCurrencyData = (selectedBase: string): UseCurrencyDataResult => 
     // Запускаем предзагрузку с небольшой задержкой, чтобы не блокировать основной рендер
     const timeoutId = setTimeout(preloadFavoriteIcons, 500);
     return () => clearTimeout(timeoutId);
-  }, [favoriteCurrencies, currencyCategories, getCurrencyInfo, resolveCurrencyIconUrls]);
+  }, [favoriteCurrencies, currencyCategories, resolveCurrencyIconUrls]);
 
   return {
     currencyCategories,
@@ -372,9 +377,9 @@ export const useCurrencyData = (selectedBase: string): UseCurrencyDataResult => 
     setSelectedCategoryId,
     favoriteCurrencies,
     setFavoriteCurrencies: updateFavoriteCurrencies,
-    getCurrencyInfo,
-    updateSelectedCurrencyInfo,
+    getCurrencyById,
     setForcedCurrency: setForcedCurrencyHandler,
+    forcedCurrency,
     resolveCurrencyIconUrls,
     resolveCurrencyAveragePrice,
   };

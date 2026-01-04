@@ -1,5 +1,4 @@
 @charset "UTF-8";
-@import "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap";
 
 @keyframes subtlePulse {
   0%, 100% {
@@ -68,7 +67,7 @@
   flex-direction: column;
   background: #03365b;
   color: #fff;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   position: relative;
   padding-right: 380px;
   -webkit-font-smoothing: antialiased;
@@ -159,7 +158,7 @@
 .navLinks a {
   color: rgba(255, 255, 255, 0.7);
   font-size: 20px;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-weight: 400;
   text-decoration: none;
   transition: color 0.3s ease;
@@ -503,7 +502,7 @@ section[id] {
   position: relative;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -625,7 +624,7 @@ section[id] {
   color: #fff;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -733,7 +732,7 @@ section[id] {
   z-index: 1;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   word-wrap: break-word;
   overflow-wrap: break-word;
   width: 100%;
@@ -927,7 +926,7 @@ section[id] {
   text-transform: none;
   font-variant: normal;
   letter-spacing: normal;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   word-wrap: break-word;
   overflow-wrap: break-word;
   text-align: center;
@@ -955,7 +954,7 @@ section[id] {
   text-transform: none;
   font-variant: normal;
   letter-spacing: normal;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   position: relative;
   z-index: 1;
   text-align: center;
@@ -1074,7 +1073,7 @@ section[id] {
   color: #fff;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -1190,7 +1189,7 @@ section[id] {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   color: #1a1a1a;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -1215,7 +1214,7 @@ section[id] {
   line-height: 1.15;
   letter-spacing: -0.015em;
   text-transform: none;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-stretch: condensed;
   letter-spacing: 0.02em;
   margin-bottom: 24px;
@@ -1280,7 +1279,7 @@ section[id] {
   text-transform: uppercase;
   font-variant: small-caps;
   letter-spacing: 0.05em;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   position: relative;
   z-index: 1;
   word-wrap: break-word;
@@ -1309,7 +1308,7 @@ section[id] {
   text-transform: uppercase;
   font-variant: small-caps;
   letter-spacing: 0.05em;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   position: relative;
   z-index: 1;
   text-align: center;
@@ -1353,7 +1352,7 @@ section[id] {
   text-transform: uppercase;
   font-variant: small-caps;
   letter-spacing: 0.05em;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   position: relative;
   z-index: 1;
   width: 100%;
@@ -1564,7 +1563,7 @@ section[id] {
   color: #122538;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: nowrap;
@@ -1658,7 +1657,7 @@ section[id] {
   color: #122538;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   word-wrap: break-word;
   overflow-wrap: break-word;
   grid-column: 1;
@@ -1688,7 +1687,7 @@ section[id] {
   margin-bottom: 24px;
   color: #fff;
   text-transform: none;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-stretch: condensed;
   letter-spacing: 0.02em;
 }
@@ -1754,7 +1753,7 @@ section[id] {
   z-index: 1;
   text-transform: uppercase;
   font-variant: small-caps;
-  font-family: Roboto, sans-serif;
+  font-family: 'Manrope', sans-serif;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
